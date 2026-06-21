@@ -9,5 +9,6 @@ assets/backgrounds/*.mp4
 assets/fonts/*.ttf
 !assets/fonts/.gitkeep
 *.log
+nohup.out
 .DS_Store
 Thumbs.db
