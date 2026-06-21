@@ -12,12 +12,34 @@ echo ""
 echo "📥 [1/6] سحب آخر التحديثات من GitHub..."
 git pull origin main
 
-# 2. تثبيت الاعتماديات
+# 2. إنشاء قاعدة البيانات إن لم تكن موجودة
 echo ""
-echo "📦 [2/6] تثبيت الاعتماديات..."
+echo "🗄️  [2/7] التأكد من وجود قاعدة البيانات..."
+DB_URL="${DATABASE_URL:-$(grep '^DATABASE_URL=' .env | head -1 | cut -d= -f2-)}"
+if [ -n "$DB_URL" ]; then
+  DB_NAME=$(echo "$DB_URL" | sed -n 's|.*/\([^?]*\).*|\1|p')
+  DB_HOST=$(echo "$DB_URL" | sed -n 's|.*@\([^:]*\).*|\1|p')
+  DB_PORT=$(echo "$DB_URL" | sed -n 's|.*:\([0-9]*\)/.*|\1|p')
+  DB_USER=$(echo "$DB_URL" | sed -n 's|.*://\([^:]*\):.*|\1|p')
+  DB_PASS=$(echo "$DB_URL" | sed -n 's|.*:\([^@]*\)@.*|\1|p')
+  PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -tc \
+    "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" 2>/dev/null \
+    | grep -q 1 || {
+      echo "   📦 إنشاء قاعدة البيانات $DB_NAME..."
+      PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" \
+        -c "CREATE DATABASE $DB_NAME" 2>/dev/null && echo "   ✅ تم الإنشاء" \
+        || echo "   ⚠️  لا يمكن إنشاء قاعدة البيانات — قد تحتاج صلاحيات"
+    }
+else
+  echo "   ⚠️  لم يتم العثور على DATABASE_URL في .env"
+fi
+
+# 3. تثبيت الاعتماديات
+echo ""
+echo "📦 [3/7] تثبيت الاعتماديات..."
 npm install
 
-# 3. تحديث Prisma
+# 4. تحديث Prisma
 echo ""
 echo "🗄️  [3/6] تحديث قاعدة البيانات..."
 npx prisma generate
@@ -25,17 +47,17 @@ npx prisma db push
 
 # 4. بناء المشروع
 echo ""
-echo "🔨 [4/6] بناء المشروع (TypeScript)..."
+echo "🔨 [5/7] بناء المشروع (TypeScript)..."
 npm run build
 
-# 5. تحديث PM2
+# 6. تحديث PM2
 echo ""
-echo "🔄 [5/6] إعادة تشغيل خدمات PM2..."
+echo "🔄 [6/7] إعادة تشغيل خدمات PM2..."
 pm2 start ecosystem.config.js 2>/dev/null || pm2 restart ecosystem.config.js
 
-# 6. عرض الحالة
+# 7. عرض الحالة
 echo ""
-echo "📊 [6/6] حالة الخدمات..."
+echo "📊 [7/7] حالة الخدمات..."
 pm2 list | grep quran-
 
 echo ""
