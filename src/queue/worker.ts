@@ -13,6 +13,7 @@ import { connection, ContentGenerationJobData, WORKER_CONCURRENCY } from "./queu
 import { generateContent } from "../services/contentPipeline";
 import { generateMetadata, getNextOptimalPublishTime } from "../services/decisionAgent";
 import { publishVideo } from "../services/youtubePublisher";
+import { publishToAllPlatforms } from "../services/multiPlatformPublisher";
 import { notifyPublishSuccess, notifyPublishFailure } from "../services/notifier";
 import { cleanupWorkDir } from "../services/videoRenderer";
 import { RECITER_ARABIC_NAMES, RECITERS, RECITER_WEIGHTS } from "../services/audioFetcher";
@@ -74,17 +75,46 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       scheduledPublishTime: scheduledAt,
     });
 
-    // 6. تحديث السجل بعد النشر الناجح
+    // 6. نشر على باقي المنصات (Facebook + Instagram + Threads) — بالتوازي
+    //    كل منصة كتتخطى بهدوء إذا الإعدادات ناقصة
+    const publicVideoUrl = process.env.PUBLIC_VIDEO_URL_BASE
+      ? `${process.env.PUBLIC_VIDEO_URL_BASE}/${generated.videoPath.split("/").pop()}`
+      : undefined;
+
+    const multiResult = await publishToAllPlatforms(
+      {
+        videoFilePath: generated.videoPath,
+        title: metadata.title,
+        description: metadata.description,
+        tags: metadata.tags,
+        isShort: contentType === ContentType.SHORT,
+        videoUrl: publicVideoUrl,
+      },
+      result.youtubeVideoId,
+      result.videoUrl
+    );
+
+    // 7. تحديث السجل بعد النشر الناجح — نخزن IDs جميع المنصات
     await prisma.publishedContent.update({
       where: { id: record.id },
       data: {
         status: "PUBLISHED",
-        youtubeVideoId: result.youtubeVideoId,
         publishedAt: new Date(),
+        youtubeVideoId: result.youtubeVideoId,
+        facebookVideoId: multiResult.facebook?.facebookVideoId || null,
+        instagramMediaId: multiResult.instagram?.instagramMediaId || null,
+        threadsPostId: multiResult.threads?.threadsPostId || null,
       },
     });
 
-    // 7. إشعار Telegram بالنجاح
+    // 8. إشعار Telegram بالنجاح
+    const allUrls = [
+      `🎬 يوتيوب: ${result.videoUrl}`,
+      multiResult.facebook?.facebookVideoId && `📘 فيسبوك: ${multiResult.facebook.postUrl}`,
+      multiResult.instagram?.instagramMediaId && `📸 انستغرام: ${multiResult.instagram.postUrl}`,
+      multiResult.threads?.threadsPostId && `🧵 تريدز: ${multiResult.threads.postUrl}`,
+    ].filter(Boolean).join("\n");
+
     await notifyPublishSuccess({
       title: metadata.title,
       videoUrl: result.videoUrl,
@@ -93,13 +123,24 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       toAyah: generated.toAyah,
       contentType,
       scheduledAt,
+      extraPlatforms: allUrls,
     });
 
-    // 8. تنظيف الملفات المؤقتة + حذف الفيديو النهائي بعد الرفع (توفير المساحة)
+    // 9. تنظيف الملفات المؤقتة + حذف الفيديو النهائي
+    //    (تكون جميع المنصات انتهت من الرفع قبل هاد الخطوة)
     await cleanupWorkDir(generated.workDir);
     await unlink(generated.videoPath).catch(() => {});
 
-    return { success: true, videoId: result.youtubeVideoId };
+    return {
+      success: true,
+      videoId: result.youtubeVideoId,
+      platforms: {
+        youtube: result.youtubeVideoId,
+        facebook: multiResult.facebook?.facebookVideoId || null,
+        instagram: multiResult.instagram?.instagramMediaId || null,
+        threads: multiResult.threads?.threadsPostId || null,
+      },
+    };
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);
 

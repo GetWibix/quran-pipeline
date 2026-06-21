@@ -44,10 +44,13 @@ export async function notifyPublishSuccess(params: {
   toAyah: number;
   contentType: string;
   scheduledAt?: string;
+  extraPlatforms?: string;
 }): Promise<void> {
   const scheduleInfo = params.scheduledAt
     ? `🕐 مجدول لـ: ${new Date(params.scheduledAt).toLocaleString("ar-MA")}`
     : "✅ تم النشر فوراً";
+
+  const extraInfo = params.extraPlatforms ? `\n${params.extraPlatforms}` : "";
 
   const text = `
 ✅ <b>تم نشر محتوى جديد</b>
@@ -56,7 +59,7 @@ export async function notifyPublishSuccess(params: {
 🎬 النوع: ${params.contentType === "SHORT" ? "Short" : "فيديو طويل"}
 📝 العنوان: ${params.title}
 🔗 ${params.videoUrl}
-${scheduleInfo}
+${scheduleInfo}${extraInfo}
 `.trim();
 
   await sendTelegramMessage(text);

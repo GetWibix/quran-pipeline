@@ -43,6 +43,9 @@ model PublishedContent {
   reciter           String
   videoFilePath     String?
   youtubeVideoId     String?
+  facebookVideoId    String?
+  instagramMediaId   String?
+  threadsPostId      String?
   title             String
   description       String
   status            PublishStatus @default(PENDING)

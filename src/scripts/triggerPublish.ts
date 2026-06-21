@@ -5,16 +5,14 @@
  */
 
 import { PrismaClient, ContentType } from "@prisma/client";
-import { Worker, Job } from "bullmq";
-import IORedis from "ioredis";
 import { generateContent } from "../services/contentPipeline";
 import { generateMetadata, getNextOptimalPublishTime } from "../services/decisionAgent";
 import { publishVideo } from "../services/youtubePublisher";
+import { publishToAllPlatforms } from "../services/multiPlatformPublisher";
 import { notifyPublishSuccess, notifyPublishFailure } from "../services/notifier";
 import { cleanupWorkDir } from "../services/videoRenderer";
 import { RECITER_ARABIC_NAMES, RECITERS, RECITER_WEIGHTS } from "../services/audioFetcher";
 import { unlink } from "fs/promises";
-import { connection, defaultJobOptions } from "../queue/queue";
 
 const prisma = new PrismaClient();
 const contentType = (process.argv[2]?.toUpperCase() === "LONG_VIDEO" ? "LONG_VIDEO" : "SHORT") as ContentType;
@@ -84,17 +82,44 @@ async function main() {
     scheduledPublishTime: scheduledAt,
   });
 
+  console.log(`   ✅ يوتيوب: ${result.videoUrl}`);
+
+  // نشر على باقي المنصات
+  const publicVideoUrl = process.env.PUBLIC_VIDEO_URL_BASE
+    ? `${process.env.PUBLIC_VIDEO_URL_BASE}/${generated.videoPath.split("/").pop()}`
+    : undefined;
+
+  const multiResult = await publishToAllPlatforms(
+    {
+      videoFilePath: generated.videoPath,
+      title: metadata.title,
+      description: metadata.description,
+      tags: metadata.tags,
+      isShort: contentType === ContentType.SHORT,
+      videoUrl: publicVideoUrl,
+    },
+    result.youtubeVideoId,
+    result.videoUrl
+  );
+
   await prisma.publishedContent.update({
     where: { id: record.id },
     data: {
       status: "PUBLISHED",
-      youtubeVideoId: result.youtubeVideoId,
       publishedAt: new Date(),
+      youtubeVideoId: result.youtubeVideoId,
+      facebookVideoId: multiResult.facebook?.facebookVideoId || null,
+      instagramMediaId: multiResult.instagram?.instagramMediaId || null,
+      threadsPostId: multiResult.threads?.threadsPostId || null,
     },
   });
 
-  console.log(`   ✅ تم الرفع: ${result.videoUrl}`);
-  console.log(`   ✅ YouTube ID: ${result.youtubeVideoId}`);
+  const allUrls = [
+    `🎬 يوتيوب: ${result.videoUrl}`,
+    multiResult.facebook?.facebookVideoId && `📘 فيسبوك: ${multiResult.facebook.postUrl}`,
+    multiResult.instagram?.instagramMediaId && `📸 انستغرام: ${multiResult.instagram.postUrl}`,
+    multiResult.threads?.threadsPostId && `🧵 تريدز: ${multiResult.threads.postUrl}`,
+  ].filter(Boolean).join("\n");
 
   await notifyPublishSuccess({
     title: metadata.title,
@@ -104,6 +129,7 @@ async function main() {
     toAyah: generated.toAyah,
     contentType,
     scheduledAt,
+    extraPlatforms: allUrls,
   });
 
   console.timeEnd("⏱️  المدة الإجمالية");
@@ -111,9 +137,12 @@ async function main() {
   console.log("╔══════════════════════════════════════════════╗");
   console.log("║     ✅✅✅  نُشر بنجاح  ✅✅✅               ║");
   console.log("╚══════════════════════════════════════════════╝");
-  console.log(`🔗 الرابط: ${result.videoUrl}`);
+  console.log(`🔗 يوتيوب: ${result.videoUrl}`);
+  if (multiResult.facebook?.facebookVideoId) console.log(`📘 فيسبوك: ${multiResult.facebook.postUrl}`);
+  if (multiResult.instagram?.instagramMediaId) console.log(`📸 انستغرام: ${multiResult.instagram.postUrl}`);
+  if (multiResult.threads?.threadsPostId) console.log(`🧵 تريدز: ${multiResult.threads.postUrl}`);
 
-  // تنظيف
+  // تنظيف بعد ما تخلص جميع المنصات
   await cleanupWorkDir(generated.workDir);
   await unlink(generated.videoPath).catch(() => {});
 
