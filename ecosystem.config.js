@@ -1,8 +1,9 @@
 /**
  * ecosystem.config.js
- * تكوين PM2 لتشغيل المشروع كامل على VPS — عمليتين مستقلتين:
+ * تكوين PM2 لتشغيل المشروع كامل على VPS — 3 عمليات مستقلة:
  * 1. quran-worker: كيعالج jobs توليد المحتوى (concurrency: 1، استهلاك موارد عند الطلب فقط)
  * 2. quran-scheduler: خفيف جداً، دايماً نائم، كيفعّل cron jobs فقط
+ * 3. quran-file-server: خفيف جداً، يخدم ملفات الفيديو للمنصات اللي تحتاج رابط عام
  *
  * تشغيل: pm2 start ecosystem.config.js
  */
@@ -23,6 +24,14 @@ module.exports = {
       instances: 1,
       autorestart: true,
       max_memory_restart: "150M", // خفيف جداً، فقط cron triggers
+      env: { NODE_ENV: "production" },
+    },
+    {
+      name: "quran-file-server",
+      script: "dist/services/fileServer.js",
+      instances: 1,
+      autorestart: true,
+      max_memory_restart: "100M", // خفيف جداً، فقط يخدم ملفات ثابتة
       env: { NODE_ENV: "production" },
     },
   ],

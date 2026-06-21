@@ -14,6 +14,7 @@ import { generateContent } from "../services/contentPipeline";
 import { generateMetadata, getNextOptimalPublishTime } from "../services/decisionAgent";
 import { publishVideo } from "../services/youtubePublisher";
 import { publishToAllPlatforms } from "../services/multiPlatformPublisher";
+import { getVideoPublicUrl } from "../services/fileServer";
 import { notifyPublishSuccess, notifyPublishFailure } from "../services/notifier";
 import { cleanupWorkDir } from "../services/videoRenderer";
 import { RECITER_ARABIC_NAMES, RECITERS, RECITER_WEIGHTS } from "../services/audioFetcher";
@@ -77,9 +78,9 @@ async function processJob(job: Job<ContentGenerationJobData>) {
 
     // 6. نشر على باقي المنصات (Facebook + Instagram + Threads) — بالتوازي
     //    كل منصة كتتخطى بهدوء إذا الإعدادات ناقصة
-    const publicVideoUrl = process.env.PUBLIC_VIDEO_URL_BASE
-      ? `${process.env.PUBLIC_VIDEO_URL_BASE}/${generated.videoPath.split("/").pop()}`
-      : undefined;
+    //    Instagram + Threads يحتاجون رابط عام (fileServer.ts كيخدمهم تلقائياً)
+    const videoFilename = generated.videoPath.split("/").pop() || "";
+    const publicVideoUrl = getVideoPublicUrl(videoFilename);
 
     const multiResult = await publishToAllPlatforms(
       {
