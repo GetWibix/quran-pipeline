@@ -9,7 +9,7 @@ cd "$(dirname "$0")"
 
 # 1. سحب آخر التحديثات من GitHub
 echo ""
-echo "📥 [1/6] سحب آخر التحديثات من GitHub..."
+echo "📥 [1/7] سحب آخر التحديثات من GitHub..."
 git pull origin main
 
 # 2. إنشاء قاعدة البيانات إن لم تكن موجودة
@@ -41,7 +41,7 @@ npm install
 
 # 4. تحديث Prisma
 echo ""
-echo "🗄️  [3/6] تحديث قاعدة البيانات..."
+echo "🗄️  [4/7] تحديث قاعدة البيانات..."
 npx prisma generate
 npx prisma db push
 
