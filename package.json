@@ -11,6 +11,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
+    "preview": "ts-node src/scripts/previewVideo.ts",
+    "e2e": "node dist/scripts/e2eTest.js",
     "test": "echo \"لا يوجد اختبارات بعد\" && exit 0"
   },
   "keywords": [

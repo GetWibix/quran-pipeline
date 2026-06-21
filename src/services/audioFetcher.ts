@@ -31,6 +31,14 @@ export const RECITERS: Record<string, Reciter> = {
   maher: "Maher_AlMuaiqly_64kbps",
 };
 
+// أوزان الاختيار العشوائي (تفضيل الجودة العالية)
+export const RECITER_WEIGHTS: Record<string, number> = {
+  abdulbasit: 4, // 192kbps — أفضل جودة
+  alafasy: 3,    // 128kbps — جودة جيدة
+  maher: 2,      // 64kbps  — متوسط
+  ghamadi: 1,     // 40kbps  — أقل جودة
+};
+
 export const RECITER_ARABIC_NAMES: Record<Reciter, string> = {
   "Alafasy_128kbps": "مشاري العفاسي",
   "Abdul_Basit_Murattal_192kbps": "عبدالباسط عبدالصمد",

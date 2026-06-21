@@ -41,6 +41,7 @@ const VIDEO_BACKGROUNDS = [
   "background-loop-1.mp4",
   "background-loop-2.mp4",
   "background-loop-3.mp4",
+  "background-loop-4.mp4",
 ];
 
 function pickBackground(): string {
@@ -48,14 +49,11 @@ function pickBackground(): string {
   return path.join(BACKGROUNDS_DIR, chosen);
 }
 
-function pickVideoBackground(): string | undefined {
-  const candidates = VIDEO_BACKGROUNDS.filter((f) => {
+function getAvailableVideoBackgrounds(): string[] {
+  return VIDEO_BACKGROUNDS.filter((f) => {
     try { require("fs").statSync(path.join(BACKGROUNDS_DIR, f)); return true; }
     catch { return false; }
-  });
-  if (candidates.length === 0) return undefined;
-  const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-  return path.join(BACKGROUNDS_DIR, chosen);
+  }).map((f) => path.join(BACKGROUNDS_DIR, f));
 }
 
 /**
@@ -82,29 +80,43 @@ export async function generateContent(
   const sceneInputs: SceneInput[] = [];
   const aspectRatio = contentType === ContentType.SHORT ? "9:16" : "16:9";
   const backgroundPath = pickBackground();
-  const videoBackgroundPath = pickVideoBackground();
+  const availableVideoBackgrounds = getAvailableVideoBackgrounds();
+  const sceneBackgrounds: string[] = []; // خلفية فيديو مختلفة لكل مشهد
 
   let totalDuration = 0;
-  const MAX_SHORT_SEC = 59;
-  const MIN_SHORT_SEC = 30;
+  const MAX_SHORT_SEC = 60;
 
-  // 3. لكل آية: جلب + صوت + رسم — نتوقف بين 30-59 ثانية
+  // 3. لكل آية: جلب + صوت + رسم — الآيات تضاف كاملة، لا نقطعها
+  // أول آية تضاف دائماً كاملة (حتى لو طالت عن 60 ثانية)
+  // الآيات التالية تضاف فقط إذا كانت المجموع لا يتجاوز 60 ثانية
   for (let ayah = range.fromAyah; ayah <= range.toAyah; ayah++) {
-    if (totalDuration >= MIN_SHORT_SEC) break;
+    if (totalDuration >= MAX_SHORT_SEC) break;
 
     const verse = await getVerse(range.surahNumber, ayah);
-    verses.push(verse);
-
     const audioOutPath = path.join(audioDir, `${range.surahNumber}-${ayah}.mp3`);
     const { filePath: audioPath, durationSeconds } = await downloadAyahAudio(
       reciter, range.surahNumber, ayah, audioOutPath
     );
 
+    // أول آية: نضيفها كاملة دائماً
+    // ما عدا الأولى: نضيف فقط إذا ما كانتش هتتجاوز الحد
+    if (verses.length > 0 && totalDuration + durationSeconds > MAX_SHORT_SEC) break;
+
+    verses.push(verse);
     const imageOutPath = path.join(scenesDir, `${range.surahNumber}-${ayah}.png`);
+
+    // نختار خلفية فيديو عشوائية لهاذ المشهد
+    const useTransparent = availableVideoBackgrounds.length > 0;
+    if (useTransparent) {
+      const chosen = availableVideoBackgrounds[Math.floor(Math.random() * availableVideoBackgrounds.length)];
+      sceneBackgrounds.push(chosen);
+    }
+
     await composeScene({
       textArabic: verse.textArabic, translation: verse.translationFr,
       surahLabel: `سورة ${verse.surahNameArabic} - الآية ${verse.ayahNumber}`,
       aspectRatio, backgroundImagePath: backgroundPath, outputPath: imageOutPath,
+      transparent: useTransparent,
     });
 
     sceneInputs.push({ imagePath: imageOutPath, audioPath, durationSeconds });
@@ -137,7 +149,7 @@ export async function generateContent(
     aspectRatio,
     outputPath: finalVideoPath,
     maxThreads: 2,
-    videoBackgroundPath,
+    videoBackgroundPaths: sceneBackgrounds.length > 0 ? sceneBackgrounds : undefined,
   });
 
   return {

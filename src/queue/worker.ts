@@ -15,7 +15,7 @@ import { generateMetadata, getNextOptimalPublishTime } from "../services/decisio
 import { publishVideo } from "../services/youtubePublisher";
 import { notifyPublishSuccess, notifyPublishFailure } from "../services/notifier";
 import { cleanupWorkDir } from "../services/videoRenderer";
-import { RECITER_ARABIC_NAMES } from "../services/audioFetcher";
+import { RECITER_ARABIC_NAMES, RECITERS, RECITER_WEIGHTS } from "../services/audioFetcher";
 import { unlink } from "fs/promises";
 
 const prisma = new PrismaClient();
@@ -27,7 +27,17 @@ async function processJob(job: Job<ContentGenerationJobData>) {
 
   try {
     // 1. توليد الفيديو الكامل (verseSelector → fetch → compose → render)
-    const generated = await generateContent(contentType, "alafasy");
+    // اختيار القارئ عشوائياً مع تفضيل الجودة العالية
+    const reciterKeys = Object.keys(RECITERS) as (keyof typeof RECITERS)[];
+    const weights = reciterKeys.map((k) => RECITER_WEIGHTS[k] ?? 1);
+    const totalWeight = weights.reduce((a, b) => a + b, 0);
+    let rand = Math.random() * totalWeight;
+    let chosenReciter = reciterKeys[0];
+    for (let i = 0; i < reciterKeys.length; i++) {
+      rand -= weights[i];
+      if (rand <= 0) { chosenReciter = reciterKeys[i]; break; }
+    }
+    const generated = await generateContent(contentType, chosenReciter);
     workDirToClean = generated.workDir;
     const reciterArabic = RECITER_ARABIC_NAMES[generated.reciter] ?? generated.reciter;
 
@@ -35,7 +45,7 @@ async function processJob(job: Job<ContentGenerationJobData>) {
     const metadata = await generateMetadata(generated.verses, contentType, reciterArabic, generated.reciter);
 
     // 3. تحديد وقت النشر الأمثل
-    const scheduledAt = getNextOptimalPublishTime(contentType);
+    const scheduledAt = await getNextOptimalPublishTime(contentType);
 
     // 4. تسجيل أولي فقاعدة البيانات (status: GENERATING -> READY)
     const record = await prisma.publishedContent.create({

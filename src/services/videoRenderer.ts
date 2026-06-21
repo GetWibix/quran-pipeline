@@ -17,7 +17,8 @@ export interface RenderOptions {
   aspectRatio: "9:16" | "16:9";
   outputPath: string;
   maxThreads?: number;
-  videoBackgroundPath?: string;
+  videoBackgroundPath?: string; // خلفية واحدة (قديم/للمطابقة)
+  videoBackgroundPaths?: string[]; // خلفية لكل مشهد
 }
 
 const DIMENSIONS = {
@@ -62,7 +63,9 @@ export async function renderVideo(opts: RenderOptions): Promise<string> {
     workDir
   );
 
-  if (opts.videoBackgroundPath) {
+  if (opts.videoBackgroundPaths && opts.videoBackgroundPaths.length > 0) {
+    await renderWithMultiBackgrounds(opts, mergedAudioPath, dims, threads, workDir);
+  } else if (opts.videoBackgroundPath) {
     await renderWithVideoBackground(opts, mergedAudioPath, dims, threads, workDir);
   } else {
     await renderWithStaticImages(opts, mergedAudioPath, dims, threads, workDir);
@@ -140,6 +143,7 @@ async function renderWithVideoBackground(
   const ffmpegArgs: string[] = [
     "-y",
     "-stream_loop", "-1",
+    "-an",
     "-i", bg,
   ];
 
@@ -150,7 +154,7 @@ async function renderWithVideoBackground(
   ffmpegArgs.push("-i", mergedAudioPath);
 
   ffmpegArgs.push("-filter_complex",
-    `[0:v]scale=${dims},setpts=PTS-STARTPTS,loop=-1:size=1[bgv];${filterChain.replace(/\[0:v\]/g, "[bgv]")}`);
+    `[0:v]scale=${dims},setpts=PTS-STARTPTS[bgv];${filterChain.replace(/\[0:v\]/g, "[bgv]")}`);
 
   if (opts.scenes.length > 0) {
     ffmpegArgs.push("-map", finalLabel);
@@ -167,6 +171,78 @@ async function renderWithVideoBackground(
     "-c:a", "aac",
     "-b:a", "128k",
     "-t", totalDuration.toFixed(3),
+    "-shortest",
+    "-threads", String(threads),
+    "-movflags", "+faststart",
+    opts.outputPath,
+  );
+
+  await execFileAsync("ffmpeg", ffmpegArgs);
+}
+
+/**
+ * رندر بمشاهد متعددة، لكل مشهد خلفية فيديو مختلفة + الصورة بتاعته
+ * كيقلل الضغط مقارنة بالطريقة القديمة (بدون enable='between(t,...)')
+ */
+async function renderWithMultiBackgrounds(
+  opts: RenderOptions,
+  mergedAudioPath: string,
+  dims: string,
+  threads: number,
+  workDir: string
+): Promise<void> {
+  const bgs = opts.videoBackgroundPaths!;
+  const n = opts.scenes.length;
+  const concatSegments: string[] = [];
+
+  const ffmpegArgs: string[] = ["-y"];
+
+  // نجيب كل فيديوهات الخلفية + صور المشاهد
+  for (let i = 0; i < n; i++) {
+    const bgIdx = i < bgs.length ? i : Math.floor(Math.random() * bgs.length);
+    ffmpegArgs.push("-stream_loop", "-1", "-an", "-i", bgs[bgIdx]);
+    ffmpegArgs.push("-i", opts.scenes[i].imagePath);
+  }
+
+  ffmpegArgs.push("-i", mergedAudioPath);
+
+  // نبني filter complex: trim + scale لكل خلفية → overlay مع الصورة
+  const filterParts: string[] = [];
+  const inputLabels: string[] = [];
+
+  for (let i = 0; i < n; i++) {
+    const bgIn = i * 2;          // مدخل الخلفية (0,2,4,...)
+    const imgIn = i * 2 + 1;     // مدخل الصورة (1,3,5,...)
+    const bgTrimmed = `[bg${i}]`;
+    const segLabel = `[s${i}]`;
+    const dur = opts.scenes[i].durationSeconds.toFixed(3);
+
+    filterParts.push(
+      `[${bgIn}:v]trim=duration=${dur},setpts=PTS-STARTPTS,scale=${dims}[bg${i}t]`
+    );
+    filterParts.push(
+      `[bg${i}t][${imgIn}:v]overlay${segLabel}`
+    );
+    inputLabels.push(segLabel);
+  }
+
+  // concat كل المشاهد
+  const concatLabel = inputLabels.join("");
+  filterParts.push(
+    `${concatLabel}concat=n=${n}:v=1:a=0[final_v]`
+  );
+
+  ffmpegArgs.push("-filter_complex", filterParts.join(";"));
+
+  ffmpegArgs.push("-map", "[final_v]");
+  ffmpegArgs.push("-map", `${2 * n}:a`);
+  ffmpegArgs.push(
+    "-c:v", "libx264",
+    "-preset", "veryfast",
+    "-crf", "23",
+    "-pix_fmt", "yuv420p",
+    "-c:a", "aac",
+    "-b:a", "128k",
     "-shortest",
     "-threads", String(threads),
     "-movflags", "+faststart",

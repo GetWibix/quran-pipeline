@@ -140,26 +140,20 @@ export async function generateMetadata(
 }
 
 /**
- * كيحدد أوقات النشر "الذهبية" حسب نوع المحتوى — قيم ثابتة مبدئياً (best practice
- * معروفة لمحتوى ديني: وقت قبل الفجر/المغرب كيشهد تفاعل أعلى)
- * يمكن تطويرها لاحقاً لتصبح ديناميكية بناءً على بيانات تفاعل تاريخية فعلية
+ * كيرجع أقرب وقت "ذهبي" قادم من الآن، بصيغة ISO جاهزة للجدولة على يوتيوب.
+ * كيستعمل البيانات المحللة من القناة (أحسن أوقات النشر حسب المشاهدات)،
+ * وإلا كيرجع للقيم الافتراضية.
  */
-const OPTIMAL_HOURS_UTC = {
-  // أوقات تقريبية بتوقيت UTC تتوافق مع ما قبل الفجر/المغرب فالمغرب (UTC+0/+1)
-  SHORT: [4, 12, 17, 20], // عدة فرص فاليوم بما إن الوتيرة 2+ شورتس/يوم
-  LONG_VIDEO: [17], // وقت واحد مفضل (بعد العصر/قبل المغرب)
-};
+export async function getNextOptimalPublishTime(contentType: ContentType): Promise<string> {
+  const { getOptimalHours } = await import("./statsCollector");
+  const optimal = await getOptimalHours();
+  const hours = optimal[contentType];
 
-/**
- * كيرجع أقرب وقت "ذهبي" قادم من الآن، بصيغة ISO جاهزة للجدولة على يوتيوب
- */
-export function getNextOptimalPublishTime(contentType: ContentType): string {
-  const hours = OPTIMAL_HOURS_UTC[contentType];
   const now = new Date();
   const candidates = hours.map((h) => {
     const d = new Date(now);
     d.setUTCHours(h, 0, 0, 0);
-    if (d <= now) d.setUTCDate(d.getUTCDate() + 1); // إذا الوقت فات اليوم، نأخدو بكرا
+    if (d <= now) d.setUTCDate(d.getUTCDate() + 1);
     return d;
   });
   candidates.sort((a, b) => a.getTime() - b.getTime());

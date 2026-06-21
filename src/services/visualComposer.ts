@@ -24,6 +24,7 @@ interface ComposeSceneOptions {
   aspectRatio: AspectRatio;
   backgroundImagePath: string; // مسار صورة خلفية ثابتة (من مكتبة templates)
   outputPath: string;
+  transparent?: boolean; // إذا كان true: لا يرسم خلفية (شفاف) — يستعمل مع فيديو الخلفية
 }
 
 const DIMENSIONS: Record<AspectRatio, { width: number; height: number }> = {
@@ -109,14 +110,16 @@ export async function composeScene(opts: ComposeSceneOptions): Promise<string> {
   const canvas: Canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
-  // --- 1. الخلفية ---
-  const { loadImage } = await import("canvas");
-  const bg = await loadImage(opts.backgroundImagePath);
-  ctx.drawImage(bg, 0, 0, width, height);
+  // --- 1. الخلفية (تُرسم فقط إذا كانت الصورة معتمة، لا تُرسم مع فيديو الخلفية) ---
+  if (!opts.transparent) {
+    const { loadImage } = await import("canvas");
+    const bg = await loadImage(opts.backgroundImagePath);
+    ctx.drawImage(bg, 0, 0, width, height);
 
-  // طبقة تعتيم خفيفة فوق الخلفية لتحسين وضوح النص (تباين أفضل)
-  ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
-  ctx.fillRect(0, 0, width, height);
+    // طبقة تعتيم خفيفة فوق الخلفية لتحسين وضوح النص (تباين أفضل)
+    ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+    ctx.fillRect(0, 0, width, height);
+  }
 
   // --- 2. النص العربي (الآية) ---
   (ctx as unknown as { direction: string }).direction = "rtl";

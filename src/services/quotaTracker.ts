@@ -23,7 +23,7 @@ export const QUOTA_COSTS = {
 
 // السقف اليومي الرسمي = 10,000، لكن كنخليو مجال أمان (نتوقفو عند 8,500)
 // لتفادي ما يصرا تجاوز بسبب عمليات قراءة/تحديث إضافية بعد الرفع
-const DAILY_SAFETY_LIMIT = 8500;
+const DAILY_SAFETY_LIMIT = 9500;
 
 function todayUTC(): Date {
   const now = new Date();

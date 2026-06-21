@@ -16,6 +16,7 @@ import { enqueueContentGeneration } from "./queue/queue";
 import { shouldGenerateExtraContent } from "./services/decisionAgent";
 import { remainingVideoUploadsToday } from "./services/quotaTracker";
 import { notifyDailySummary } from "./services/notifier";
+import { collectAllStats, analyzeOptimalHours, persistOptimalHours } from "./services/statsCollector";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -51,7 +52,19 @@ cron.schedule("0 20 * * *", async () => {
   }
 });
 
-// --- 4. ملخص يومي عبر Telegram (آخر النهار) ---
+// --- 4. جمع إحصائيات يوتيوب وتحليل أفضل أوقات النشر (آخر النهار) ---
+cron.schedule("30 22 * * *", async () => {
+  console.log("📊 تشغيل: جمع إحصائيات الفيديوهات المنشورة...");
+  const updated = await collectAllStats();
+  console.log(`📊 تم تحديث ${updated} فيديو`);
+
+  console.log("📊 تحليل أفضل أوقات النشر...");
+  const optimal = await analyzeOptimalHours();
+  await persistOptimalHours(optimal);
+  console.log(`📊 أفضل أوقات النشر: SHORT=${optimal.SHORT.join(",")}, LONG_VIDEO=${optimal.LONG_VIDEO.join(",")}`);
+});
+
+// --- 5. ملخص يومي عبر Telegram (آخر النهار) ---
 cron.schedule("0 22 * * *", async () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
