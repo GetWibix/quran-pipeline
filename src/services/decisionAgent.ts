@@ -40,8 +40,15 @@ function buildDescription(
   surahName: string,
   fromAyah: number,
   toAyah: number,
-  combinedText: string
+  combinedText: string,
+  tags: string[]
 ): string {
+  const hashtags = [...new Set(tags)]
+    .filter(t => /^[\u0600-\u06FFa-zA-Z]+$/.test(t.replace(/_/g, "")))
+    .slice(0, 15)
+    .map(t => `#${t.startsWith("#") ? t.slice(1) : t}`)
+    .join(" ");
+
   return [
     aiDescription,
     "",
@@ -51,8 +58,7 @@ function buildDescription(
     "📜 نص الآيات:",
     combinedText,
     "",
-    "📚 المصدر: القرآن الكريم",
-    "#قرآن_كريم #تلاوة #اسلام",
+    hashtags,
   ].join("\n");
 }
 
@@ -62,7 +68,8 @@ function buildMessages(surahName: string, fromAyah: number, toAyah: number, comb
       role: "system" as const,
       content: `أنت مساعد متخصص فإنتاج محتوى ديني محترم لقناة يوتيوب قرآنية.
 ممنوع أي عنوان فيه exaggeration أو clickbait يخالف الاحترام الديني.
-الهاشتاغات خاصها تكون متعلقة بالقرآن/الإسلام/السورة المحددة (8-12 كلمة).
+الهاشتاغات خاصها تكون متعلقة بالقرآن/الإسلام/السورة المحددة (12-20 كلمة).
+نوّع بين هاشتاغات عامة (#قرآن_كريم, #تلاوة, #اسلام) ومتخصصة (#اسم_السورة, #رقم_الآية, #الموضوع).
 أجب فقط JSON صحيح بدون أي markdown.`,
     },
     {
@@ -89,7 +96,7 @@ function parseResponse(rawText: string, surahName: string, fromAyah: number, toA
     return {
       title: `سورة ${surahName} - الآيات ${fromAyah}-${toAyah}`,
       description: `تلاوة خاشعة لآيات من سورة ${surahName}`,
-      tags: ["قرآن_كريم", "تلاوة", surahName, "اسلام"],
+      tags: ["قرآن_كريم", "تلاوة", "اسلام", surahName, "دعاء", "خشوع", "تدبر", "القرآن"],
     };
   }
 }
@@ -134,7 +141,7 @@ export async function generateMetadata(
     console.error("🚫 كل الموديلات المجانية فشلت، آخر خطأ:", lastError);
   }
 
-  const description = buildDescription(aiDescription, reciterArabic, surahName, fromAyah, toAyah, combinedText);
+  const description = buildDescription(aiDescription, reciterArabic, surahName, fromAyah, toAyah, combinedText, tags);
 
   return { title: aiTitle, description, tags };
 }
