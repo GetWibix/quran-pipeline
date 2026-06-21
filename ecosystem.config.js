@@ -26,13 +26,5 @@ module.exports = {
       max_memory_restart: "150M", // خفيف جداً، فقط cron triggers
       env: { NODE_ENV: "production" },
     },
-    {
-      name: "quran-file-server",
-      script: "dist/services/fileServer.js",
-      instances: 1,
-      autorestart: true,
-      max_memory_restart: "100M", // خفيف جداً، فقط يخدم ملفات ثابتة
-      env: { NODE_ENV: "production" },
-    },
   ],
 };

@@ -14,7 +14,7 @@ import { generateContent } from "../services/contentPipeline";
 import { generateMetadata, getNextOptimalPublishTime } from "../services/decisionAgent";
 import { publishVideo } from "../services/youtubePublisher";
 import { publishToAllPlatforms } from "../services/multiPlatformPublisher";
-import { getVideoPublicUrl } from "../services/fileServer";
+import { uploadToR2, deleteFromR2 } from "../services/r2Uploader";
 import { notifyPublishSuccess, notifyPublishFailure } from "../services/notifier";
 import { cleanupWorkDir } from "../services/videoRenderer";
 import { RECITER_ARABIC_NAMES, RECITERS, RECITER_WEIGHTS } from "../services/audioFetcher";
@@ -76,11 +76,12 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       scheduledPublishTime: scheduledAt,
     });
 
-    // 6. نشر على باقي المنصات (Facebook + Instagram + Threads) — بالتوازي
+    // 6. رفع الفيديو إلى R2 (لـ Instagram + Threads — يحتاجون رابط عام)
+    //    إذا R2 مش مهيأ، Instagram + Threads يتخطوا بهدوء
+    const publicVideoUrl = await uploadToR2(generated.videoPath);
+
+    // 7. نشر على باقي المنصات (Facebook + Instagram + Threads) — بالتوازي
     //    كل منصة كتتخطى بهدوء إذا الإعدادات ناقصة
-    //    Instagram + Threads يحتاجون رابط عام (fileServer.ts كيخدمهم تلقائياً)
-    const videoFilename = generated.videoPath.split("/").pop() || "";
-    const publicVideoUrl = getVideoPublicUrl(videoFilename);
 
     const multiResult = await publishToAllPlatforms(
       {
@@ -127,10 +128,11 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       extraPlatforms: allUrls,
     });
 
-    // 9. تنظيف الملفات المؤقتة + حذف الفيديو النهائي
+    // 9. تنظيف الملفات المؤقتة + حذف الفيديو من R2 + حذف الفيديو النهائي
     //    (تكون جميع المنصات انتهت من الرفع قبل هاد الخطوة)
     await cleanupWorkDir(generated.workDir);
     await unlink(generated.videoPath).catch(() => {});
+    if (publicVideoUrl) await deleteFromR2(generated.videoPath);
 
     return {
       success: true,

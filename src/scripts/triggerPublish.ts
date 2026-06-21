@@ -9,7 +9,7 @@ import { generateContent } from "../services/contentPipeline";
 import { generateMetadata, getNextOptimalPublishTime } from "../services/decisionAgent";
 import { publishVideo } from "../services/youtubePublisher";
 import { publishToAllPlatforms } from "../services/multiPlatformPublisher";
-import { getVideoPublicUrl } from "../services/fileServer";
+import { uploadToR2, deleteFromR2 } from "../services/r2Uploader";
 import { notifyPublishSuccess, notifyPublishFailure } from "../services/notifier";
 import { cleanupWorkDir } from "../services/videoRenderer";
 import { RECITER_ARABIC_NAMES, RECITERS, RECITER_WEIGHTS } from "../services/audioFetcher";
@@ -85,9 +85,8 @@ async function main() {
 
   console.log(`   ✅ يوتيوب: ${result.videoUrl}`);
 
-  // نشر على باقي المنصات
-  const videoFilename = generated.videoPath.split("/").pop() || "";
-  const publicVideoUrl = getVideoPublicUrl(videoFilename);
+  // نشر على باقي المنصات — نرفع الفيديو لـ R2 عشان Instagram + Threads
+  const publicVideoUrl = await uploadToR2(generated.videoPath);
 
   const multiResult = await publishToAllPlatforms(
     {
@@ -145,6 +144,7 @@ async function main() {
   // تنظيف بعد ما تخلص جميع المنصات
   await cleanupWorkDir(generated.workDir);
   await unlink(generated.videoPath).catch(() => {});
+  if (publicVideoUrl) await deleteFromR2(generated.videoPath);
 
   await prisma.$disconnect();
   process.exit(0);
