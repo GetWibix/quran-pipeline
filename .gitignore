@@ -2,12 +2,6 @@ node_modules/
 dist/
 .env
 assets/videos/
-assets/backgrounds/*.jpg
-assets/backgrounds/*.png
-assets/backgrounds/*.mp4
-!assets/backgrounds/.gitkeep
-assets/fonts/*.ttf
-!assets/fonts/.gitkeep
 *.log
 nohup.out
 .DS_Store
