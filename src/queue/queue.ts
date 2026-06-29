@@ -17,7 +17,9 @@ export const connection = new IORedis(
 
 export interface ContentGenerationJobData {
   contentType: ContentType;
-  isExtra?: boolean; // واش هاد الفيديو نتيجة قرار "زيادة بسبب التفاعل"
+  isExtra?: boolean;
+  /** إذا true، يتجاوز رفع يوتيوب لكن ينشر على باقي المنصات كالمعتاد */
+  skipYouTube?: boolean;
 }
 
 export const contentQueue = new Queue<ContentGenerationJobData>(

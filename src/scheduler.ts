@@ -28,8 +28,8 @@ cron.schedule("0 8 * * *", async () => {
 });
 
 cron.schedule("0 16 * * *", async () => {
-  console.log("⏰ تشغيل: Short المساء");
-  await enqueueContentGeneration({ contentType: ContentType.SHORT });
+  console.log("⏰ تشغيل: Short المساء (بدون يوتيوب — باقي المنصات عادي)");
+  await enqueueContentGeneration({ contentType: ContentType.SHORT, skipYouTube: true });
 });
 
 // --- 2. فيديو طويل أسبوعي (الجمعة، يوم مناسب دينياً لمحتوى أطول) ---
@@ -48,6 +48,7 @@ cron.schedule("0 20 * * *", async () => {
     await enqueueContentGeneration({
       contentType: ContentType.SHORT,
       isExtra: true,
+      skipYouTube: true,
     });
   }
 });

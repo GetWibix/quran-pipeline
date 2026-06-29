@@ -29,6 +29,14 @@ export interface PublishResult {
   videoUrl: string;
 }
 
+const ENGAGEMENT_COMMENTS = [
+  "أي آية لمست قلبك اليوم؟ شاركنا برأيك في التعليقات 🕊️",
+  "ما هو الدرس الذي أخذته من هذه الآيات؟ اكتبه في تعليق 🖋️",
+  "سبحان الله.. تأمل في معاني هذه الآيات ودعنا نعرف أيها أثّر فيك 🌙",
+  "آية تتلى.. وقلب يخشع. شاركنا مشاعرك مع هذه التلاوة 🤲",
+  "هل شعرت بالراحة عند سماع هذه الآيات؟ اكتب نعم في تعليق 💚",
+];
+
 function getOAuthClient() {
   const oauth2Client = new google.auth.OAuth2(
     process.env.YT_CLIENT_ID,
@@ -110,10 +118,44 @@ export async function publishVideo(
     }
   }
 
+  // 4. إضافة تعليق تلقائي لزيادة التفاعل
+  await addEngagementComment(videoId, opts.title);
+
   return {
     youtubeVideoId: videoId,
     videoUrl: `https://youtube.com/watch?v=${videoId}`,
   };
+}
+
+/**
+ * كيضيف تعليق تفاعلي على الفيديو بعد النشر (لزيادة التفاعل في المعلقادات)
+ * الفكرة: التعليقات ترفع الفيديو في الاقتراحات حسب خوارزمية يوتيوب
+ * هذا يتطلب صلاحية youtube.force-ssl في OAuth
+ */
+async function addEngagementComment(videoId: string, title: string): Promise<void> {
+  try {
+    const auth = getOAuthClient();
+    const youtube = google.youtube({ version: "v3", auth });
+    const comment = ENGAGEMENT_COMMENTS[Math.floor(Math.random() * ENGAGEMENT_COMMENTS.length)];
+
+    await youtube.commentThreads.insert({
+      part: ["snippet"],
+      requestBody: {
+        snippet: {
+          videoId,
+          topLevelComment: {
+            snippet: {
+              textOriginal: comment,
+            },
+          },
+        },
+      },
+    });
+
+    console.log(`💬 تم إضافة تعليق تلقائي على الفيديو ${videoId}`);
+  } catch (err) {
+    console.warn(`⚠️ تعذر إضافة التعليق التلقائي (قد تحتاج صلاحية youtube.force-ssl):`, err instanceof Error ? err.message : String(err));
+  }
 }
 
 /**

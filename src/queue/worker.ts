@@ -66,15 +66,24 @@ async function processJob(job: Job<ContentGenerationJobData>) {
     });
     dbRecordId = record.id;
 
-    // 5. النشر الفعلي على يوتيوب (مع فحص Quota داخلي تلقائي)
-    const result = await publishVideo({
-      videoFilePath: generated.videoPath,
-      title: metadata.title,
-      description: metadata.description,
-      tags: metadata.tags,
-      isShort: contentType === ContentType.SHORT,
-      scheduledPublishTime: scheduledAt,
-    });
+    // 5. النشر الفعلي على يوتيوب (إذا skipYouTube=true، نتجاوز)
+    let youtubeVideoId: string | null = null;
+    let youtubeVideoUrl: string | null = null;
+
+    if (!job.data.skipYouTube) {
+      const result = await publishVideo({
+        videoFilePath: generated.videoPath,
+        title: metadata.title,
+        description: metadata.description,
+        tags: metadata.tags,
+        isShort: contentType === ContentType.SHORT,
+        scheduledPublishTime: scheduledAt,
+      });
+      youtubeVideoId = result.youtubeVideoId;
+      youtubeVideoUrl = result.videoUrl;
+    } else {
+      console.log("⏭️ تخطي رفع يوتيوب (skipYouTube=true) — باقي المنصات مستمرة");
+    }
 
     // 6. رفع الفيديو إلى R2 (لـ Instagram + Threads — يحتاجون رابط عام)
     //    إذا R2 مش مهيأ، Instagram + Threads يتخطوا بهدوء
@@ -92,26 +101,26 @@ async function processJob(job: Job<ContentGenerationJobData>) {
         isShort: contentType === ContentType.SHORT,
         videoUrl: publicVideoUrl,
       },
-      result.youtubeVideoId,
-      result.videoUrl
+      youtubeVideoId ?? "",
+      youtubeVideoUrl ?? ""
     );
 
-    // 7. تحديث السجل بعد النشر الناجح — نخزن IDs جميع المنصات
+    // 8. تحديث السجل بعد النشر الناجح — نخزن IDs جميع المنصات
     await prisma.publishedContent.update({
       where: { id: record.id },
       data: {
         status: "PUBLISHED",
         publishedAt: new Date(),
-        youtubeVideoId: result.youtubeVideoId,
+        youtubeVideoId,
         facebookVideoId: multiResult.facebook?.facebookVideoId || null,
         instagramMediaId: multiResult.instagram?.instagramMediaId || null,
         threadsPostId: multiResult.threads?.threadsPostId || null,
       },
     });
 
-    // 8. إشعار Telegram بالنجاح
+    // 9. إشعار Telegram بالنجاح
     const allUrls = [
-      `🎬 يوتيوب: ${result.videoUrl}`,
+      youtubeVideoUrl && `🎬 يوتيوب: ${youtubeVideoUrl}`,
       multiResult.facebook?.facebookVideoId && `📘 فيسبوك: ${multiResult.facebook.postUrl}`,
       multiResult.instagram?.instagramMediaId && `📸 انستغرام: ${multiResult.instagram.postUrl}`,
       multiResult.threads?.threadsPostId && `🧵 تريدز: ${multiResult.threads.postUrl}`,
@@ -119,7 +128,7 @@ async function processJob(job: Job<ContentGenerationJobData>) {
 
     await notifyPublishSuccess({
       title: metadata.title,
-      videoUrl: result.videoUrl,
+      videoUrl: youtubeVideoUrl ?? "",
       surahName: generated.verses[0].surahNameArabic,
       fromAyah: generated.fromAyah,
       toAyah: generated.toAyah,
@@ -136,9 +145,9 @@ async function processJob(job: Job<ContentGenerationJobData>) {
 
     return {
       success: true,
-      videoId: result.youtubeVideoId,
+      videoId: youtubeVideoId ?? "",
       platforms: {
-        youtube: result.youtubeVideoId,
+        youtube: youtubeVideoId,
         facebook: multiResult.facebook?.facebookVideoId || null,
         instagram: multiResult.instagram?.instagramMediaId || null,
         threads: multiResult.threads?.threadsPostId || null,
