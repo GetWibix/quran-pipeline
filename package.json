@@ -32,6 +32,7 @@
     "typescript": "^5.6.0"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1075.0",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^5.20.0",
     "bullmq": "^5.78.1",
