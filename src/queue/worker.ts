@@ -29,7 +29,6 @@ async function processJob(job: Job<ContentGenerationJobData>) {
 
   try {
     // 1. توليد الفيديو الكامل (verseSelector → fetch → compose → render)
-    // اختيار القارئ عشوائياً مع تفضيل الجودة العالية
     const reciterKeys = Object.keys(RECITERS) as (keyof typeof RECITERS)[];
     const weights = reciterKeys.map((k) => RECITER_WEIGHTS[k] ?? 1);
     const totalWeight = weights.reduce((a, b) => a + b, 0);
@@ -46,8 +45,8 @@ async function processJob(job: Job<ContentGenerationJobData>) {
     // 2. توليد العنوان/الوصف/الهاشتاغات بالذكاء الاصطناعي
     const metadata = await generateMetadata(generated.verses, contentType, reciterArabic, generated.reciter);
 
-    // 3. تحديد وقت النشر الأمثل
-    const scheduledAt = await getNextOptimalPublishTime(contentType);
+    // 3. تحديد وقت النشر — forcePublishAt يتجاوز الاختيار التلقائي
+    const scheduledAt = job.data.forcePublishAt ?? await getNextOptimalPublishTime(contentType);
 
     // 4. تسجيل أولي فقاعدة البيانات (status: GENERATING -> READY)
     const record = await prisma.publishedContent.create({
@@ -66,7 +65,7 @@ async function processJob(job: Job<ContentGenerationJobData>) {
     });
     dbRecordId = record.id;
 
-    // 5. النشر الفعلي على يوتيوب (إذا skipYouTube=true، نتجاوز)
+    // 5. النشر الفعلي على يوتيوب (إذا skipYouTube=true أو youtubeOnly=true، نتجاوز)
     let youtubeVideoId: string | null = null;
     let youtubeVideoUrl: string | null = null;
 
@@ -82,30 +81,39 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       youtubeVideoId = result.youtubeVideoId;
       youtubeVideoUrl = result.videoUrl;
     } else {
-      console.log("⏭️ تخطي رفع يوتيوب (skipYouTube=true) — باقي المنصات مستمرة");
+      console.log("⏭️ تخطي رفع يوتيوب (skipYouTube=true)");
     }
 
-    // 6. رفع الفيديو إلى R2 (لـ Instagram + Threads — يحتاجون رابط عام)
-    //    إذا R2 مش مهيأ، Instagram + Threads يتخطوا بهدوء
-    const publicVideoUrl = await uploadToR2(generated.videoPath);
+    // 6. باقي المنصات — نتجاوز إذا youtubeOnly (يوتيوب فقط)
+    let publicVideoUrl: string | undefined = undefined;
+    let multiResult: Awaited<ReturnType<typeof publishToAllPlatforms>> = {
+      youtube: null,
+      facebook: null,
+      instagram: null,
+      threads: null,
+      errors: [],
+    };
 
-    // 7. نشر على باقي المنصات (Facebook + Instagram + Threads) — بالتوازي
-    //    كل منصة كتتخطى بهدوء إذا الإعدادات ناقصة
+    if (!job.data.youtubeOnly) {
+      publicVideoUrl = await uploadToR2(generated.videoPath);
 
-    const multiResult = await publishToAllPlatforms(
-      {
-        videoFilePath: generated.videoPath,
-        title: metadata.title,
-        description: metadata.description,
-        tags: metadata.tags,
-        isShort: contentType === ContentType.SHORT,
-        videoUrl: publicVideoUrl,
-      },
-      youtubeVideoId ?? "",
-      youtubeVideoUrl ?? ""
-    );
+      multiResult = await publishToAllPlatforms(
+        {
+          videoFilePath: generated.videoPath,
+          title: metadata.title,
+          description: metadata.description,
+          tags: metadata.tags,
+          isShort: contentType === ContentType.SHORT,
+          videoUrl: publicVideoUrl,
+        },
+        youtubeVideoId ?? "",
+        youtubeVideoUrl ?? ""
+      );
+    } else {
+      console.log("⏭️ تخطي رفع باقي المنصات (youtubeOnly=true)");
+    }
 
-    // 8. تحديث السجل بعد النشر الناجح — نخزن IDs جميع المنصات
+    // 7. تحديث السجل بعد النشر الناجح — نخزن IDs جميع المنصات
     await prisma.publishedContent.update({
       where: { id: record.id },
       data: {
@@ -118,7 +126,7 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       },
     });
 
-    // 9. إشعار Telegram بالنجاح
+    // 8. إشعار Telegram بالنجاح
     const allUrls = [
       youtubeVideoUrl && `🎬 يوتيوب: ${youtubeVideoUrl}`,
       multiResult.facebook?.facebookVideoId && `📘 فيسبوك: ${multiResult.facebook.postUrl}`,
@@ -138,7 +146,6 @@ async function processJob(job: Job<ContentGenerationJobData>) {
     });
 
     // 9. تنظيف الملفات المؤقتة + حذف الفيديو من R2 + حذف الفيديو النهائي
-    //    (تكون جميع المنصات انتهت من الرفع قبل هاد الخطوة)
     await cleanupWorkDir(generated.workDir);
     await unlink(generated.videoPath).catch(() => {});
     if (publicVideoUrl) await deleteFromR2(generated.videoPath);

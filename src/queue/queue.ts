@@ -20,6 +20,10 @@ export interface ContentGenerationJobData {
   isExtra?: boolean;
   /** إذا true، يتجاوز رفع يوتيوب لكن ينشر على باقي المنصات كالمعتاد */
   skipYouTube?: boolean;
+  /** إذا true، ينشر على يوتيوب فقط ويتجاوز باقي المنصات */
+  youtubeOnly?: boolean;
+  /** وقت نشر إجباري (ISO) — يتجاوز getNextOptimalPublishTime */
+  forcePublishAt?: string;
 }
 
 export const contentQueue = new Queue<ContentGenerationJobData>(

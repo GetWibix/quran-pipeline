@@ -72,8 +72,8 @@ export const MIN_SAMPLES_FOR_ADAPTIVE = 20;
 /**
  * وقت النشر الافتراضي (الاحتياطي) — يتم استعماله قبل ما يجمع المحرك بيانات كافية.
  * يقرأ من متغيرات البيئة:
- *   DEFAULT_PUBLISH_HOUR   (0-23, افتراضي 8 صباحاً)
- *   DEFAULT_PUBLISH_MINUTE (0-59, افتراضي 0)
+ *   DEFAULT_PUBLISH_HOUR   (0-23, افتراضي 11)
+ *   DEFAULT_PUBLISH_MINUTE (0-59, افتراضي 15)
  */
 function getDefaultPublishHour(): number {
   const val = process.env.DEFAULT_PUBLISH_HOUR;
@@ -81,7 +81,7 @@ function getDefaultPublishHour(): number {
     const n = parseInt(val, 10);
     if (!isNaN(n) && n >= 0 && n <= 23) return n;
   }
-  return 8; // 8 صباحاً بتوقيت المنطقة المستهدفة
+  return 11;
 }
 
 function getDefaultPublishMinute(): number {
@@ -90,7 +90,7 @@ function getDefaultPublishMinute(): number {
     const n = parseInt(val, 10);
     if (!isNaN(n) && n >= 0 && n <= 59) return n;
   }
-  return 0;
+  return 15;
 }
 
 /**
