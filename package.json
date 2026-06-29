@@ -12,6 +12,9 @@
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio",
     "preview": "ts-node src/scripts/previewVideo.ts",
+    "setup": "ts-node src/scripts/setupPlatforms.ts",
+    "setup:guide": "ts-node src/scripts/setupPlatforms.ts --guide",
+    "setup:verify": "ts-node src/scripts/setupPlatforms.ts --verify",
     "e2e": "node dist/scripts/e2eTest.js",
     "publish": "node dist/scripts/triggerPublish.js",
     "test": "echo \"لا يوجد اختبارات بعد\" && exit 0"
