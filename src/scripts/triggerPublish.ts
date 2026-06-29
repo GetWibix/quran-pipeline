@@ -97,6 +97,7 @@ async function main() {
       isShort: contentType === ContentType.SHORT,
       videoUrl: publicVideoUrl,
     },
+    { youtube: false, facebook: true, instagram: true, threads: true },
     result.youtubeVideoId,
     result.videoUrl
   );

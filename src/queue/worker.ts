@@ -1,15 +1,11 @@
 /**
  * worker.ts
- * الـ Worker الفعلي: كياخد job من الـ queue وكيدير الـ pipeline كامل
- * (توليد فيديو → metadata → جدولة → نشر → إشعار)
- *
- * هذا الملف خاصو يتشغل كـ process مستقل دائم التشغيل عبر PM2:
- *   pm2 start dist/queue/worker.js --name quran-worker
+ * الـ Worker الفعلي: ينفذ pipeline التوليد والنشر مع توجيه ذكي للمنصات
  */
 
 import { Worker, Job } from "bullmq";
 import { PrismaClient, ContentType } from "@prisma/client";
-import { connection, ContentGenerationJobData, WORKER_CONCURRENCY } from "./queue";
+import { connection, ContentGenerationJobData, WORKER_CONCURRENCY, PlatformRouting } from "./queue";
 import { generateContent } from "../services/contentPipeline";
 import { generateMetadata, getNextOptimalPublishTime } from "../services/decisionAgent";
 import { publishVideo } from "../services/youtubePublisher";
@@ -22,33 +18,38 @@ import { unlink } from "fs/promises";
 
 const prisma = new PrismaClient();
 
+function getDefaultRouting(): PlatformRouting {
+  return { youtube: true, facebook: true, instagram: true, threads: true };
+}
+
+function pickReciter(): (keyof typeof RECITERS) {
+  const keys = Object.keys(RECITERS) as (keyof typeof RECITERS)[];
+  const weights = keys.map((k) => RECITER_WEIGHTS[k] ?? 1);
+  const total = weights.reduce((a, b) => a + b, 0);
+  let rand = Math.random() * total;
+  for (let i = 0; i < keys.length; i++) {
+    rand -= weights[i];
+    if (rand <= 0) return keys[i];
+  }
+  return keys[0];
+}
+
 async function processJob(job: Job<ContentGenerationJobData>) {
   const { contentType } = job.data;
+  const routing = job.data.platformRouting ?? getDefaultRouting();
   let dbRecordId: string | undefined;
   let workDirToClean: string | undefined;
 
   try {
-    // 1. توليد الفيديو الكامل (verseSelector → fetch → compose → render)
-    const reciterKeys = Object.keys(RECITERS) as (keyof typeof RECITERS)[];
-    const weights = reciterKeys.map((k) => RECITER_WEIGHTS[k] ?? 1);
-    const totalWeight = weights.reduce((a, b) => a + b, 0);
-    let rand = Math.random() * totalWeight;
-    let chosenReciter = reciterKeys[0];
-    for (let i = 0; i < reciterKeys.length; i++) {
-      rand -= weights[i];
-      if (rand <= 0) { chosenReciter = reciterKeys[i]; break; }
-    }
+    const chosenReciter = pickReciter();
     const generated = await generateContent(contentType, chosenReciter);
     workDirToClean = generated.workDir;
     const reciterArabic = RECITER_ARABIC_NAMES[generated.reciter] ?? generated.reciter;
 
-    // 2. توليد العنوان/الوصف/الهاشتاغات بالذكاء الاصطناعي
     const metadata = await generateMetadata(generated.verses, contentType, reciterArabic, generated.reciter);
 
-    // 3. تحديد وقت النشر — forcePublishAt يتجاوز الاختيار التلقائي
-    const scheduledAt = job.data.forcePublishAt ?? await getNextOptimalPublishTime(contentType);
+    const scheduledAt = job.data.forcePublishAt ?? (await getNextOptimalPublishTime(contentType));
 
-    // 4. تسجيل أولي فقاعدة البيانات (status: GENERATING -> READY)
     const record = await prisma.publishedContent.create({
       data: {
         contentType,
@@ -65,11 +66,11 @@ async function processJob(job: Job<ContentGenerationJobData>) {
     });
     dbRecordId = record.id;
 
-    // 5. النشر الفعلي على يوتيوب (إذا skipYouTube=true أو youtubeOnly=true، نتجاوز)
+    // ─── النشر على يوتيوب ────────────────────────────────────
     let youtubeVideoId: string | null = null;
     let youtubeVideoUrl: string | null = null;
 
-    if (!job.data.skipYouTube) {
+    if (routing.youtube) {
       const result = await publishVideo({
         videoFilePath: generated.videoPath,
         title: metadata.title,
@@ -81,11 +82,11 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       youtubeVideoId = result.youtubeVideoId;
       youtubeVideoUrl = result.videoUrl;
     } else {
-      console.log("⏭️ تخطي رفع يوتيوب (skipYouTube=true)");
+      console.log(`⏭️ تخطي يوتيوب (routing disabled)`);
     }
 
-    // 6. باقي المنصات — نتجاوز إذا youtubeOnly (يوتيوب فقط)
-    let publicVideoUrl: string | undefined = undefined;
+    // ─── النشر على باقي المنصات ──────────────────────────────
+    let publicVideoUrl: string | undefined;
     let multiResult: Awaited<ReturnType<typeof publishToAllPlatforms>> = {
       youtube: null,
       facebook: null,
@@ -94,7 +95,8 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       errors: [],
     };
 
-    if (!job.data.youtubeOnly) {
+    const shouldPublishOthers = routing.facebook || routing.instagram || routing.threads;
+    if (shouldPublishOthers) {
       publicVideoUrl = await uploadToR2(generated.videoPath);
 
       multiResult = await publishToAllPlatforms(
@@ -106,14 +108,20 @@ async function processJob(job: Job<ContentGenerationJobData>) {
           isShort: contentType === ContentType.SHORT,
           videoUrl: publicVideoUrl,
         },
-        youtubeVideoId ?? "",
-        youtubeVideoUrl ?? ""
+        {
+          youtube: routing.youtube,
+          facebook: routing.facebook,
+          instagram: routing.instagram,
+          threads: routing.threads,
+        },
+        youtubeVideoId ?? undefined,
+        youtubeVideoUrl ?? undefined,
       );
     } else {
-      console.log("⏭️ تخطي رفع باقي المنصات (youtubeOnly=true)");
+      console.log(`⏭️ تخطي باقي المنصات (كلها disabled)`);
     }
 
-    // 7. تحديث السجل بعد النشر الناجح — نخزن IDs جميع المنصات
+    // ─── تحديث السجل ─────────────────────────────────────────
     await prisma.publishedContent.update({
       where: { id: record.id },
       data: {
@@ -126,8 +134,8 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       },
     });
 
-    // 8. إشعار Telegram بالنجاح
-    const allUrls = [
+    // ─── إشعار Telegram ──────────────────────────────────────
+    const publishedPlatforms = [
       youtubeVideoUrl && `🎬 يوتيوب: ${youtubeVideoUrl}`,
       multiResult.facebook?.facebookVideoId && `📘 فيسبوك: ${multiResult.facebook.postUrl}`,
       multiResult.instagram?.instagramMediaId && `📸 انستغرام: ${multiResult.instagram.postUrl}`,
@@ -142,10 +150,10 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       toAyah: generated.toAyah,
       contentType,
       scheduledAt,
-      extraPlatforms: allUrls,
+      extraPlatforms: publishedPlatforms,
     });
 
-    // 9. تنظيف الملفات المؤقتة + حذف الفيديو من R2 + حذف الفيديو النهائي
+    // ─── تنظيف ───────────────────────────────────────────────
     await cleanupWorkDir(generated.workDir);
     await unlink(generated.videoPath).catch(() => {});
     if (publicVideoUrl) await deleteFromR2(generated.videoPath);
@@ -180,25 +188,21 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       await cleanupWorkDir(workDirToClean).catch(() => {});
     }
 
-    throw err; // كنرميه مرة أخرى باش BullMQ يدير retry logic (attempts: 2)
+    throw err;
   }
 }
 
-export const worker = new Worker<ContentGenerationJobData>(
-  "content-generation",
-  processJob,
-  {
-    connection: connection as any,
-    concurrency: WORKER_CONCURRENCY,
-  }
-);
+export const worker = new Worker<ContentGenerationJobData>("content-generation", processJob, {
+  connection: connection as any,
+  concurrency: WORKER_CONCURRENCY,
+});
 
 worker.on("completed", (job) => {
   console.log(`✅ Job ${job.id} نجح:`, job.returnvalue);
 });
 
 worker.on("failed", (job, err) => {
-  console.error(`❌ Job ${job?.id} فشل بعد كل المحاولات:`, err.message);
+  console.error(`❌ Job ${job?.id} فشل:`, err.message);
 });
 
 console.log("🚀 Quran Content Worker بدأ التشغيل...");

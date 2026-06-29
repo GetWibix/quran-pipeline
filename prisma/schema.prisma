@@ -59,6 +59,10 @@ model PublishedContent {
   watchTimeMinutes  Float         @default(0)
   engagementScore   Float         @default(0) // محسوب: (likes+comments)/views * watchTime weight
 
+  // تفاعل خاص بكل منصة
+  facebookEngagement  Float?      // engagement score على فيسبوك
+  instagramEngagement Float?      // engagement score على انستغرام
+
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 

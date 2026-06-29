@@ -15,13 +15,18 @@ export const connection = new IORedis(
   { maxRetriesPerRequest: null }
 );
 
+export interface PlatformRouting {
+  youtube?: boolean;
+  facebook?: boolean;
+  instagram?: boolean;
+  threads?: boolean;
+}
+
 export interface ContentGenerationJobData {
   contentType: ContentType;
   isExtra?: boolean;
-  /** إذا true، يتجاوز رفع يوتيوب لكن ينشر على باقي المنصات كالمعتاد */
-  skipYouTube?: boolean;
-  /** إذا true، ينشر على يوتيوب فقط ويتجاوز باقي المنصات */
-  youtubeOnly?: boolean;
+  /** platformRouting يحدد أي المنصات ينشر عليها هذا الفيديو (الكل افتراضياً) */
+  platformRouting?: PlatformRouting;
   /** وقت نشر إجباري (ISO) — يتجاوز getNextOptimalPublishTime */
   forcePublishAt?: string;
 }

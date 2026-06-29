@@ -1,12 +1,7 @@
 /**
  * scheduler.ts
- * نقطة الدخول الرئيسية للـ cron جدولة — هذا الملف خاصو يتشغل كـ process مستقل دائم
- *   pm2 start dist/scheduler.js --name quran-scheduler
- *
- * استراتيجية النشر:
- * - يوتيوب: فيديو رئيسي واحد/يوم (11:15) + فيديو إضافي إذا زاد التفاعل (بوقت تجريبي)
- * - باقي المنصات: فيديوهين/يوم ثابتين (11:15 + 16:00) + زيادة حسب التفاعل
- * - فيديو طويل واحد/الأسبوع (الجمعة)
+ * الـ cron scheduler المركزي — يدير جدولة النشر لجميع المنصات
+ * استراتيجية النشر لكل منصة حسب تفاعلها الفعلي
  */
 
 import cron from "node-cron";
@@ -16,132 +11,119 @@ import { shouldGenerateExtraContent } from "./services/decisionAgent";
 import { remainingVideoUploadsToday } from "./services/quotaTracker";
 import { notifyDailySummary } from "./services/notifier";
 import { collectAllStats, analyzeOptimalHours, persistOptimalHours } from "./services/statsCollector";
+import { updatePlatformEngagements, decidePlatformIncreases } from "./services/platformAnalytics";
 import { PrismaClient } from "@prisma/client";
 import { getNextPublishTime } from "./services/publishingEngine/experimentManager";
-import { getTimezoneOffset, targetHourToUtc } from "./services/publishingEngine/types";
+import { targetHourToUtc } from "./services/publishingEngine/types";
 
 const prisma = new PrismaClient();
+const QUOTA_SAFE_MARGIN = 2;
 
-/**
- * يحسب وقت 11:15 القادم (بتوقيت المنطقة المستهدفة) ويعيده بصيغة ISO (UTC)
- */
-function nextLocalTimeAsUtc(targetHour: number, targetMinute: number): string {
-  const now = new Date();
-  const utcTargetHour = targetHourToUtc(targetHour);
-  const d = new Date(now);
-  d.setUTCHours(utcTargetHour, targetMinute, 0, 0);
-  if (d <= now) d.setUTCDate(d.getUTCDate() + 1);
-  return d.toISOString();
-}
-
-// --- 1. يوتيوب رئيسي + جميع المنصات (11:15 بتوقيت المنطقة المستهدفة) ---
+// ─── النشر الرئيسي — جميع المنصات (11:15) ─────────────────────
 cron.schedule("15 11 * * *", async () => {
-  console.log("⏰ تشغيل: النشر الرئيسي (يوتيوب + جميع المنصات)");
-  const publishAt = nextLocalTimeAsUtc(11, 15);
+  console.log("⏰ [11:15] النشر الرئيسي — جميع المنصات");
+  const now = new Date();
+  const utcHour = targetHourToUtc(11);
+  const scheduledAt = new Date(now);
+  scheduledAt.setUTCHours(utcHour, 15, 0, 0);
+  if (scheduledAt <= now) scheduledAt.setUTCDate(scheduledAt.getUTCDate() + 1);
+
   await enqueueContentGeneration({
     contentType: ContentType.SHORT,
-    forcePublishAt: publishAt,
+    forcePublishAt: scheduledAt.toISOString(),
+    platformRouting: { youtube: true, facebook: true, instagram: true, threads: true },
   });
 });
 
-// --- 2. المنصات فقط (16:00) — يوتيوب يتخطى ---
+// ─── المنصات فقط — يوتيوب يتخطى (16:00) ──────────────────────
 cron.schedule("0 16 * * *", async () => {
-  console.log("⏰ تشغيل: المنصات فقط (يوتيوب يتخطى)");
-  await enqueueContentGeneration({ contentType: ContentType.SHORT, skipYouTube: true });
+  console.log("⏰ [16:00] المنصات فقط (يوتيوب يتخطى)");
+  await enqueueContentGeneration({
+    contentType: ContentType.SHORT,
+    platformRouting: { youtube: false, facebook: true, instagram: true, threads: true },
+  });
 });
 
-// --- 3. فيديو طويل أسبوعي (الجمعة) ---
+// ─── فيديو طويل أسبوعي (الجمعة) ───────────────────────────────
 cron.schedule("0 14 * * 5", async () => {
-  console.log("⏰ تشغيل: الفيديو الطويل الأسبوعي");
-  await enqueueContentGeneration({ contentType: ContentType.LONG_VIDEO });
+  console.log("⏰ [الجمعة] الفيديو الطويل الأسبوعي");
+  await enqueueContentGeneration({
+    contentType: ContentType.LONG_VIDEO,
+    platformRouting: { youtube: true, facebook: true, instagram: true, threads: true },
+  });
 });
 
-// --- 4. فحص "الزيادة حسب التفاعل" للمنصات الأخرى ---
+// ─── فحص زيادة المحتوى لكل منصة (20:00) ──────────────────────
 cron.schedule("0 20 * * *", async () => {
-  console.log("🤖 فحص: واش نزيدو محتوى إضافي للمنصات؟");
-  const decision = await shouldGenerateExtraContent();
-  console.log(`القرار: ${decision.shouldGenerate} — ${decision.reasoning}`);
+  console.log("🤖 [20:00] فحص تفاعل جميع المنصات — هل نزيد النشر؟");
 
-  if (decision.shouldGenerate) {
-    await enqueueContentGeneration({
-      contentType: ContentType.SHORT,
-      isExtra: true,
-      skipYouTube: true,
-    });
-  }
-});
-
-// --- 5. فحص تفاعل يوتيوب — إذا زاد، نزيد فيديو تجريبي ---
-cron.schedule("30 20 * * *", async () => {
-  console.log("📈 فحص: واش نزيدو فيديو إضافي على يوتيوب؟");
-
-  const remainingUploads = await remainingVideoUploadsToday();
-  if (remainingUploads <= 1) {
+  const remaining = await remainingVideoUploadsToday();
+  if (remaining <= QUOTA_SAFE_MARGIN) {
     console.log("⏭️ لا توجد رفعات كافية في Quota");
     return;
   }
 
-  // نجيب متوسط engagement لآخر 5 فيديوهات يوتيوب
-  const recentYtVideos = await prisma.publishedContent.findMany({
-    where: {
-      status: "PUBLISHED",
-      youtubeVideoId: { not: null },
-    },
-    orderBy: { publishedAt: "desc" },
-    take: 5,
-    select: { engagementScore: true, views: true, likes: true, comments: true },
-  });
+  // نجيب متوسط engagement لكل منصة
+  const decisions = await decidePlatformIncreases();
+  console.log(`   📊 يوتيوب: ${(decisions.youtube.score * 100).toFixed(2)}% ${decisions.youtube.shouldIncrease ? "↑" : "—"}`);
+  console.log(`   📊 فيسبوك: ${(decisions.facebook.score * 100).toFixed(2)}% ${decisions.facebook.shouldIncrease ? "↑" : "—"}`);
+  console.log(`   📊 انستغرام: ${(decisions.instagram.score * 100).toFixed(2)}% ${decisions.instagram.shouldIncrease ? "↑" : "—"}`);
 
-  if (recentYtVideos.length < 3) {
-    console.log("⏭️ ما كفاش بيانات التفاعل على يوتيوب");
-    return;
-  }
+  // نبني routing حسب المنصات اللي تفاعلها مرتفع
+  const routing = {
+    youtube: decisions.youtube.shouldIncrease,
+    facebook: decisions.facebook.shouldIncrease,
+    instagram: decisions.instagram.shouldIncrease,
+    threads: decisions.instagram.shouldIncrease, // تريدز تابع لانستغرام
+  };
 
-  const avgEngagement =
-    recentYtVideos.reduce((sum, v) => sum + (v.engagementScore ?? 0), 0) /
-    recentYtVideos.length;
-
-  // threshold أعلى من العام — خاص التفاعل يكون فعلاً مرتفع
-  const YT_ENGAGEMENT_THRESHOLD = 0.08;
-  if (avgEngagement < YT_ENGAGEMENT_THRESHOLD) {
-    console.log(`⏭️ تفاعل يوتيوب (${(avgEngagement * 100).toFixed(2)}%) تحت العتبة (${(YT_ENGAGEMENT_THRESHOLD * 100).toFixed(0)}%)`);
+  const anyIncrease = Object.values(routing).some(Boolean);
+  if (!anyIncrease) {
+    console.log("⏭️ لا توجد منصة تحتاج زيادة");
     return;
   }
 
   // نحدد وقت تجريبي باستعمال experimentManager
-  const decision = await getNextPublishTime(ContentType.SHORT);
-  const publishHour = decision.hour;
-  const publishMinute = decision.minute;
-  const utcHour = targetHourToUtc(publishHour);
-
+  const experiment = await getNextPublishTime(ContentType.SHORT);
+  const utcHour = targetHourToUtc(experiment.hour);
   const now = new Date();
   const scheduledAt = new Date(now);
-  scheduledAt.setUTCHours(utcHour, publishMinute, 0, 0);
+  scheduledAt.setUTCHours(utcHour, experiment.minute, 0, 0);
   if (scheduledAt <= now) scheduledAt.setUTCDate(scheduledAt.getUTCDate() + 1);
 
-  console.log(`📈 تفاعل يوتيوب مرتفع (${(avgEngagement * 100).toFixed(2)}%) — نزيد فيديو تجريبي في ${publishHour}:${String(publishMinute).padStart(2, "0")} (${decision.reasoning})`);
+  console.log(`📈 نزيد فيديو إضافي: يوتيوب=${routing.youtube}, فيسبوك=${routing.facebook}, انستغرام=${routing.instagram}`);
+  console.log(`   الوقت التجريبي: ${experiment.hour}:${String(experiment.minute).padStart(2, "0")} (${experiment.reasoning})`);
 
   await enqueueContentGeneration({
     contentType: ContentType.SHORT,
     isExtra: true,
-    youtubeOnly: true,
+    platformRouting: routing,
     forcePublishAt: scheduledAt.toISOString(),
   });
 });
 
-// --- 6. جمع إحصائيات يوتيوب وتحليل أفضل أوقات النشر ---
+// ─── جمع إحصائيات يوتيوب (22:30) ─────────────────────────────
 cron.schedule("30 22 * * *", async () => {
-  console.log("📊 تشغيل: جمع إحصائيات الفيديوهات المنشورة...");
+  console.log("📊 [22:30] جمع إحصائيات يوتيوب...");
   const updated = await collectAllStats();
   console.log(`📊 تم تحديث ${updated} فيديو`);
 
   console.log("📊 تحليل أفضل أوقات النشر...");
   const optimal = await analyzeOptimalHours();
   await persistOptimalHours(optimal);
-  console.log(`📊 أفضل أوقات النشر: SHORT=${optimal.SHORT.join(",")}, LONG_VIDEO=${optimal.LONG_VIDEO.join(",")}`);
+  console.log(`📊 أفضل الأوقات: SHORT=${optimal.SHORT.join(",")}, LONG=${optimal.LONG_VIDEO.join(",")}`);
 });
 
-// --- 7. ملخص يومي عبر Telegram ---
+// ─── جمع إحصائيات فيسبوك وانستغرام (23:00) ────────────────────
+cron.schedule("0 23 * * *", async () => {
+  console.log("📊 [23:00] جمع إحصائيات فيسبوك وانستغرام...");
+  const result = await updatePlatformEngagements();
+  console.log(`📊 تم تحديث ${result.updated} فيديو`);
+  console.log(`   فيسبوك: ${result.facebook.count} فيديو - متوسط التفاعل ${(result.facebook.avgEngagement * 100).toFixed(2)}%`);
+  console.log(`   انستغرام: ${result.instagram.count} فيديو - متوسط التفاعل ${(result.instagram.avgEngagement * 100).toFixed(2)}%`);
+});
+
+// ─── ملخص يومي (22:00) ─────────────────────────────────────────
 cron.schedule("0 22 * * *", async () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -152,7 +134,7 @@ cron.schedule("0 22 * * *", async () => {
 
   const quotaRemaining = await remainingVideoUploadsToday();
 
-  const recentExtra = await prisma.agentDecisionLog.findFirst({
+  const lastExtra = await prisma.agentDecisionLog.findFirst({
     where: {
       decisionType: "EXTRA_SHORT_TRIGGERED",
       createdAt: { gte: today },
@@ -163,10 +145,8 @@ cron.schedule("0 22 * * *", async () => {
   await notifyDailySummary({
     publishedToday,
     quotaRemaining,
-    extraContentTriggered: Boolean(
-      recentExtra && recentExtra.reasoning.includes("تفعيل")
-    ),
+    extraContentTriggered: Boolean(lastExtra && lastExtra.reasoning.includes("زيادة")),
   });
 });
 
-console.log("📅 Quran Scheduler بدأ التشغيل — فالانتظار على الأوقات المحددة...");
+console.log("📅 Quran Scheduler — تشغيل cron jobs...");

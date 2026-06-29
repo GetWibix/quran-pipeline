@@ -8,8 +8,14 @@ export interface MultiPlatformPublishOptions {
   description: string;
   tags: string[];
   isShort: boolean;
-  /** رابط عام للفيديو — ضروري لـ Instagram + Threads (YouTube وFacebook كيشتغلو بلاو) */
   videoUrl?: string;
+}
+
+export interface PlatformRouting {
+  youtube?: boolean;
+  facebook?: boolean;
+  instagram?: boolean;
+  threads?: boolean;
 }
 
 export interface MultiPlatformResult {
@@ -20,76 +26,82 @@ export interface MultiPlatformResult {
   errors: { platform: string; error: string }[];
 }
 
-/**
- * كينشر الفيديو على جميع المنصات المتاحة بشكل متوازي
- * كل منصة كتتخطى بهدوء إذا كانت إعداداتها ناقصة
- * الفيديو ما كيتحذف إلا بعد ما تخلص جميع المنصات
- */
 export async function publishToAllPlatforms(
   opts: MultiPlatformPublishOptions,
-  youtubeVideoId: string,
-  youtubeVideoUrl: string
+  routing: PlatformRouting,
+  youtubeVideoId?: string,
+  youtubeVideoUrl?: string,
 ): Promise<MultiPlatformResult> {
   const errors: { platform: string; error: string }[] = [];
   const result: MultiPlatformResult = {
-    youtube: youtubeVideoId ? { videoId: youtubeVideoId, url: youtubeVideoUrl } : null,
+    youtube: youtubeVideoId ? { videoId: youtubeVideoId, url: youtubeVideoUrl ?? "" } : null,
     facebook: null,
     instagram: null,
     threads: null,
     errors: [],
   };
 
-  const commonOptions = {
-    videoFilePath: opts.videoFilePath,
-    title: opts.title,
-    description: opts.description,
-    tags: opts.tags,
-    isShort: opts.isShort,
-  };
-
   const promises: Promise<void>[] = [];
 
-  // Facebook — نشر مباشر (يدعم رفع الملفات المحلية)
-  promises.push(
-    publishToFacebook(commonOptions)
-      .then(r => { result.facebook = r; })
-      .catch(e => {
-        const msg = e instanceof Error ? e.message : String(e);
-        errors.push({ platform: "facebook", error: msg });
-        console.error(`❌ Facebook فشل: ${msg}`);
-      })
-  );
-
-  // Instagram — يحتاج رابط عام
-  if (opts.videoUrl) {
+  if (routing.facebook !== false) {
     promises.push(
-      publishToInstagram({ ...commonOptions, videoUrl: opts.videoUrl })
-        .then(r => { result.instagram = r; })
-        .catch(e => {
+      publishToFacebook({
+        videoFilePath: opts.videoFilePath,
+        title: opts.title,
+        description: opts.description,
+        tags: opts.tags,
+        isShort: opts.isShort,
+      })
+        .then((r) => { result.facebook = r; })
+        .catch((e) => {
           const msg = e instanceof Error ? e.message : String(e);
-          errors.push({ platform: "instagram", error: msg });
-          console.error(`❌ Instagram فشل: ${msg}`);
-        })
+          errors.push({ platform: "facebook", error: msg });
+          console.error(`❌ Facebook فشل: ${msg}`);
+        }),
     );
   }
 
-  // Threads — يحتاج رابط عام
-  if (opts.videoUrl) {
+  if (routing.instagram !== false && opts.videoUrl) {
     promises.push(
-      publishToThreads({ ...commonOptions, videoUrl: opts.videoUrl })
-        .then(r => { result.threads = r; })
-        .catch(e => {
+      publishToInstagram({
+        videoFilePath: opts.videoFilePath,
+        title: opts.title,
+        description: opts.description,
+        tags: opts.tags,
+        isShort: opts.isShort,
+        videoUrl: opts.videoUrl,
+      })
+        .then((r) => { result.instagram = r; })
+        .catch((e) => {
+          const msg = e instanceof Error ? e.message : String(e);
+          errors.push({ platform: "instagram", error: msg });
+          console.error(`❌ Instagram فشل: ${msg}`);
+        }),
+    );
+  }
+
+  if (routing.threads !== false && opts.videoUrl) {
+    promises.push(
+      publishToThreads({
+        videoFilePath: opts.videoFilePath,
+        title: opts.title,
+        description: opts.description,
+        tags: opts.tags,
+        isShort: opts.isShort,
+        videoUrl: opts.videoUrl,
+      })
+        .then((r) => { result.threads = r; })
+        .catch((e) => {
           const msg = e instanceof Error ? e.message : String(e);
           errors.push({ platform: "threads", error: msg });
           console.error(`❌ Threads فشل: ${msg}`);
-        })
+        }),
     );
   }
 
   await Promise.all(promises);
   result.errors = errors;
 
-  // طباعة ملخص النشر
   const published = [
     result.youtube && "YouTube",
     result.facebook?.facebookVideoId && "Facebook",
@@ -100,7 +112,7 @@ export async function publishToAllPlatforms(
   console.log(`📢 تم النشر على: ${published.join(", ") || "لا شيء"}`);
   if (errors.length) {
     console.warn(`⚠️ فشل في ${errors.length} منصة:`);
-    errors.forEach(e => console.warn(`   - ${e.platform}: ${e.error}`));
+    errors.forEach((e) => console.warn(`   - ${e.platform}: ${e.error}`));
   }
 
   return result;
