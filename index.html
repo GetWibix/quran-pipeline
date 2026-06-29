@@ -1,233 +1,46 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>NOR Quran — نشر القرآن الكريم آلياً</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Amiri:ital@0;1&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: 'Cairo', sans-serif;
-    background: linear-gradient(135deg, #0a1628 0%, #1a2a4a 50%, #0d1f3c 100%);
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    position: relative;
-    overflow-x: hidden;
-  }
-  body::before {
-    content: '';
-    position: fixed;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle at 30% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 70% 50%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
-    z-index: 0;
-  }
-  .container {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 32px;
-    padding: 60px 48px;
-    max-width: 560px;
-    width: 100%;
-    position: relative;
-    z-index: 1;
-    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
-  }
-  .icon {
-    width: 72px;
-    height: 72px;
-    background: linear-gradient(135deg, #2563eb, #7c3aed);
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 24px;
-    font-size: 32px;
-    box-shadow: 0 8px 32px rgba(37, 99, 235, 0.3);
-  }
-  h1 {
-    font-size: 28px;
-    font-weight: 800;
-    color: #fff;
-    text-align: center;
-    margin-bottom: 8px;
-    letter-spacing: -0.5px;
-  }
-  .subtitle {
-    font-size: 16px;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.5);
-    text-align: center;
-    margin-bottom: 36px;
-  }
-  .features {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    margin-bottom: 36px;
-  }
-  .feature {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: background 0.2s;
-  }
-  .feature:hover { background: rgba(255, 255, 255, 0.07); }
-  .feature-icon {
-    width: 36px;
-    height: 36px;
-    background: rgba(37, 99, 235, 0.15);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    flex-shrink: 0;
-  }
-  .feature-text {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 14px;
-    font-weight: 500;
-  }
-  .feature-text span {
-    color: rgba(255, 255, 255, 0.45);
-    font-weight: 400;
-    font-size: 13px;
-    display: block;
-  }
-  .divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    margin-bottom: 28px;
-  }
-  .contact-card {
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: 16px;
-    padding: 20px 24px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
-  .contact-icon {
-    width: 42px;
-    height: 42px;
-    background: rgba(16, 185, 129, 0.15);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-  }
-  .contact-info {
-    direction: ltr;
-    text-align: left;
-  }
-  .contact-label {
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    display: block;
-    margin-bottom: 2px;
-  }
-  .contact-email {
-    color: #60a5fa;
-    font-size: 15px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: color 0.2s;
-  }
-  .contact-email:hover { color: #93c5fd; }
-  .footer {
-    text-align: center;
-    margin-top: 28px;
-    color: rgba(255, 255, 255, 0.2);
-    font-size: 12px;
-    font-weight: 400;
-  }
-  .quran-verse {
-    font-family: 'Amiri', serif;
-    font-size: 20px;
-    color: rgba(255, 255, 255, 0.15);
-    text-align: center;
-    margin-top: 24px;
-    line-height: 1.8;
-  }
-  @media (max-width: 480px) {
-    .container { padding: 36px 24px; }
-    h1 { font-size: 24px; }
-    .contact-card { flex-direction: column; text-align: center; }
-    .contact-info { text-align: center; }
-  }
-</style>
-</head>
-<body>
-<div class="container">
-  <div class="icon">﷽</div>
-  <h1>NOR Quran</h1>
-  <p class="subtitle">نشر آيات القرآن الكريم على يوتيوب والمنصات</p>
-
-  <div class="features">
-    <div class="feature">
-      <div class="feature-icon">📹</div>
-      <div class="feature-text">
-        نشر تلقائي لليوتيوب
-        <span>رفع وجدولة الفيديوهات عبر YouTube Data API</span>
-      </div>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🤖</div>
-      <div class="feature-text">
-        عناوين ذكية بالذكاء الاصطناعي
-        <span>توليد عناوين ووصف وهاشتاغات محسّنة للظهور</span>
-      </div>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">📊</div>
-      <div class="feature-text">
-        تحليلات وأوقات النشر المثلى
-        <span>تجارب ذكية 70/30 لاختيار أفضل توقيت للنشر</span>
-      </div>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🌐</div>
-      <div class="feature-text">
-        نشر متعدد المنصات
-        <span>فيسبوك · إنستغرام · ثريدز · يوتيوب · تيليغرام</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="divider"></div>
-
-  <div class="contact-card">
-    <div class="contact-icon">✉️</div>
-    <div class="contact-info">
-      <span class="contact-label">تواصل معنا</span>
-      <a href="mailto:contact@waxbix.com" class="contact-email">contact@waxbix.com</a>
-    </div>
-  </div>
-
-  <div class="quran-verse">﴿ وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا ﴾</div>
-
-  <div class="footer">© 2026 NOR Quran — تطبيق آلي لنشر القرآن</div>
-</div>
-</body>
-</html>
+<!DOCTYPE html><html lang="ar" dir="rtl"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>الرئيسية | NOR Quran</title><meta name="description" content="نظام ذكي مفتوح المصدر لنشر آيات القرآن الكريم آلياً على يوتيوب والمنصات الأخرى"><meta name="theme-color" content="#0a1628"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="alternate" type="application/rss+xml" title="NOR Quran" href="/rss.xml"><!-- Open Graph --><meta property="og:type" content="website"><meta property="og:title" content="الرئيسية | NOR Quran"><meta property="og:description" content="نظام ذكي مفتوح المصدر لنشر آيات القرآن الكريم آلياً على يوتيوب والمنصات الأخرى"><meta property="og:image" content="https://quran.waxbix.com/og-image.png"><meta property="og:url" content="https://quran.waxbix.com"><meta property="og:site_name" content="NOR Quran"><!-- Twitter --><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="الرئيسية | NOR Quran"><meta name="twitter:description" content="نظام ذكي مفتوح المصدر لنشر آيات القرآن الكريم آلياً على يوتيوب والمنصات الأخرى"><meta name="twitter:image" content="https://quran.waxbix.com/og-image.png"><!-- JSON-LD --><script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "NOR Quran",
+        "description": "نظام آلي مفتوح المصدر لنشر آيات القرآن الكريم على يوتيوب والمنصات الأخرى",
+        "url": "https://quran.waxbix.com",
+        "applicationCategory": "Multimedia",
+        "operatingSystem": "Linux",
+        "author": {
+          "@type": "Person",
+          "name": "NOR Quran Team"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script><link rel="stylesheet" href="/_assets/about.Cl1h-ayX.css"><script type="module" src="/_assets/hoisted.BzcJXfT6.js"></script></head> <body class="min-h-screen bg-bg-dark text-white">  <header class="glass-header"> <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between"> <a href="/" class="flex items-center gap-2 text-xl font-bold"> <span class="text-2xl">🕌</span> <span class="gradient-text">NOR Quran</span> </a> <div class="hidden lg:flex items-center gap-1"> <a href="/" class="px-3 py-2 text-sm text-text-secondary hover:text-white rounded-lg transition-colors"> الرئيسية </a><a href="/about" class="px-3 py-2 text-sm text-text-secondary hover:text-white rounded-lg transition-colors"> عن المشروع </a><a href="/features" class="px-3 py-2 text-sm text-text-secondary hover:text-white rounded-lg transition-colors"> الميزات </a><a href="/tech-stack" class="px-3 py-2 text-sm text-text-secondary hover:text-white rounded-lg transition-colors"> التقنيات </a><a href="/quran" class="px-3 py-2 text-sm text-text-secondary hover:text-white rounded-lg transition-colors"> القرآن </a><a href="/docs" class="px-3 py-2 text-sm text-text-secondary hover:text-white rounded-lg transition-colors"> التعليمات </a><a href="/gallery" class="px-3 py-2 text-sm text-text-secondary hover:text-white rounded-lg transition-colors"> المعرض </a><a href="/faq" class="px-3 py-2 text-sm text-text-secondary hover:text-white rounded-lg transition-colors"> الأسئلة الشائعة </a> </div> <div class="flex items-center gap-3"> <a href="https://github.com/GetWibix/quran-pipeline" target="_blank" rel="noopener noreferrer" class="btn-secondary !px-4 !py-2 text-sm"> <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"></path></svg>
+GitHub
+</a> <button id="mobile-menu-btn" class="lg:hidden p-2 text-text-secondary hover:text-white"> <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path> </svg> </button> </div> </nav> <div id="mobile-menu" class="lg:hidden hidden"> <div class="px-4 py-3 space-y-1 border-t border-border"> <a href="/" class="block px-3 py-2 text-text-secondary hover:text-white hover:bg-card-hover rounded-lg transition-colors"> الرئيسية </a><a href="/about" class="block px-3 py-2 text-text-secondary hover:text-white hover:bg-card-hover rounded-lg transition-colors"> عن المشروع </a><a href="/features" class="block px-3 py-2 text-text-secondary hover:text-white hover:bg-card-hover rounded-lg transition-colors"> الميزات </a><a href="/tech-stack" class="block px-3 py-2 text-text-secondary hover:text-white hover:bg-card-hover rounded-lg transition-colors"> التقنيات </a><a href="/quran" class="block px-3 py-2 text-text-secondary hover:text-white hover:bg-card-hover rounded-lg transition-colors"> القرآن </a><a href="/docs" class="block px-3 py-2 text-text-secondary hover:text-white hover:bg-card-hover rounded-lg transition-colors"> التعليمات </a><a href="/gallery" class="block px-3 py-2 text-text-secondary hover:text-white hover:bg-card-hover rounded-lg transition-colors"> المعرض </a><a href="/faq" class="block px-3 py-2 text-text-secondary hover:text-white hover:bg-card-hover rounded-lg transition-colors"> الأسئلة الشائعة </a> </div> </div> </header>   <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-16"> <div class="hero-glow"></div> <div class="hero-glow-2"></div> <div class="animated-gradient absolute inset-0 opacity-30"></div> <div class="relative z-10 max-w-4xl mx-auto px-4 text-center"> <div class="text-8xl mb-6">🕌</div> <h1 class="text-5xl md:text-7xl font-bold mb-4"> <span class="gradient-text">NOR Quran</span> </h1> <p class="text-2xl md:text-3xl text-text-secondary mb-4 font-semibold">
+ننشر القرآن الكريم آلياً — 24 ساعة، 7 أيام، 365 يوم
+</p> <p class="text-text-secondary text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
+نظام ذكي مفتوح المصدر يختار الآيات، يولد فيديوهات، وينشرها على يوتيوب وفيسبوك وإنستغرام وثريدز — بدون تدخل يدوي.
+</p> <div class="flex flex-col sm:flex-row gap-4 justify-center items-center"> <a href="/docs" class="btn-primary text-lg px-8 py-4">
+ابدأ الآن
+</a> <a href="/features" class="btn-secondary text-lg px-8 py-4">
+شاهد الميزات
+</a> </div> </div> </section>  <section class="py-16 relative"> <div class="max-w-4xl mx-auto px-4 text-center"> <div class="glow-card p-8 md:p-12"> <p class="text-xl md:text-2xl leading-relaxed text-text-secondary">
+NOR Quran يقرأ القرآن كاملاً (<span class="text-white font-bold">6,236</span> آية) بتسلسل بدون تكرار. يستخدم الذكاء الاصطناعي لاختيار الآيات المناسبة وتوليد عناوين محترمة. ينشر في أفضل الأوقات بناءً على تحليلات الأداء.
+</p> </div> </div> </section>  <section class="py-16 relative"> <div class="max-w-7xl mx-auto px-4"> <h2 class="section-title">الميزات الأساسية</h2> <p class="section-subtitle">كل ما تحتاج لنشر القرآن الكريم آلياً باحترافية</p> <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> <div class="glow-card p-6 group"> <div class="text-4xl mb-4">📹</div> <h3 class="text-xl font-bold mb-2">نشر تلقائي ليوتيوب</h3> <p class="text-text-secondary text-sm leading-relaxed mb-4">رفع الفيديو وجدولته على YouTube تلقائياً عبر API v3 مع دعم الفيديوهات القصيرة والطويلة.</p> <a href="/features" class="text-primary text-sm font-semibold hover:text-secondary transition-colors inline-flex items-center gap-1">
+اعرف المزيد
+<span aria-hidden="true">←</span> </a> </div><div class="glow-card p-6 group"> <div class="text-4xl mb-4">🤖</div> <h3 class="text-xl font-bold mb-2">عناوين ذكية بالذكاء الاصطناعي</h3> <p class="text-text-secondary text-sm leading-relaxed mb-4">توليد عناوين ووصف وهاشتاغات محترمة عبر OpenRouter — بدون مبالغة أو خداع.</p> <a href="/features" class="text-primary text-sm font-semibold hover:text-secondary transition-colors inline-flex items-center gap-1">
+اعرف المزيد
+<span aria-hidden="true">←</span> </a> </div><div class="glow-card p-6 group"> <div class="text-4xl mb-4">📊</div> <h3 class="text-xl font-bold mb-2">تحليلات وأوقات النشر المثلى</h3> <p class="text-text-secondary text-sm leading-relaxed mb-4">70% أفضل وقت + 30% تجربة أوقات جديدة لتحسين الأداء مع التعلم التدريجي.</p> <a href="/features" class="text-primary text-sm font-semibold hover:text-secondary transition-colors inline-flex items-center gap-1">
+اعرف المزيد
+<span aria-hidden="true">←</span> </a> </div><div class="glow-card p-6 group"> <div class="text-4xl mb-4">🌐</div> <h3 class="text-xl font-bold mb-2">نشر متعدد المنصات</h3> <p class="text-text-secondary text-sm leading-relaxed mb-4">ينشر تلقائياً على YouTube، Facebook، Instagram، وThreads مع إشعار Telegram.</p> <a href="/features" class="text-primary text-sm font-semibold hover:text-secondary transition-colors inline-flex items-center gap-1">
+اعرف المزيد
+<span aria-hidden="true">←</span> </a> </div><div class="glow-card p-6 group"> <div class="text-4xl mb-4">🔄</div> <h3 class="text-xl font-bold mb-2">قراءة متسلسلة بدون تكرار</h3> <p class="text-text-secondary text-sm leading-relaxed mb-4">يقرأ القرآن كاملاً (6,236 آية) بتسلسل من الفاتحة للناس بدون تكرار.</p> <a href="/features" class="text-primary text-sm font-semibold hover:text-secondary transition-colors inline-flex items-center gap-1">
+اعرف المزيد
+<span aria-hidden="true">←</span> </a> </div><div class="glow-card p-6 group"> <div class="text-4xl mb-4">🎙️</div> <h3 class="text-xl font-bold mb-2">أصوات عدة قراء</h3> <p class="text-text-secondary text-sm leading-relaxed mb-4">عبد الباسط 40%، العفاسي 30%، المعيقلي 20%، الغامدي 10% مع توزيع عشوائي.</p> <a href="/features" class="text-primary text-sm font-semibold hover:text-secondary transition-colors inline-flex items-center gap-1">
+اعرف المزيد
+<span aria-hidden="true">←</span> </a> </div> </div> </div> </section>  <section class="py-16 relative"> <div class="max-w-5xl mx-auto px-4"> <div class="glow-card p-8"> <div class="grid grid-cols-2 md:grid-cols-4 gap-6"> <div class="text-center p-6"> <div class="text-4xl md:text-5xl font-bold gradient-text mb-2" data-count="500"> ٥٠٠ </div> <div class="text-text-secondary text-sm"> فيديو منشور  </div> </div><div class="text-center p-6"> <div class="text-4xl md:text-5xl font-bold gradient-text mb-2" data-count="25000"> ٢٥٬٠٠٠ </div> <div class="text-text-secondary text-sm"> مشاهدة  </div> </div><div class="text-center p-6"> <div class="text-4xl md:text-5xl font-bold gradient-text mb-2" data-count="6"> ٦ </div> <div class="text-text-secondary text-sm"> قراء  </div> </div><div class="text-center p-6"> <div class="text-4xl md:text-5xl font-bold gradient-text mb-2" data-count="30"> ٣٠ </div> <div class="text-text-secondary text-sm"> جزء منجز  </div> </div> </div> </div> </div> </section>  <section class="py-16 relative"> <div class="max-w-3xl mx-auto px-4"> <div class="w-full"> <h3 class="text-xl font-bold mb-4 text-center">آخر فيديو منشور</h3> <div class="relative aspect-video rounded-2xl overflow-hidden border border-border"> <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="آخر فيديو منشور" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full"></iframe> </div> </div> </div> </section>  <section class="py-20 relative"> <div class="max-w-3xl mx-auto px-4 text-center"> <h2 class="text-3xl md:text-4xl font-bold mb-4">ابدأ مع NOR Quran</h2> <p class="text-text-secondary text-lg mb-8">انطلق في رحلة نشر القرآن الكريم آلياً — مجاناً ومفتوح المصدر</p> <div class="flex flex-col sm:flex-row gap-4 justify-center"> <a href="/docs" class="btn-primary text-lg px-8 py-4">تعليمات التشغيل</a> <a href="https://github.com/GetWibix/quran-pipeline" target="_blank" rel="noopener noreferrer" class="btn-secondary text-lg px-8 py-4">مشاهدة الكود على GitHub</a> </div> </div> </section> <footer class="border-t border-border bg-bg-dark/50"> <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"> <div class="grid grid-cols-1 md:grid-cols-4 gap-8"> <div class="md:col-span-2"> <a href="/" class="flex items-center gap-2 text-xl font-bold mb-4"> <span class="text-2xl">🕌</span> <span class="gradient-text">NOR Quran</span> </a> <p class="text-text-secondary text-sm leading-relaxed max-w-md">
+نظام ذكي مفتوح المصدر لنشر آيات القرآن الكريم على يوتيوب وفيسبوك وإنستغرام وثريدز — بدون تدخل يدوي.
+</p> </div> <div> <h3 class="font-semibold mb-4">روابط سريعة</h3> <ul class="space-y-2 text-sm text-text-secondary"> <li><a href="/about" class="hover:text-white transition-colors">عن المشروع</a></li> <li><a href="/features" class="hover:text-white transition-colors">الميزات</a></li> <li><a href="/docs" class="hover:text-white transition-colors">التعليمات</a></li> <li><a href="/faq" class="hover:text-white transition-colors">الأسئلة الشائعة</a></li> </ul> </div> <div> <h3 class="font-semibold mb-4">تواصل</h3> <ul class="space-y-2 text-sm text-text-secondary"> <li><a href="https://github.com/GetWibix/quran-pipeline" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">GitHub</a></li> <li><a href="mailto:contact@waxbix.com" class="hover:text-white transition-colors">contact@waxbix.com</a></li> <li><a href="/privacy" class="hover:text-white transition-colors">سياسة الخصوصية</a></li> </ul> </div> </div> <div class="mt-10 pt-6 border-t border-border text-center"> <p class="text-2xl text-text-muted mb-4 font-amiri">﴿ وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا ﴾</p> <p class="text-text-muted text-sm">© 2026 NOR Quran — تطبيق آلي لنشر القرآن</p> </div> </div> </footer>  </body></html>

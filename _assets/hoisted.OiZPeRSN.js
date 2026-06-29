@@ -1,0 +1,1 @@
+import"./hoisted.BzcJXfT6.js";document.querySelectorAll(".faq-btn").forEach(e=>{e.addEventListener("click",()=>{const t=e.nextElementSibling,c=e.querySelector("svg");t.classList.toggle("hidden"),c.classList.toggle("rotate-180")})});
