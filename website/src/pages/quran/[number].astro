@@ -68,8 +68,9 @@ const ayahsJson = JSON.stringify(ayahs);
               onclick={`playAudio(${ayah.numberInSurah})`}
               class="text-primary hover:text-secondary transition-colors text-sm"
               id={`play-btn-${ayah.numberInSurah}`}
+              aria-label={`استماع للآية ${ayah.numberInSurah}`}
             >
-              <Icon name="play" size={14} class="inline ml-1" /> استمع
+              <Icon name="play" size={14} class="inline ml-1" aria-hidden="true" /> استمع
             </button>
             <audio id={`audio-${ayah.numberInSurah}`} preload="none"></audio>
           </div>
