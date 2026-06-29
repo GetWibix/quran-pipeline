@@ -1,9 +1,233 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head><meta charset="UTF-8"><title>QuranLive</title></head>
-<body style="font-family:sans-serif;padding:40px;max-width:600px;margin:auto;">
-  <h1>QuranLive App</h1>
-  <p>تطبيق آلي لنشر فيديوهات القرآن الكريم على يوتيوب والمنصات الأخرى.</p>
-  <p>للاستفسارات: soufiane0best@gmail.com</p>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Waxbix — نشر القرآن الكريم آلياً</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital@0;1&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: linear-gradient(135deg, #0a1628 0%, #1a2a4a 50%, #0d1f3c 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+    z-index: 0;
+  }
+  .container {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 32px;
+    padding: 60px 48px;
+    max-width: 560px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+  }
+  .icon {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    font-size: 32px;
+    box-shadow: 0 8px 32px rgba(37, 99, 235, 0.3);
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .subtitle {
+    font-size: 16px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .features {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+  .feature {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.2s;
+  }
+  .feature:hover { background: rgba(255, 255, 255, 0.07); }
+  .feature-icon {
+    width: 36px;
+    height: 36px;
+    background: rgba(37, 99, 235, 0.15);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .feature-text {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .feature-text span {
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 400;
+    font-size: 13px;
+    display: block;
+  }
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    margin-bottom: 28px;
+  }
+  .contact-card {
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .contact-icon {
+    width: 42px;
+    height: 42px;
+    background: rgba(16, 185, 129, 0.15);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .contact-info {
+    direction: ltr;
+    text-align: left;
+  }
+  .contact-label {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .contact-email {
+    color: #60a5fa;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .contact-email:hover { color: #93c5fd; }
+  .footer {
+    text-align: center;
+    margin-top: 28px;
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 12px;
+    font-weight: 400;
+  }
+  .quran-verse {
+    font-family: 'Amiri', serif;
+    font-size: 20px;
+    color: rgba(255, 255, 255, 0.15);
+    text-align: center;
+    margin-top: 24px;
+    line-height: 1.8;
+  }
+  @media (max-width: 480px) {
+    .container { padding: 36px 24px; }
+    h1 { font-size: 24px; }
+    .contact-card { flex-direction: column; text-align: center; }
+    .contact-info { text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="icon">﷽</div>
+  <h1>Waxbix</h1>
+  <p class="subtitle">نشر آيات القرآن الكريم على يوتيوب والمنصات</p>
+
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon">📹</div>
+      <div class="feature-text">
+        نشر تلقائي لليوتيوب
+        <span>رفع وجدولة الفيديوهات عبر YouTube Data API</span>
+      </div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🤖</div>
+      <div class="feature-text">
+        عناوين ذكية بالذكاء الاصطناعي
+        <span>توليد عناوين ووصف وهاشتاغات محسّنة للظهور</span>
+      </div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">📊</div>
+      <div class="feature-text">
+        تحليلات وأوقات النشر المثلى
+        <span>تجارب ذكية 70/30 لاختيار أفضل توقيت للنشر</span>
+      </div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon">🌐</div>
+      <div class="feature-text">
+        نشر متعدد المنصات
+        <span>فيسبوك · إنستغرام · ثريدز · يوتيوب · تيليغرام</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="contact-card">
+    <div class="contact-icon">✉️</div>
+    <div class="contact-info">
+      <span class="contact-label">تواصل معنا</span>
+      <a href="mailto:contact@waxbix.com" class="contact-email">contact@waxbix.com</a>
+    </div>
+  </div>
+
+  <div class="quran-verse">﴿ وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا ﴾</div>
+
+  <div class="footer">© 2026 Waxbix — تطبيق آلي لنشر القرآن</div>
+</div>
 </body>
 </html>
