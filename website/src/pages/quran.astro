@@ -1,0 +1,76 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+const res = await fetch('https://api.alquran.cloud/v1/surah');
+const data = await res.json();
+const surahs = data.data;
+const surahsJson = JSON.stringify(surahs);
+---
+
+<BaseLayout title="القرآن الكريم" description="اقرأ القرآن الكريم واستمع إلى آياته">
+  <Header />
+
+  <section class="pt-32 pb-16 relative min-h-screen">
+    <div class="hero-glow"></div>
+    <div class="max-w-6xl mx-auto px-4">
+      <h1 class="text-4xl md:text-5xl font-bold text-center mb-4">
+        <span class="gradient-text">القرآن الكريم</span>
+      </h1>
+      <p class="text-text-secondary text-center text-lg mb-8">اقرأ واستمع إلى آيات القرآن الكريم</p>
+
+      <div class="max-w-md mx-auto mb-8">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="ابحث عن سورة..."
+          class="w-full px-4 py-3 bg-card border border-border rounded-xl text-white placeholder-text-muted focus:outline-none focus:border-primary transition-colors"
+        />
+      </div>
+
+      <div id="surahs-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        {surahs.map((s) => (
+          <a href={`/quran/${s.number}`} class="glow-card p-4 text-center group cursor-pointer">
+            <div class="text-lg font-bold text-primary mb-1">{s.number}</div>
+            <div class="font-semibold text-lg font-amiri">{s.name}</div>
+            <div class="text-text-muted text-xs mt-1">{s.englishName}</div>
+            <div class="text-text-muted text-xs">{s.numberOfAyahs} آية</div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<script id="surahs-data" type="application/json" set:html={surahsJson}></script>
+
+<script>
+  const surahs = JSON.parse(document.getElementById('surahs-data').textContent);
+  const container = document.getElementById('surahs-container');
+  const searchInput = document.getElementById('search-input');
+
+  function renderSurahs(filter = '') {
+    const filtered = surahs.filter((s) =>
+      s.name.includes(filter) || s.englishName.toLowerCase().includes(filter.toLowerCase())
+    );
+    container.innerHTML = filtered
+      .map(
+        (s) => `
+        <a href="/quran/${s.number}" class="glow-card p-4 text-center group cursor-pointer">
+          <div class="text-lg font-bold text-primary mb-1">${s.number}</div>
+          <div class="font-semibold text-lg font-amiri">${s.name}</div>
+          <div class="text-text-muted text-xs mt-1">${s.englishName}</div>
+          <div class="text-text-muted text-xs">${s.numberOfAyahs} آية</div>
+        </a>
+      `
+      )
+      .join('');
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => renderSurahs(e.target.value));
+  }
+</script>

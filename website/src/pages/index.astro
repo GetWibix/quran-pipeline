@@ -1,0 +1,131 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import FeatureCard from '../components/FeatureCard.astro';
+import StatCounter from '../components/StatCounter.astro';
+import YouTubeEmbed from '../components/YouTubeEmbed.astro';
+import Icon from '../components/Icon.astro';
+
+const features = [
+  { icon: 'video', title: 'نشر تلقائي ليوتيوب', description: 'رفع الفيديو وجدولته على YouTube تلقائياً عبر API v3 مع دعم الفيديوهات القصيرة والطويلة.', link: '/features' },
+  { icon: 'robot', title: 'عناوين ذكية بالذكاء الاصطناعي', description: 'توليد عناوين ووصف وهاشتاغات محترمة عبر OpenRouter — بدون مبالغة أو خداع.', link: '/features' },
+  { icon: 'chart', title: 'تحليلات وأوقات النشر المثلى', description: '70% أفضل وقت + 30% تجربة أوقات جديدة لتحسين الأداء مع التعلم التدريجي.', link: '/features' },
+  { icon: 'globe', title: 'نشر متعدد المنصات', description: 'ينشر تلقائياً على YouTube، Facebook، Instagram، وThreads مع إشعار Telegram.', link: '/features' },
+  { icon: 'refresh', title: 'قراءة متسلسلة بدون تكرار', description: 'يقرأ القرآن كاملاً (6,236 آية) بتسلسل من الفاتحة للناس بدون تكرار.', link: '/features' },
+  { icon: 'mic', title: 'أصوات عدة قراء', description: 'عبد الباسط 40%، العفاسي 30%، المعيقلي 20%، الغامدي 10% مع توزيع عشوائي.', link: '/features' },
+];
+
+const stats = [
+  { value: 500, label: 'فيديو منشور' },
+  { value: 25000, label: 'مشاهدة' },
+  { value: 6, label: 'قراء' },
+  { value: 30, label: 'جزء منجز' },
+];
+---
+
+<BaseLayout title="الرئيسية">
+  <Header />
+
+  <!-- Hero -->
+  <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+    <!-- Background images -->
+    <div class="absolute inset-0">
+      <img
+        src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1920&q=80"
+        alt=""
+        class="w-full h-full object-cover"
+        loading="eager"
+      />
+    </div>
+
+    <!-- Overlay gradient: natural dark with gold tint -->
+    <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-black/60 to-bg-dark"></div>
+
+    <!-- Gold decorative corners -->
+    <div class="absolute top-24 left-6 md:left-12 w-20 h-20 md:w-32 md:h-32 border-t-2 border-l-2 border-gold/30 rounded-tl-3xl"></div>
+    <div class="absolute top-24 right-6 md:right-12 w-20 h-20 md:w-32 md:h-32 border-t-2 border-r-2 border-gold/30 rounded-tr-3xl"></div>
+    <div class="absolute bottom-40 left-6 md:left-12 w-20 h-20 md:w-32 md:h-32 border-b-2 border-l-2 border-gold/30 rounded-bl-3xl"></div>
+    <div class="absolute bottom-40 right-6 md:right-12 w-20 h-20 md:w-32 md:h-32 border-b-2 border-r-2 border-gold/30 rounded-br-3xl"></div>
+
+    <!-- Gold horizontal lines -->
+    <div class="absolute top-1/3 left-0 w-16 md:w-24 h-px bg-gradient-to-r from-transparent to-gold/40"></div>
+    <div class="absolute top-1/3 right-0 w-16 md:w-24 h-px bg-gradient-to-l from-transparent to-gold/40"></div>
+
+    <!-- Content -->
+    <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
+      <Icon name="mosque" size={56} class="text-gold-light mb-4" />
+      <h1 class="text-5xl md:text-7xl font-bold mb-4">
+        <span class="text-white">NOR Quran</span>
+      </h1>
+      <p class="text-2xl md:text-3xl mb-4 font-semibold text-gold-light/90">
+        ننشر القرآن الكريم آلياً — 24 ساعة، 7 أيام، 365 يوم
+      </p>
+      <p class="text-cream/70 text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
+        نظام ذكي مفتوح المصدر يختار الآيات، يولد فيديوهات، وينشرها على يوتيوب وفيسبوك وإنستغرام وثريدز — بدون تدخل يدوي.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <a href="/docs" class="btn-gold text-lg px-8 py-4">
+          ابدأ الآن
+        </a>
+        <a href="/features" class="btn-outline-gold text-lg px-8 py-4">
+          شاهد الميزات
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- نبذة سريعة -->
+  <section class="py-16 relative">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <div class="glow-card p-8 md:p-12">
+        <p class="text-xl md:text-2xl leading-relaxed text-text-secondary">
+          NOR Quran يقرأ القرآن كاملاً (<span class="text-white font-bold">6,236</span> آية) بتسلسل بدون تكرار. يستخدم الذكاء الاصطناعي لاختيار الآيات المناسبة وتوليد عناوين محترمة. ينشر في أفضل الأوقات بناءً على تحليلات الأداء.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- الميزات الأساسية -->
+  <section class="py-16 relative">
+    <div class="max-w-7xl mx-auto px-4">
+      <h2 class="section-title">الميزات الأساسية</h2>
+      <p class="section-subtitle">كل ما تحتاج لنشر القرآن الكريم آلياً باحترافية</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {features.map((feat) => <FeatureCard icon={feat.icon} title={feat.title} description={feat.description} link={feat.link} />)}
+      </div>
+    </div>
+  </section>
+
+  <!-- إحصائيات -->
+  <section class="py-16 relative">
+    <div class="max-w-5xl mx-auto px-4">
+      <div class="glow-card p-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {stats.map((stat) => <StatCounter {...stat} />)}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- آخر فيديو -->
+  <section class="py-16 relative">
+    <div class="max-w-3xl mx-auto px-4">
+      <YouTubeEmbed videoId="MedcpoVFAbI" title="آخر فيديو منشور" />
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="py-20 relative">
+    <div class="max-w-3xl mx-auto px-4 text-center">
+      <h2 class="text-3xl md:text-4xl font-bold mb-4">ابدأ مع NOR Quran</h2>
+      <p class="text-text-secondary text-lg mb-8">انطلق في رحلة نشر القرآن الكريم آلياً — مجاناً ومفتوح المصدر</p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <a href="/docs" class="btn-primary text-lg px-8 py-4">تعليمات التشغيل</a>
+        <a href="https://github.com/GetWibix/quran-pipeline" target="_blank" rel="noopener noreferrer" class="btn-secondary text-lg px-8 py-4">مشاهدة الكود على GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>

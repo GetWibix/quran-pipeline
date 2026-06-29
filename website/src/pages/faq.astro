@@ -1,0 +1,83 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+const faqs = [
+  {
+    q: 'هل الموقع مجاني؟',
+    a: 'نعم، NOR Quran مفتوح المصدر ومجاني تماماً للأعمال الخيرية. لا توجد أي رسوم أو اشتراكات.',
+  },
+  {
+    q: 'هل أستطيع استخدام الكود لمشروعي؟',
+    a: 'نعم، بشرط غير تجاري. الكود مرخص للاستخدام الشخصي والخيري.',
+  },
+  {
+    q: 'هل يحتاج سيرفر قوي؟',
+    a: 'لا، 1-2GB RAM كافية لتشغيل النظام. يمكنك استخدام VPS منخفض التكلفة.',
+  },
+  {
+    q: 'كيف أحصل على توكن يوتيوب؟',
+    a: 'عبر تشغيل سكريبت getRefreshToken الموجود في المشروع. اتبع التعليمات في صفحة /docs.',
+  },
+  {
+    q: 'هل يدعم ترجمة القرآن؟',
+    a: 'حالياً النظام يدعم العربية فقط. دعم الترجمة الإنجليزية قيد التطوير.',
+  },
+  {
+    q: 'كيف أضيف قارئ جديد؟',
+    a: 'يعدل في الكود بإضافة القارئ الجديد في ملف التوزيع العشوائي وتوفير ملفات الصوت الخاصة به.',
+  },
+  {
+    q: 'كم فيديو ينشر في اليوم؟',
+    a: 'النظام يجدول النشر كل 4 ساعات بمعدل 6 فيديوهات في اليوم.',
+  },
+  {
+    q: 'هل يمكن استخدامه تجارياً؟',
+    a: 'للأعمال التجارية يرجى التواصل عبر contact@waxbix.com.',
+  },
+];
+---
+
+<BaseLayout title="الأسئلة الشائعة" description="أجوبة على الأسئلة المتكررة حول مشروع NOR Quran">
+  <Header />
+
+  <section class="pt-32 pb-16 relative min-h-screen">
+    <div class="hero-glow"></div>
+    <div class="max-w-4xl mx-auto px-4">
+      <h1 class="text-4xl md:text-5xl font-bold text-center mb-4">
+        <span class="gradient-text">الأسئلة الشائعة</span>
+      </h1>
+      <p class="text-text-secondary text-center text-lg mb-12">إجابات على أكثر الأسئلة تكرراً</p>
+
+      <div class="space-y-4">
+        {faqs.map((faq) => (
+          <div class="glow-card p-6">
+            <button class="faq-btn w-full flex items-center justify-between text-right" data-target={faq.q}>
+              <span class="font-bold text-lg">{faq.q}</span>
+              <svg class="w-5 h-5 text-text-secondary transform transition-transform duration-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            <div class="faq-answer hidden mt-4 text-text-secondary leading-relaxed">
+              {faq.a}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
+
+<script>
+  document.querySelectorAll('.faq-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const answer = btn.nextElementSibling;
+      const icon = btn.querySelector('svg');
+      answer.classList.toggle('hidden');
+      icon.classList.toggle('rotate-180');
+    });
+  });
+</script>

@@ -1,0 +1,39 @@
+---
+import Icon from './Icon.astro';
+---
+<footer class="border-t border-border bg-bg-dark/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div class="md:col-span-2">
+        <a href="/" class="flex items-center gap-2 text-xl font-bold mb-4">
+          <Icon name="mosque" size={24} class="text-primary" />
+          <span class="gradient-text">NOR Quran</span>
+        </a>
+        <p class="text-text-secondary text-sm leading-relaxed max-w-md">
+          نظام ذكي مفتوح المصدر لنشر آيات القرآن الكريم على يوتيوب وفيسبوك وإنستغرام وثريدز — بدون تدخل يدوي.
+        </p>
+      </div>
+      <div>
+        <h3 class="font-semibold mb-4">روابط سريعة</h3>
+        <ul class="space-y-2 text-sm text-text-secondary">
+          <li><a href="/about" class="hover:text-white transition-colors">عن المشروع</a></li>
+          <li><a href="/features" class="hover:text-white transition-colors">الميزات</a></li>
+          <li><a href="/docs" class="hover:text-white transition-colors">التعليمات</a></li>
+          <li><a href="/faq" class="hover:text-white transition-colors">الأسئلة الشائعة</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="font-semibold mb-4">تواصل</h3>
+        <ul class="space-y-2 text-sm text-text-secondary">
+          <li><a href="https://github.com/GetWibix/quran-pipeline" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">GitHub</a></li>
+          <li><a href="mailto:contact@waxbix.com" class="hover:text-white transition-colors">contact@waxbix.com</a></li>
+          <li><a href="/privacy" class="hover:text-white transition-colors">سياسة الخصوصية</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-10 pt-6 border-t border-border text-center">
+      <p class="text-2xl text-text-muted mb-4 font-amiri">﴿ وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا ﴾</p>
+      <p class="text-text-muted text-sm">© 2026 NOR Quran — تطبيق آلي لنشر القرآن</p>
+    </div>
+  </div>
+</footer>

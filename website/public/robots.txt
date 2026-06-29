@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://quran.waxbix.com/sitemap-index.xml

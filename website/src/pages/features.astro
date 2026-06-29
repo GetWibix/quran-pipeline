@@ -1,0 +1,77 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Icon from '../components/Icon.astro';
+
+const features = [
+  {
+    icon: 'video',
+    title: 'النشر التلقائي ليوتيوب',
+    description: 'يرفع الفيديو إلى YouTube عبر API v3 مع جدولة النشر. يدعم الفيديوهات القصيرة (Shorts) والطويلة. يضبط الخصوصية تلقائياً (خاص ← عام حسب الوقت المحدد). يختار الصورة المصغرة (Thumbnail) إن وُجدت.',
+  },
+  {
+    icon: 'robot',
+    title: 'عناوين ووصف بالذكاء الاصطناعي',
+    description: 'يستخدم OpenRouter (نماذج مجانية) لتوليد: عنوان جذاب ومحترم (أقصى 70 حرف)، وصف شامل مع تفاصيل السورة والآيات، هاشتاغات هرمية (عام ← سورة ← قارئ)، و5 أنماط مختلفة للعناوين مع تتبع الأداء. كل هذا بدون مبالغة أو خداع — أدب مع كلام الله.',
+  },
+  {
+    icon: 'chart',
+    title: 'تحليلات وأوقات النشر المثلى',
+    description: 'يختار وقت النشر بذكاء: 70% ينشر في أفضل وقت معروف (أعلى تفاعل)، 30% يجرب أوقات جديدة لتحسين الأداء. بعد 48 ساعة من النشر، يحلل النتائج ويحدث قاعدة البيانات. مع الوقت، النظام يتعلم أفضل أوقات النشر لكل نوع محتوى.',
+  },
+  {
+    icon: 'globe',
+    title: 'نشر متعدد المنصات',
+    description: 'بعد رفع الفيديو لـ YouTube، ينشر تلقائياً على Facebook (صفحة)، Instagram (حساب تجاري)، وThreads. مع إشعار عبر Telegram عند النجاح أو الفشل.',
+  },
+  {
+    icon: 'refresh',
+    title: 'قراءة متسلسلة بدون تكرار',
+    description: 'يقرأ القرآن كاملاً (6,236 آية) بتسلسل من الفاتحة للناس بدون تكرار. يتتبع الآيات التي تم نشرها بالفعل لضمان تغطية كاملة للقرآن.',
+  },
+  {
+    icon: 'mic',
+    title: 'أصوات عدة قراء',
+    description: 'نظام توزيع عشوائي: عبد الباسط 40%، العفاسي 30%، المعيقلي 20%، الغامدي 10%. يختار قارئاً مختلفاً لكل فيديو لتنويع المحتوى.',
+  },
+  {
+    icon: 'trending',
+    title: 'التقارير والإحصائيات',
+    description: 'إحصائيات يومية عبر Telegram بعد كل نشر: عدد المشاهدات، الإعجابات، التعليقات، المشاركات، وأداء الهاشتاغات.',
+  },
+  {
+    icon: 'shield',
+    title: 'حد الأمان (API Safety)',
+    description: '9,500/10,000 وحدة API — حماية من الاستنزاف. يوقف النشر تلقائياً عند الاقتراب من الحد الأقصى لتفادي التكاليف غير المتوقعة.',
+  },
+];
+---
+
+<BaseLayout title="الميزات" description="جميع ميزات نظام NOR Quran لنشر القرآن الكريم آلياً">
+  <Header />
+
+  <section class="pt-32 pb-16 relative min-h-screen">
+    <div class="hero-glow"></div>
+    <div class="max-w-6xl mx-auto px-4">
+      <h1 class="text-4xl md:text-5xl font-bold text-center mb-4">
+        <span class="gradient-text">الميزات</span>
+      </h1>
+      <p class="text-text-secondary text-center text-lg mb-12">كل ما تحتاج لنشر القرآن الكريم آلياً باحترافية</p>
+
+      <div class="space-y-6">
+        {features.map((feat) => (
+          <div class="glow-card p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start">
+            <div class="flex-shrink-0"><Icon name={feat.icon} size={36} class="text-primary" /></div>
+            <div>
+              <h2 class="text-2xl font-bold mb-2">{feat.title}</h2>
+              <p class="text-text-secondary leading-relaxed">{feat.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>

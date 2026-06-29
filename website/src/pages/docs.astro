@@ -1,0 +1,116 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<BaseLayout title="التعليمات" description="كيفية تشغيل نظام NOR Quran خطوة بخطوة">
+  <Header />
+
+  <section class="pt-32 pb-16 relative min-h-screen">
+    <div class="hero-glow"></div>
+    <div class="max-w-4xl mx-auto px-4">
+      <h1 class="text-4xl md:text-5xl font-bold text-center mb-4">
+        <span class="gradient-text">التعليمات</span>
+      </h1>
+      <p class="text-text-secondary text-center text-lg mb-12">كيفية تشغيل النظام خطوة بخطوة</p>
+
+      <div class="space-y-6">
+        <div class="glow-card p-6">
+          <div class="flex items-center gap-4 mb-4">
+            <span class="text-2xl font-bold text-primary">1</span>
+            <h2 class="text-xl font-bold">المتطلبات الأساسية</h2>
+          </div>
+          <ul class="space-y-2 text-text-secondary list-disc list-inside">
+            <li>Node.js 18+</li>
+            <li>PostgreSQL</li>
+            <li>Redis</li>
+            <li>Docker (موصى به)</li>
+            <li>FFmpeg</li>
+          </ul>
+        </div>
+
+        <div class="glow-card p-6">
+          <div class="flex items-center gap-4 mb-4">
+            <span class="text-2xl font-bold text-primary">2</span>
+            <h2 class="text-xl font-bold">克隆 المستودع</h2>
+          </div>
+          <div class="bg-black/30 rounded-xl p-4 font-mono text-sm text-text-secondary overflow-x-auto">
+            git clone https://github.com/GetWibix/quran-pipeline.git<br />
+            cd quran-pipeline<br />
+            npm install
+          </div>
+        </div>
+
+        <div class="glow-card p-6">
+          <div class="flex items-center gap-4 mb-4">
+            <span class="text-2xl font-bold text-primary">3</span>
+            <h2 class="text-xl font-bold">إعداد .env</h2>
+          </div>
+          <p class="text-text-secondary mb-3">انسخ ملف .env.example إلى .env واملأ المتغيرات التالية:</p>
+          <div class="bg-black/30 rounded-xl p-4 font-mono text-sm text-text-secondary overflow-x-auto">
+            DATABASE_URL="postgresql://..."<br />
+            REDIS_URL="redis://..."<br />
+            YT_REFRESH_TOKEN="..."<br />
+            OPENROUTER_API_KEY="..."<br />
+            CLOUDFLARE_R2_*="..."<br />
+            TELEGRAM_BOT_TOKEN="..."<br />
+            TELEGRAM_CHAT_ID="..."
+          </div>
+        </div>
+
+        <div class="glow-card p-6">
+          <div class="flex items-center gap-4 mb-4">
+            <span class="text-2xl font-bold text-primary">4</span>
+            <h2 class="text-xl font-bold">الحصول على YT_REFRESH_TOKEN</h2>
+          </div>
+          <p class="text-text-secondary leading-relaxed">
+            شغل سكريبت getRefreshToken لربط حساب YouTube:
+          </p>
+          <div class="bg-black/30 rounded-xl p-4 font-mono text-sm text-text-secondary mt-3 overflow-x-auto">
+            npm run get-refresh-token
+          </div>
+        </div>
+
+        <div class="glow-card p-6">
+          <div class="flex items-center gap-4 mb-4">
+            <span class="text-2xl font-bold text-primary">5</span>
+            <h2 class="text-xl font-bold">تشغيل Docker</h2>
+          </div>
+          <div class="bg-black/30 rounded-xl p-4 font-mono text-sm text-text-secondary overflow-x-auto">
+            docker-compose up -d
+          </div>
+        </div>
+
+        <div class="glow-card p-6">
+          <div class="flex items-center gap-4 mb-4">
+            <span class="text-2xl font-bold text-primary">6</span>
+            <h2 class="text-xl font-bold">تشغيل التطبيق</h2>
+          </div>
+          <div class="bg-black/30 rounded-xl p-4 font-mono text-sm text-text-secondary overflow-x-auto">
+            npm run dev:worker    # في terminal 1<br />
+            npm run dev:scheduler # في terminal 2
+          </div>
+        </div>
+
+        <div class="glow-card p-6">
+          <div class="flex items-center gap-4 mb-4">
+            <span class="text-2xl font-bold text-primary">7</span>
+            <h2 class="text-xl font-bold">الجدولة والتشغيل الآلي</h2>
+          </div>
+          <p class="text-text-secondary leading-relaxed">
+            النظام يستخدم node-cron للجدولة. التردد الافتراضي هو كل 4 ساعات. يمكنك تعديله في ملف src/scheduler.ts.
+            لضمان استمرارية التشغيل، استخدم PM2 أو systemd.
+          </p>
+        </div>
+      </div>
+
+      <div class="glow-card p-8 mt-8 text-center">
+        <p class="text-text-secondary mb-4">هل تحتاج مساعدة؟</p>
+        <a href="mailto:contact@waxbix.com" class="text-primary hover:text-secondary transition-colors">contact@waxbix.com</a>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>

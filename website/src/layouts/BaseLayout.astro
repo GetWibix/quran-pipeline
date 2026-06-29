@@ -1,0 +1,66 @@
+---
+import '../styles/global.css';
+
+export interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+}
+
+const { title, description = 'نظام ذكي مفتوح المصدر لنشر آيات القرآن الكريم آلياً على يوتيوب والمنصات الأخرى', ogImage } = Astro.props;
+const siteUrl = 'https://quran.waxbix.com';
+const pageTitle = `${title} | NOR Quran`;
+const image = ogImage || `${siteUrl}/og-image.png`;
+---
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#0a1628" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="alternate" type="application/rss+xml" title="NOR Quran" href="/rss.xml" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
+    <meta property="og:url" content={siteUrl} />
+    <meta property="og:site_name" content="NOR Quran" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={image} />
+
+    <!-- JSON-LD -->
+    <script type="application/ld+json" set:html={`
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "NOR Quran",
+        "description": "نظام آلي مفتوح المصدر لنشر آيات القرآن الكريم على يوتيوب والمنصات الأخرى",
+        "url": "https://quran.waxbix.com",
+        "applicationCategory": "Multimedia",
+        "operatingSystem": "Linux",
+        "author": {
+          "@type": "Person",
+          "name": "NOR Quran Team"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    `} />
+  </head>
+  <body class="min-h-screen bg-bg-dark text-white">
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,79 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Icon from '../components/Icon.astro';
+---
+
+<BaseLayout title="عن المشروع" description="تعرف على قصة NOR Quran — نظام آلي مفتوح المصدر لنشر القرآن الكريم">
+  <Header />
+
+  <section class="pt-32 pb-16 relative min-h-screen">
+    <div class="hero-glow"></div>
+    <div class="max-w-4xl mx-auto px-4">
+      <h1 class="text-4xl md:text-5xl font-bold text-center mb-6">
+        <span class="gradient-text">عن المشروع</span>
+      </h1>
+      <p class="text-text-secondary text-center text-lg mb-12">القصة، الرؤية، والقيم</p>
+
+      <div class="space-y-8">
+        <div class="glow-card p-8">
+          <h2 class="text-2xl font-bold mb-4">ما هو NOR Quran؟</h2>
+          <p class="text-text-secondary leading-relaxed">
+            نظام آلي مفتوح المصدر لنشر آيات القرآن الكريم على يوتيوب والمنصات الأخرى. يقوم النظام باختيار الآيات، تصميم فيديوهات جذابة، وجدولة النشر في أفضل الأوقات — كل ذلك بدون تدخل يدوي.
+          </p>
+        </div>
+
+        <div class="glow-card p-8">
+          <h2 class="text-2xl font-bold mb-4">القصة</h2>
+          <p class="text-text-secondary leading-relaxed">
+            فكرة NOR Quran انطلقت من رغبة في نشر القرآن على أوسع نطاق باستخدام التقنية. بدلاً من النشر اليدوي المتعب، قمنا ببناء نظام يعمل 24/7 يختار أجمل الآيات، يصمم فيديوهات جذابة، وينشرها في التوقيت المثالي. كل هذا مجاناً ولوجه الله.
+          </p>
+        </div>
+
+        <div class="glow-card p-8">
+          <h2 class="text-2xl font-bold mb-4">الرؤية</h2>
+          <p class="text-text-secondary leading-relaxed">
+            نشر القرآن في كل مكان، بدون جهد يدوي. نؤمن بأن التقنية يمكن أن تكون وسيلة عظيمة لنشر كلام الله في أرجاء الأرض، وأن كل مسلم يستحق أن يصل إليه القرآن بطريقة سهلة وميسرة.
+          </p>
+        </div>
+
+        <div class="glow-card p-8">
+          <h2 class="text-2xl font-bold mb-4">القيم</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex items-start gap-3">
+              <Icon name="check" size={18} class="text-primary flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 class="font-semibold">مجاني</h3>
+                <p class="text-text-secondary text-sm">بدون أي رسوم أو اشتراكات</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <Icon name="check" size={18} class="text-primary flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 class="font-semibold">خيري</h3>
+                <p class="text-text-secondary text-sm">لوجه الله لا يطلب أي مقابل</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <Icon name="check" size={18} class="text-primary flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 class="font-semibold">مفتوح المصدر</h3>
+                <p class="text-text-secondary text-sm">الكود متاح للجميع للتطوير والتحسين</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3">
+              <Icon name="check" size={18} class="text-primary flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 class="font-semibold">احترام القرآن</h3>
+                <p class="text-text-secondary text-sm">أدب مع كلام الله، لا clickbait ولا مبالغة</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>
