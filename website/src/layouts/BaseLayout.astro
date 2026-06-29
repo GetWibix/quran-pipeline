@@ -5,12 +5,14 @@ export interface Props {
   title: string;
   description?: string;
   ogImage?: string;
+  canonical?: string;
 }
 
-const { title, description = 'نظام ذكي مفتوح المصدر لنشر آيات القرآن الكريم آلياً على يوتيوب والمنصات الأخرى', ogImage } = Astro.props;
+const { title, description = 'نظام ذكي مفتوح المصدر لنشر آيات القرآن الكريم آلياً على يوتيوب والمنصات الأخرى', ogImage, canonical } = Astro.props;
 const siteUrl = 'https://quran.waxbix.com';
 const pageTitle = `${title} | NOR Quran`;
 const image = ogImage || `${siteUrl}/og-image.png`;
+const canonicalUrl = canonical || siteUrl;
 ---
 
 <!DOCTYPE html>
@@ -21,16 +23,22 @@ const image = ogImage || `${siteUrl}/og-image.png`;
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <meta name="theme-color" content="#0a1628" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="googlebot" content="index, follow" />
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonicalUrl} />
     <link rel="alternate" type="application/rss+xml" title="NOR Quran" href="/rss.xml" />
+    <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={image} />
-    <meta property="og:url" content={siteUrl} />
+    <meta property="og:url" content={canonicalUrl} />
     <meta property="og:site_name" content="NOR Quran" />
+    <meta property="og:locale" content="ar_AR" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
@@ -38,27 +46,70 @@ const image = ogImage || `${siteUrl}/og-image.png`;
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={image} />
 
-    <!-- JSON-LD -->
+    <!-- JSON-LD: Organization -->
     <script type="application/ld+json" set:html={`
       {
         "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
+        "@type": "Organization",
         "name": "NOR Quran",
         "description": "نظام آلي مفتوح المصدر لنشر آيات القرآن الكريم على يوتيوب والمنصات الأخرى",
-        "url": "https://quran.waxbix.com",
-        "applicationCategory": "Multimedia",
-        "operatingSystem": "Linux",
-        "author": {
-          "@type": "Person",
-          "name": "NOR Quran Team"
+        "url": "${siteUrl}",
+        "logo": "${siteUrl}/favicon.svg",
+        "foundingDate": "2026",
+        "developer": {
+          "@type": "Organization",
+          "name": "Waxbix",
+          "url": "https://waxbix.com"
         },
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
+        "sameAs": [
+          "https://github.com/GetWibix/quran-pipeline"
+        ]
+      }
+    `} />
+
+    <!-- JSON-LD: WebSite -->
+    <script type="application/ld+json" set:html={`
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "NOR Quran",
+        "url": "${siteUrl}",
+        "description": "${description}",
+        "inLanguage": "ar",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "${siteUrl}/quran?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
         }
       }
     `} />
+
+    <!-- JSON-LD: SoftwareApplication (homepage only) -->
+    {canonicalUrl === siteUrl && (
+      <script type="application/ld+json" set:html={`
+        {
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "NOR Quran",
+          "description": "نظام آلي مفتوح المصدر لنشر آيات القرآن الكريم على يوتيوب والمنصات الأخرى",
+          "url": "${siteUrl}",
+          "applicationCategory": "Multimedia",
+          "operatingSystem": "Linux",
+          "author": {
+            "@type": "Organization",
+            "name": "NOR Quran Team"
+          },
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        }
+      `} />
+    )}
   </head>
   <body class="min-h-screen bg-bg-dark text-white">
     <slot />
