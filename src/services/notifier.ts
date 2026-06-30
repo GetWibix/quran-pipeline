@@ -83,6 +83,32 @@ export async function notifyPublishFailure(params: {
   await sendTelegramMessage(text);
 }
 
+export async function notifyReport(params: {
+  type: "DAILY" | "WEEKLY" | "MONTHLY";
+  totalVideos: number;
+  experimentsCount: number;
+  bestHour: number | null;
+  worstHour: number | null;
+  avgScore: number;
+  improvementRate: number;
+  recommendations: string[];
+}): Promise<void> {
+  const typeLabel = { DAILY: "اليومي", WEEKLY: "الأسبوعي", MONTHLY: "الشهري" }[params.type];
+  const text = `
+📊 <b>التقرير ${typeLabel}</b>
+
+📤 إجمالي الفيديوهات: ${params.totalVideos}
+🧪 التجارب: ${params.experimentsCount}
+${params.bestHour !== null ? `🏆 أفضل وقت: ${params.bestHour}:00` : ""}
+${params.worstHour !== null ? `📉 أسوأ وقت: ${params.worstHour}:00` : ""}
+📈 متوسط الأداء: ${(params.avgScore * 100).toFixed(1)}%
+${params.improvementRate !== 0 ? `📊 التحسن: ${params.improvementRate > 0 ? "+" : ""}${params.improvementRate.toFixed(1)}%` : ""}
+${params.recommendations.length > 0 ? `💡 التوصيات:\n${params.recommendations.map((r) => `  - ${r}`).join("\n")}` : ""}
+`.trim();
+
+  await sendTelegramMessage(text);
+}
+
 export async function notifyDailySummary(params: {
   publishedToday: number;
   quotaRemaining: number;

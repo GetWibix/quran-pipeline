@@ -63,6 +63,9 @@ model PublishedContent {
   facebookEngagement  Float?      // engagement score على فيسبوك
   instagramEngagement Float?      // engagement score على انستغرام
 
+  titlePatternId      Int?        // معرف نمط العنوان المستخدم (SEO)
+  publishExperiments  PublishExperiment[] // التجارب الجدولية المرتبطة
+
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
@@ -85,4 +88,82 @@ model QuotaUsage {
   date        DateTime @unique @db.Date // يوم واحد = صف واحد (UTC، نفس توقيت يوتيوب)
   unitsUsed   Int      @default(0)
   updatedAt   DateTime @updatedAt
+}
+
+/// سجل أداء كل تايم سلوت للنشر — لتحسين جدولة المحتوى
+model TimeSlotScore {
+  id               String      @id @default(cuid())
+  contentType      ContentType
+  hour             Int
+  minute           Int
+  performanceScore Float       @default(0)
+  sampleCount      Int         @default(0)
+  confidence       Float       @default(0)
+  lastAnalyzedAt   DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@unique([contentType, hour, minute])
+  @@index([contentType, performanceScore])
+}
+
+/// سجل التجارب الجدولية (A/B testing للتايم سلوتس)
+model PublishExperiment {
+  id                 String                @id @default(cuid())
+  contentType        ContentType
+  scheduledHour      Int
+  scheduledMinute    Int
+  isExperimental     Boolean               @default(false)
+  publishedContentId String
+  publishedContent   PublishedContent      @relation(fields: [publishedContentId], references: [id])
+  experimentResult   ExperimentResult?
+  createdAt          DateTime              @default(now())
+
+  @@index([contentType])
+}
+
+/// نتائج تجارب الجدولة
+model ExperimentResult {
+  id                String           @id @default(cuid())
+  experimentId      String           @unique
+  experiment        PublishExperiment @relation(fields: [experimentId], references: [id])
+  views             Int              @default(0)
+  likes             Int              @default(0)
+  comments          Int              @default(0)
+  watchTimeMinutes  Float            @default(0)
+  subscribersGained Int              @default(0)
+  performanceScore  Float            @default(0)
+  createdAt         DateTime         @default(now())
+}
+
+/// تقارير النشر الدورية (يومية/أسبوعية/شهرية)
+model PublishReport {
+  id                  String   @id @default(cuid())
+  reportType          String   // "DAILY" | "WEEKLY" | "MONTHLY"
+  periodStart         DateTime
+  periodEnd           DateTime
+  totalVideos         Int      @default(0)
+  experimentsCount    Int      @default(0)
+  bestHour            Int?
+  worstHour           Int?
+  avgPerformanceScore Float    @default(0)
+  improvementRate     Float    @default(0)
+  recommendations     Json?
+  detailedData        Json?
+  createdAt           DateTime @default(now())
+}
+
+/// أداء أنماط العناوين (SEO titles)
+model TitlePatternPerformance {
+  id              Int          @id @default(autoincrement())
+  patternId       Int
+  contentType     ContentType
+  avgViews        Float        @default(0)
+  sampleCount     Int          @default(0)
+  lastUsedAt      DateTime     @default(now())
+  lastAnalyzedAt  DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([patternId, contentType])
 }
