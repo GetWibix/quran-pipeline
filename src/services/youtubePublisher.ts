@@ -82,7 +82,7 @@ export async function publishVideo(
         title: opts.title,
         description: opts.description,
         tags: opts.tags,
-        categoryId: "22", // "People & Blogs" - فئة عامة مناسبة لمحتوى ديني/تعليمي
+        categoryId: "27", // "Education" - فئة تعليمية مناسبة لمحتوى قرآني
       },
       status: {
         privacyStatus: isScheduled

@@ -41,13 +41,18 @@ function buildDescription(
   fromAyah: number,
   toAyah: number,
   combinedText: string,
-  tags: string[]
+  tags: string[],
+  contentType: ContentType
 ): string {
   const hashtags = [...new Set(tags)]
     .filter(t => /^[\u0600-\u06FFa-zA-Z]+$/.test(t.replace(/_/g, "")))
     .slice(0, 15)
     .map(t => `#${t.startsWith("#") ? t.slice(1) : t}`)
     .join(" ");
+
+  if (contentType === ContentType.POSTER) {
+    return aiDescription;
+  }
 
   return [
     aiDescription,
@@ -58,15 +63,28 @@ function buildDescription(
     "📜 نص الآيات:",
     combinedText,
     "",
+    "🔔 اشترك في القناة لتصلك تلاوات جديدة يومياً",
+    "",
     hashtags,
   ].join("\n");
 }
 
 function buildMessages(surahName: string, fromAyah: number, toAyah: number, combinedText: string, contentType: ContentType) {
-  return [
-    {
-      role: "system" as const,
-      content: `أنت مساعد متخصص فإنتاج محتوى ديني محترم لقناة يوتيوب قرآنية.
+  const isPoster = contentType === ContentType.POSTER;
+
+  const systemContent = isPoster
+    ? `أنت مساعد متخصص في إنتاج محتوى ديني لصفحة فيسبوك قرآنية.
+المطلوب: caption مؤثر وجذاب لمنشور مصور (poster) فيه آيات قرآنية على خلفية جذابة.
+
+ال caption خاص يكون:
+- يعبر عن معنى الآيات بأسلوب بليغ وجذاب
+- يلامس القلب ويحفز على التفاعل (مشاركة، حفظ، تدبر)
+- محترم وليس clickbait
+- ينتهي بدعوة للتفاعل (مثلاً: "شارك الآية لتكون في ميزان حسناتك")
+
+الهاشتاغات خاصها تكون متنوعة (8-12 كلمة): عامة (#قرآن, #إسلام) ومتخصصة (#اسم_السورة, #الموضوع).
+أجب فقط JSON صحيح بدون markdown.`
+    : `أنت مساعد متخصص فإنتاج محتوى ديني محترم لقناة يوتيوب قرآنية.
 ممنوع أي عنوان فيه exaggeration أو clickbait يخالف الاحترام الديني.
 
 العنوان خاص يكون مؤثر عاطفياً ويلامس القلب — يستهدف المشاعر (طمأنينة، سكينة، راحة، خوف، رجاء، تذكير، أمل).
@@ -76,11 +94,20 @@ function buildMessages(surahName: string, fromAyah: number, toAyah: number, comb
 
 الهاشتاغات خاصها تكون متعلقة بالقرآن/الإسلام/السورة المحددة (12-20 كلمة).
 نوّع بين هاشتاغات عامة (#قرآن_كريم, #تلاوة, #اسلام) ومتخصصة (#اسم_السورة, #رقم_الآية, #الموضوع).
-أجب فقط JSON صحيح بدون أي markdown.`,
-    },
-    {
-      role: "user" as const,
-      content: `السورة: ${surahName}، الآيات من ${fromAyah} إلى ${toAyah}
+أجب فقط JSON صحيح بدون أي markdown.`;
+
+  const userContent = isPoster
+    ? `السورة: ${surahName}، الآيات من ${fromAyah} إلى ${toAyah}
+نص الآيات: "${combinedText}"
+نوع المحتوى: منشور مصور (بوستر) فيسبوكي
+
+أعطني JSON:
+{
+  "title": "ملخص جذاب للآيات (أقل من 50 حرف)",
+  "description": "caption مؤثر وجذاب للمنشور (فقرة قصيرة)",
+  "tags": ["هاشتاغ1", "هاشتاغ2", "..."]
+}`
+    : `السورة: ${surahName}، الآيات من ${fromAyah} إلى ${toAyah}
 نص الآيات: "${combinedText}"
 نوع المحتوى: ${contentType === ContentType.SHORT ? "Short (فيديو قصير)" : "فيديو طويل"}
 
@@ -89,8 +116,11 @@ function buildMessages(surahName: string, fromAyah: number, toAyah: number, comb
   "title": "عنوان مؤثر عاطفياً أقل من 70 حرف",
   "description": "فقرة واحدة تصف فوائد/عبر/دروس هذه الآيات (بدون قائمة، بدون إيموجي)",
   "tags": ["كلمة1", "كلمة2", "..."]
-}`,
-    },
+}`;
+
+  return [
+    { role: "system" as const, content: systemContent },
+    { role: "user" as const, content: userContent },
   ];
 }
 
@@ -107,10 +137,6 @@ function parseResponse(rawText: string, surahName: string, fromAyah: number, toA
   }
 }
 
-/**
- * كيولّد عنوان/وصف/هاشتاغات مناسبة للفيديو عبر OpenRouter
- * كيجرب الموديلات المجانية بالترتيب، إذا فشل أول ينتقل للتالي
- */
 export async function generateMetadata(
   verses: VerseData[],
   contentType: ContentType,
@@ -147,16 +173,11 @@ export async function generateMetadata(
     console.error("🚫 كل الموديلات المجانية فشلت، آخر خطأ:", lastError);
   }
 
-  const description = buildDescription(aiDescription, reciterArabic, surahName, fromAyah, toAyah, combinedText, tags);
+  const description = buildDescription(aiDescription, reciterArabic, surahName, fromAyah, toAyah, combinedText, tags, contentType);
 
   return { title: aiTitle, description, tags };
 }
 
-/**
- * كيرجع أقرب وقت "ذهبي" قادم من الآن، بصيغة ISO جاهزة للجدولة على يوتيوب.
- * كيستعمل البيانات المحللة من القناة (أحسن أوقات النشر حسب المشاهدات)،
- * وإلا كيرجع للقيم الافتراضية.
- */
 export async function getNextOptimalPublishTime(contentType: ContentType): Promise<string> {
   const { getOptimalHours } = await import("./statsCollector");
   const optimal = await getOptimalHours();
@@ -173,24 +194,13 @@ export async function getNextOptimalPublishTime(contentType: ContentType): Promi
   return candidates[0].toISOString();
 }
 
-/**
- * كيقرر واش يستحق نزيدو محتوى إضافي اليوم بناءً على معدل التفاعل الأخير،
- * مع احترام صارم لسقف الـ Quota (الفحص الأول قبل أي قرار إبداعي)
- *
- * منطق القرار:
- * - نحسبو متوسط engagementScore لآخر 5 فيديوهات منشورة
- * - إذا أعلى من threshold معين (يدل على جمهور متفاعل اليوم) => نزيدو Short واحد إضافي
- * - فحص الـ quota المتبقي هو شرط حتمي أول، ماشي اختياري
- */
 export async function shouldGenerateExtraContent(): Promise<{
   shouldGenerate: boolean;
   reasoning: string;
 }> {
   const remainingUploads = await remainingVideoUploadsToday();
   if (remainingUploads <= 1) {
-    // نخليو على الأقل رفعة واحدة محجوزة للمحتوى المجدول العادي
-    const reasoning =
-      "لا يوجد مجال كافي فالـ Quota اليوم — تم تأجيل أي زيادة لليوم الجاي";
+    const reasoning = "لا يوجد مجال كافي فالـ Quota اليوم — تم تأجيل أي زيادة لليوم الجاي";
     await logDecision("EXTRA_SHORT_TRIGGERED", reasoning, { remainingUploads });
     return { shouldGenerate: false, reasoning };
   }
@@ -211,7 +221,6 @@ export async function shouldGenerateExtraContent(): Promise<{
     recentContent.reduce((sum, c) => sum + c.engagementScore, 0) /
     recentContent.length;
 
-  // threshold تجريبي مبدئي — يُفترض تعديله بعد جمع بيانات حقيقية من القناة
   const ENGAGEMENT_THRESHOLD = 0.05;
   const shouldGenerate = avgEngagement >= ENGAGEMENT_THRESHOLD;
 

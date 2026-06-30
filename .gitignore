@@ -2,6 +2,8 @@ node_modules/
 dist/
 .env
 assets/videos/
+output/
+test-output/
 *.log
 nohup.out
 .DS_Store

@@ -12,11 +12,13 @@ const prisma = new PrismaClient();
 export interface OptimalHours {
   SHORT: number[];
   LONG_VIDEO: number[];
+  POSTER: number[];
 }
 
 const DEFAULT_OPTIMAL_HOURS: OptimalHours = {
   SHORT: [12, 17, 20, 4],
   LONG_VIDEO: [17],
+  POSTER: [9],
 };
 
 /**
@@ -80,9 +82,10 @@ export async function analyzeOptimalHours(): Promise<OptimalHours> {
   const result: OptimalHours = {
     SHORT: [...DEFAULT_OPTIMAL_HOURS.SHORT],
     LONG_VIDEO: [...DEFAULT_OPTIMAL_HOURS.LONG_VIDEO],
+    POSTER: [...DEFAULT_OPTIMAL_HOURS.POSTER],
   };
 
-  for (const ct of ["SHORT", "LONG_VIDEO"] as ContentType[]) {
+  for (const ct of ["SHORT", "LONG_VIDEO", "POSTER"] as ContentType[]) {
     const videos = await prisma.publishedContent.findMany({
       where: {
         status: "PUBLISHED",
@@ -157,6 +160,7 @@ export async function getOptimalHours(): Promise<OptimalHours> {
     return {
       SHORT: Array.isArray(data.SHORT) ? (data.SHORT as number[]) : DEFAULT_OPTIMAL_HOURS.SHORT,
       LONG_VIDEO: Array.isArray(data.LONG_VIDEO) ? (data.LONG_VIDEO as number[]) : DEFAULT_OPTIMAL_HOURS.LONG_VIDEO,
+      POSTER: Array.isArray(data.POSTER) ? (data.POSTER as number[]) : DEFAULT_OPTIMAL_HOURS.POSTER,
     };
   }
 

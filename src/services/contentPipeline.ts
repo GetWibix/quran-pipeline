@@ -25,6 +25,7 @@ export interface GeneratedContent {
   reciter: Reciter;
   verses: VerseData[];
   totalDurationSeconds: number;
+  sceneDurations: number[]; // مدة كل مشهد/آية بالثواني — للـ Chapters
 }
 
 const BACKGROUNDS_DIR = path.join(__dirname, "../../assets/backgrounds");
@@ -162,5 +163,6 @@ export async function generateContent(
     reciter,
     verses,
     totalDurationSeconds: totalDuration,
+    sceneDurations: sceneInputs.map((s) => s.durationSeconds),
   };
 }

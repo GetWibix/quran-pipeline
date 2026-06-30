@@ -22,6 +22,12 @@ export interface PlatformRouting {
   threads?: boolean;
 }
 
+export interface PosterJobData {
+  surahName: string;
+  verses: { number: number; text: string }[];
+  caption: string;
+}
+
 export interface ContentGenerationJobData {
   contentType: ContentType;
   isExtra?: boolean;
@@ -29,6 +35,8 @@ export interface ContentGenerationJobData {
   platformRouting?: PlatformRouting;
   /** وقت نشر إجباري (ISO) — يتجاوز getNextOptimalPublishTime */
   forcePublishAt?: string;
+  /** إذا كانت مهمة بوستر بدل فيديو */
+  posterData?: PosterJobData;
 }
 
 export const contentQueue = new Queue<ContentGenerationJobData>(

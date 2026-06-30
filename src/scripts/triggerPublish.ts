@@ -7,13 +7,15 @@
 import { PrismaClient, ContentType } from "@prisma/client";
 import { generateContent } from "../services/contentPipeline";
 import { generateMetadata, getNextOptimalPublishTime } from "../services/decisionAgent";
+import { generateSeoMetadata } from "../services/seoEngine";
+import type { SeoInput } from "../services/seoEngine";
 import { publishVideo } from "../services/youtubePublisher";
 import { publishToAllPlatforms } from "../services/multiPlatformPublisher";
 import { uploadToR2, deleteFromR2 } from "../services/r2Uploader";
 import { notifyPublishSuccess, notifyPublishFailure } from "../services/notifier";
 import { cleanupWorkDir } from "../services/videoRenderer";
 import { RECITER_ARABIC_NAMES, RECITERS, RECITER_WEIGHTS } from "../services/audioFetcher";
-import { unlink } from "fs/promises";
+import { rename, unlink } from "fs/promises";
 
 const prisma = new PrismaClient();
 const contentType = (process.argv[2]?.toUpperCase() === "LONG_VIDEO" ? "LONG_VIDEO" : "SHORT") as ContentType;
@@ -47,7 +49,55 @@ async function main() {
   console.log("━".repeat(50));
   console.log("🤖 [2/5] توليد الميتاداتا (AI)...");
   const metadata = await generateMetadata(generated.verses, contentType, reciterArabic, generated.reciter);
-  console.log(`   ✅ العنوان: ${metadata.title}`);
+  console.log(`   ✅ العنوان (AI): ${metadata.title}`);
+
+  // تحسين SEO
+  console.log("━".repeat(50));
+  console.log("🔍 [2.5/5] تحسين SEO...");
+  const surahName = generated.verses[0].surahNameArabic;
+  const verseText = generated.verses.map((v) => v.textArabic).join(" ");
+  const seoInput: SeoInput = {
+    surahName,
+    surahNumber: generated.surahNumber,
+    fromAyah: generated.fromAyah,
+    toAyah: generated.toAyah,
+    reciter: generated.reciter,
+    reciterArabic,
+    contentType,
+    verseText,
+    aiHook: metadata.title,
+    aiDescription: metadata.description,
+    aiTags: metadata.tags,
+  };
+  const seoOutput = await generateSeoMetadata(seoInput);
+  console.log(`   ✅ العنوان (SEO): ${seoOutput.title}`);
+
+  // إعادة تسمية الفيديو
+  const safeName = seoOutput.title
+    .replace(/[<>:"/\\|?*]/g, "")
+    .replace(/\s+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/[^\w_\u0600-\u06FF-]/g, "")
+    .slice(0, 100)
+    .replace(/_+$/, "");
+  const newVideoPath = generated.videoPath.replace(/[^/\\]+\.mp4$/, `${safeName || "video"}.mp4`);
+  if (newVideoPath !== generated.videoPath) {
+    await rename(generated.videoPath, newVideoPath);
+    generated.videoPath = newVideoPath;
+    console.log(`   ✅ أعيدت التسمية: ${safeName}.mp4`);
+  }
+
+  // إضافة Chapters للفيديوهات الطويلة
+  let finalDescription = seoOutput.description;
+  if (contentType === ContentType.LONG_VIDEO && generated.sceneDurations.length > 1) {
+    const chapters = generated.verses.map((v, i) => {
+      const startSec = generated.sceneDurations.slice(0, i).reduce((sum, d) => sum + d, 0);
+      const mm = Math.floor(startSec / 60);
+      const ss = Math.floor(startSec % 60);
+      return `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")} - الآية ${v.ayahNumber}`;
+    }).join("\n");
+    finalDescription = `${seoOutput.description}\n\n${chapters}`;
+  }
 
   console.log("━".repeat(50));
   console.log("⏰ [3/5] تحديد وقت النشر الأمثل...");
@@ -64,10 +114,11 @@ async function main() {
       toAyah: generated.toAyah,
       reciter: generated.reciter,
       videoFilePath: generated.videoPath,
-      title: metadata.title,
-      description: metadata.description,
+      title: seoOutput.title,
+      description: finalDescription,
       status: "READY",
       scheduledAt: new Date(scheduledAt),
+      titlePatternId: seoOutput.patternId,
     },
   });
   console.log(`   ✅ السجل: ${record.id}`);
@@ -76,31 +127,40 @@ async function main() {
   console.log("🌐 [5/5] رفع على يوتيوب...");
   const result = await publishVideo({
     videoFilePath: generated.videoPath,
-    title: metadata.title,
-    description: metadata.description,
-    tags: metadata.tags,
+    title: seoOutput.title,
+    description: finalDescription,
+    tags: seoOutput.tags,
     isShort: contentType === ContentType.SHORT,
     scheduledPublishTime: scheduledAt,
   });
 
   console.log(`   ✅ يوتيوب: ${result.videoUrl}`);
 
-  // نشر على باقي المنصات — نرفع الفيديو لـ R2 عشان Instagram + Threads
-  const publicVideoUrl = await uploadToR2(generated.videoPath);
+  // نشر على باقي المنصات
+  let publicVideoUrl: string | undefined;
+  let multiResult: Awaited<ReturnType<typeof publishToAllPlatforms>> = {
+    youtube: null, facebook: null, instagram: null, threads: null, errors: [],
+  };
 
-  const multiResult = await publishToAllPlatforms(
-    {
-      videoFilePath: generated.videoPath,
-      title: metadata.title,
-      description: metadata.description,
-      tags: metadata.tags,
-      isShort: contentType === ContentType.SHORT,
-      videoUrl: publicVideoUrl,
-    },
-    { youtube: false, facebook: true, instagram: true, threads: true },
-    result.youtubeVideoId,
-    result.videoUrl
-  );
+  if (process.env.CF_ACCOUNT_ID && process.env.CF_R2_TOKEN) {
+    publicVideoUrl = await uploadToR2(generated.videoPath);
+
+    multiResult = await publishToAllPlatforms(
+      {
+        videoFilePath: generated.videoPath,
+        title: seoOutput.title,
+        description: finalDescription,
+        tags: seoOutput.tags,
+        isShort: contentType === ContentType.SHORT,
+        videoUrl: publicVideoUrl,
+      },
+      { youtube: false, facebook: true, instagram: true, threads: true },
+      result.youtubeVideoId,
+      result.videoUrl
+    );
+  } else {
+    console.log("⏭️ R2 مش مهيأ — تخطي باقي المنصات");
+  }
 
   await prisma.publishedContent.update({
     where: { id: record.id },
@@ -122,9 +182,9 @@ async function main() {
   ].filter(Boolean).join("\n");
 
   await notifyPublishSuccess({
-    title: metadata.title,
+    title: seoOutput.title,
     videoUrl: result.videoUrl,
-    surahName: generated.verses[0].surahNameArabic,
+    surahName,
     fromAyah: generated.fromAyah,
     toAyah: generated.toAyah,
     contentType,
@@ -142,10 +202,10 @@ async function main() {
   if (multiResult.instagram?.instagramMediaId) console.log(`📸 انستغرام: ${multiResult.instagram.postUrl}`);
   if (multiResult.threads?.threadsPostId) console.log(`🧵 تريدز: ${multiResult.threads.postUrl}`);
 
-  // تنظيف بعد ما تخلص جميع المنصات
+  // تنظيف
   await cleanupWorkDir(generated.workDir);
   await unlink(generated.videoPath).catch(() => {});
-  if (publicVideoUrl) await deleteFromR2(generated.videoPath);
+  if (publicVideoUrl) await deleteFromR2(generated.videoPath).catch(() => {});
 
   await prisma.$disconnect();
   process.exit(0);

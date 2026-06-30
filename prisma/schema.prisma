@@ -13,6 +13,7 @@ datasource db {
 enum ContentType {
   SHORT
   LONG_VIDEO
+  POSTER
 }
 
 enum PublishStatus {
