@@ -136,31 +136,31 @@ async function main() {
 
   console.log(`   ✅ يوتيوب: ${result.videoUrl}`);
 
-  // نشر على باقي المنصات
-  let publicVideoUrl: string | undefined;
+  // نشر على فيسبوك (مباشر بدون R2)
   let multiResult: Awaited<ReturnType<typeof publishToAllPlatforms>> = {
     youtube: null, facebook: null, instagram: null, threads: null, errors: [],
   };
 
-  if (process.env.CF_ACCOUNT_ID && process.env.CF_R2_TOKEN) {
-    publicVideoUrl = await uploadToR2(generated.videoPath);
+  const r2Configured = !!(process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY && process.env.R2_SECRET_KEY);
+  let publicVideoUrl: string | undefined;
 
-    multiResult = await publishToAllPlatforms(
-      {
-        videoFilePath: generated.videoPath,
-        title: seoOutput.title,
-        description: finalDescription,
-        tags: seoOutput.tags,
-        isShort: contentType === ContentType.SHORT,
-        videoUrl: publicVideoUrl,
-      },
-      { youtube: false, facebook: true, instagram: true, threads: true },
-      result.youtubeVideoId,
-      result.videoUrl
-    );
-  } else {
-    console.log("⏭️ R2 مش مهيأ — تخطي باقي المنصات");
+  if (r2Configured) {
+    publicVideoUrl = await uploadToR2(generated.videoPath);
   }
+
+  multiResult = await publishToAllPlatforms(
+    {
+      videoFilePath: generated.videoPath,
+      title: seoOutput.title,
+      description: finalDescription,
+      tags: seoOutput.tags,
+      isShort: contentType === ContentType.SHORT,
+      videoUrl: publicVideoUrl,
+    },
+    { youtube: false, facebook: true, instagram: r2Configured, threads: r2Configured },
+    result.youtubeVideoId,
+    result.videoUrl
+  );
 
   await prisma.publishedContent.update({
     where: { id: record.id },
@@ -205,7 +205,7 @@ async function main() {
   // تنظيف
   await cleanupWorkDir(generated.workDir);
   await unlink(generated.videoPath).catch(() => {});
-  if (publicVideoUrl) await deleteFromR2(generated.videoPath).catch(() => {});
+  if (r2Configured) await deleteFromR2(generated.videoPath).catch(() => {});
 
   await prisma.$disconnect();
   process.exit(0);
