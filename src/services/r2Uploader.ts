@@ -62,12 +62,17 @@ export async function uploadToR2(localPath: string): Promise<string | undefined>
 
   console.log(`☁️  رفع الفيديو إلى R2: ${key}`);
 
-  await s3.send(new PutObjectCommand({
-    Bucket: BUCKET,
-    Key: key,
-    Body: fileBuffer,
-    ContentType: "video/mp4",
-  }));
+  try {
+    await s3.send(new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+      Body: fileBuffer,
+      ContentType: "video/mp4",
+    }));
+  } catch (err) {
+    console.warn(`⚠️ R2: فشل الرفع — ${err instanceof Error ? err.message : String(err)}`);
+    return undefined;
+  }
 
   // نرجع الرابط العام
   if (PUBLIC_URL) {

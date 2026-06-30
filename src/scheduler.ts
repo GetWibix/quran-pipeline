@@ -123,6 +123,36 @@ cron.schedule("0 23 * * *", async () => {
   console.log(`   انستغرام: ${result.instagram.count} فيديو - متوسط التفاعل ${(result.instagram.avgEngagement * 100).toFixed(2)}%`);
 });
 
+// ─── تحديث توكن فيسبوك التلقائي (كل يوم 03:00 — يتحقق داخلياً) ─
+cron.schedule("0 3 * * *", async () => {
+  console.log("🔄 [03:00] فحص صلاحية توكن فيسبوك...");
+
+  // نتجنب import cycle — نستورد مباشرة
+  const { checkTokenHealth, refreshFacebookToken, updateEnvInPlace } =
+    await import("./services/tokenRefresher");
+
+  try {
+    const health = await checkTokenHealth();
+    if (health.shouldRefresh) {
+      console.log(`⚠️ التوكن على وشك الانتهاء (باقي ${health.daysRemaining} يوم) — جاري التحديث...`);
+      if (!process.env.META_USER_ACCESS_TOKEN) {
+        console.warn("⚠️ META_USER_ACCESS_TOKEN غير موجود — لا يمكن التحديث التلقائي");
+        return;
+      }
+      const result = await refreshFacebookToken();
+      await updateEnvInPlace({
+        META_USER_ACCESS_TOKEN: result.userToken,
+        META_PAGE_ACCESS_TOKEN: result.pageToken,
+      });
+      console.log("✅ تم تحديث توكن فيسبوك تلقائياً");
+    } else {
+      console.log(`✅ توكن فيسبوك سليم (باقي ${health.daysRemaining} يوم)`);
+    }
+  } catch (err) {
+    console.error(`❌ فشل تحديث توكن فيسبوك: ${err instanceof Error ? err.message : String(err)}`);
+  }
+});
+
 // ─── ملخص يومي (22:00) ─────────────────────────────────────────
 cron.schedule("0 22 * * *", async () => {
   const today = new Date();
