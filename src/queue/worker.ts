@@ -210,6 +210,9 @@ async function processJob(job: Job<ContentGenerationJobData>) {
         tags: seoOutput.tags,
         isShort: contentType === ContentType.SHORT,
         scheduledPublishTime: scheduledAt,
+        surahName,
+        fromAyah: generated.fromAyah,
+        toAyah: generated.toAyah,
       });
       youtubeVideoId = result.youtubeVideoId;
       youtubeVideoUrl = result.videoUrl;
@@ -246,6 +249,9 @@ async function processJob(job: Job<ContentGenerationJobData>) {
           tags: seoOutput.tags,
           isShort: contentType === ContentType.SHORT,
           videoUrl: publicVideoUrl,
+          surahName,
+          fromAyah: generated.fromAyah,
+          toAyah: generated.toAyah,
         },
         {
           youtube: routing.youtube,

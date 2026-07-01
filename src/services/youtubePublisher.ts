@@ -11,6 +11,7 @@
 import { google } from "googleapis";
 import { createReadStream } from "fs";
 import { canAfford, recordUsage, QUOTA_COSTS } from "./quotaTracker";
+import { generateComment } from "./commentGenerator";
 
 export interface PublishOptions {
   videoFilePath: string;
@@ -22,6 +23,10 @@ export interface PublishOptions {
   /** وقت النشر المجدول (ISO 8601). إذا undefined، كينشر فوراً (public) */
   scheduledPublishTime?: string;
   privacyStatus?: "private" | "public" | "unlisted";
+  /** سياق الآيات للتعليق التلقائي بالذكاء الاصطناعي */
+  surahName?: string;
+  fromAyah?: number;
+  toAyah?: number;
 }
 
 export interface PublishResult {
@@ -29,7 +34,7 @@ export interface PublishResult {
   videoUrl: string;
 }
 
-const ENGAGEMENT_COMMENTS = [
+const ENGAGEMENT_COMMENTS_FALLBACK = [
   "أي آية لمست قلبك اليوم؟ شاركنا برأيك في التعليقات 🕊️",
   "ما هو الدرس الذي أخذته من هذه الآيات؟ اكتبه في تعليق 🖋️",
   "سبحان الله.. تأمل في معاني هذه الآيات ودعنا نعرف أيها أثّر فيك 🌙",
@@ -120,7 +125,7 @@ export async function publishVideo(
 
   // 4. إضافة تعليق تلقائي لزيادة التفاعل (مع تأخير لانتظار معالجة يوتيوب)
   await new Promise((r) => setTimeout(r, 15000));
-  await addEngagementComment(videoId, opts.title);
+  await addEngagementComment(videoId, opts.title, opts.surahName, opts.fromAyah, opts.toAyah);
 
   return {
     youtubeVideoId: videoId,
@@ -133,11 +138,17 @@ export async function publishVideo(
  * الفكرة: التعليقات ترفع الفيديو في الاقتراحات حسب خوارزمية يوتيوب
  * هذا يتطلب صلاحية youtube.force-ssl في OAuth
  */
-async function addEngagementComment(videoId: string, title: string): Promise<void> {
+async function addEngagementComment(videoId: string, title: string, surahName?: string, fromAyah?: number, toAyah?: number): Promise<void> {
   try {
+    let comment: string;
+    if (surahName && fromAyah) {
+      comment = await generateComment(title, surahName, fromAyah, toAyah ?? fromAyah);
+    } else {
+      comment = ENGAGEMENT_COMMENTS_FALLBACK[Math.floor(Math.random() * ENGAGEMENT_COMMENTS_FALLBACK.length)];
+    }
+
     const auth = getOAuthClient();
     const youtube = google.youtube({ version: "v3", auth });
-    const comment = ENGAGEMENT_COMMENTS[Math.floor(Math.random() * ENGAGEMENT_COMMENTS.length)];
 
     await youtube.commentThreads.insert({
       part: ["snippet"],
@@ -153,9 +164,9 @@ async function addEngagementComment(videoId: string, title: string): Promise<voi
       },
     });
 
-    console.log(`💬 تم إضافة تعليق تلقائي على الفيديو ${videoId}`);
+    console.log(`💬 تعليق AI على ${videoId}: ${comment.slice(0, 60)}...`);
   } catch (err) {
-    console.warn(`⚠️ تعذر إضافة التعليق التلقائي (قد تحتاج صلاحية youtube.force-ssl):`, err instanceof Error ? err.message : String(err));
+    console.warn(`⚠️ تعذر إضافة التعليق التلقائي:`, err instanceof Error ? err.message : String(err));
   }
 }
 

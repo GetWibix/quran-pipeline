@@ -9,6 +9,9 @@ export interface MultiPlatformPublishOptions {
   tags: string[];
   isShort: boolean;
   videoUrl?: string;
+  surahName?: string;
+  fromAyah?: number;
+  toAyah?: number;
 }
 
 export interface PlatformRouting {
@@ -51,6 +54,9 @@ export async function publishToAllPlatforms(
         description: opts.description,
         tags: opts.tags,
         isShort: opts.isShort,
+        surahName: opts.surahName,
+        fromAyah: opts.fromAyah,
+        toAyah: opts.toAyah,
       })
         .then((r) => { result.facebook = r; })
         .catch((e) => {

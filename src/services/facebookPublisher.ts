@@ -1,5 +1,6 @@
 import { readFile } from "fs/promises";
 import { request as httpsRequest } from "https";
+import { generateComment } from "./commentGenerator";
 
 export interface FacebookPublishOptions {
   videoFilePath: string;
@@ -7,6 +8,9 @@ export interface FacebookPublishOptions {
   description: string;
   tags: string[];
   isShort: boolean;
+  surahName?: string;
+  fromAyah?: number;
+  toAyah?: number;
 }
 
 export interface FacebookPublishResult {
@@ -17,14 +21,6 @@ export interface FacebookPublishResult {
 const PAGE_ID = process.env.META_PAGE_ID ?? "";
 const ACCESS_TOKEN = process.env.META_PAGE_ACCESS_TOKEN ?? "";
 const API_VERSION = "v22.0";
-
-const ENGAGEMENT_COMMENTS = [
-  "اللهم اجعل هذه التلاوة نوراً في قلوبنا وشفاءً لصدورنا 🤲 شاركنا الأجر مع غيرك 💚",
-  "سبحان الله.. آية تتلى وقلب يخشع. ادعو لنا وشارك الفيديو لتعم الفائدة 🕊️",
-  "لا تنسوا مشاركة هذا الفيديو مع أحبابكم لتعم البركة 🤲 جعلها الله في ميزان حسناتكم",
-  "اللهم اجعل القرآن ربيع قلوبنا ونور صدورنا 🌙 انشر تؤجر 🤲",
-  "ذكر الله يطمئن القلوب 💚 شارك مع من تحب لتعم الطمأنينة",
-];
 
 function isConfigured(): boolean {
   return Boolean(PAGE_ID && ACCESS_TOKEN);
@@ -58,13 +54,26 @@ function httpsPost(url: string): Promise<any> {
   });
 }
 
-async function addEngagementComment(videoId: string): Promise<void> {
+async function addEngagementComment(videoId: string, opts?: FacebookPublishOptions): Promise<void> {
   try {
-    const comment = ENGAGEMENT_COMMENTS[Math.floor(Math.random() * ENGAGEMENT_COMMENTS.length)];
+    let comment: string;
+    if (opts?.surahName && opts?.fromAyah) {
+      comment = await generateComment(opts.title, opts.surahName, opts.fromAyah, opts.toAyah ?? opts.fromAyah);
+    } else {
+      const fallback = [
+        "اللهم اجعل هذه التلاوة نوراً في قلوبنا 🤲 شارك الأجر مع غيرك 💚",
+        "سبحان الله.. آية تتلى وقلب يخشع. ادعو لنا 🕊️",
+        "ذكر الله يطمئن القلوب 💚 شارك مع من تحب",
+        "اللهم اجعل القرآن ربيع قلوبنا 🌙 انشر تؤجر 🤲",
+        "لا تنسوا مشاركة الفيديو مع أحبابكم 🤲 جعلها الله في ميزان حسناتكم",
+      ];
+      comment = fallback[Math.floor(Math.random() * fallback.length)];
+    }
+
     const url = `https://graph.facebook.com/${API_VERSION}/${videoId}/comments?message=${encodeURIComponent(comment)}&access_token=${ACCESS_TOKEN}`;
     const data = await httpsPost(url);
     if (data.error) console.warn(`⚠️ فشل تعليق فيسبوك التلقائي: ${data.error.message}`);
-    else console.log(`💬 تم إضافة تعليق تلقائي على فيسبوك ${videoId}`);
+    else console.log(`💬 تعليق AI على فيسبوك ${videoId}: ${comment.slice(0, 60)}...`);
   } catch (err) {
     console.warn(`⚠️ تعذر إضافة التعليق التلقائي على فيسبوك:`, err instanceof Error ? err.message : String(err));
   }
@@ -148,7 +157,7 @@ export async function publishToFacebook(opts: FacebookPublishOptions): Promise<F
   const videoId = String(data.id ?? "");
 
   if (videoId) {
-    addEngagementComment(videoId);
+    addEngagementComment(videoId, opts);
   }
 
   return {

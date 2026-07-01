@@ -132,6 +132,9 @@ async function main() {
     tags: seoOutput.tags,
     isShort: contentType === ContentType.SHORT,
     scheduledPublishTime: scheduledAt,
+    surahName,
+    fromAyah: generated.fromAyah,
+    toAyah: generated.toAyah,
   });
 
   console.log(`   ✅ يوتيوب: ${result.videoUrl}`);
@@ -156,6 +159,9 @@ async function main() {
       tags: seoOutput.tags,
       isShort: contentType === ContentType.SHORT,
       videoUrl: publicVideoUrl,
+      surahName,
+      fromAyah: generated.fromAyah,
+      toAyah: generated.toAyah,
     },
     { youtube: false, facebook: true, instagram: r2Configured, threads: r2Configured },
     result.youtubeVideoId,
