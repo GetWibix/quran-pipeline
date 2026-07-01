@@ -1,4 +1,5 @@
 import { readFile } from "fs/promises";
+import { request as httpsRequest } from "https";
 
 export interface FacebookPublishOptions {
   videoFilePath: string;
@@ -51,6 +52,61 @@ async function addEngagementComment(videoId: string): Promise<void> {
   }
 }
 
+function buildMultipartBody(
+  videoBuffer: Buffer,
+  fields: Record<string, string>,
+  boundary: string
+): Buffer {
+  const parts: Buffer[] = [];
+
+  for (const [key, value] of Object.entries(fields)) {
+    parts.push(Buffer.from(
+      `--${boundary}\r\nContent-Disposition: form-data; name="${key}"\r\n\r\n${value}\r\n`,
+      "utf-8"
+    ));
+  }
+
+  parts.push(Buffer.from(
+    `--${boundary}\r\nContent-Disposition: form-data; name="source"; filename="video.mp4"\r\nContent-Type: video/mp4\r\n\r\n`,
+    "utf-8"
+  ));
+  parts.push(videoBuffer);
+  parts.push(Buffer.from(`\r\n--${boundary}--\r\n`, "utf-8"));
+
+  return Buffer.concat(parts);
+}
+
+function httpsPostMultipart(url: string, body: Buffer, boundary: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const options = {
+      hostname: parsed.hostname,
+      path: parsed.pathname + parsed.search,
+      method: "POST",
+      headers: {
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+        "Content-Length": body.length.toString(),
+      },
+    };
+
+    const req = httpsRequest(options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => {
+        try {
+          resolve(JSON.parse(data));
+        } catch {
+          reject(new Error(`Facebook: استجابة غير متوقعة — ${data}`));
+        }
+      });
+    });
+
+    req.on("error", reject);
+    req.write(body);
+    req.end();
+  });
+}
+
 export async function publishToFacebook(opts: FacebookPublishOptions): Promise<FacebookPublishResult> {
   if (!isConfigured()) {
     console.warn("⚠️ Facebook: META_PAGE_ID أو META_PAGE_ACCESS_TOKEN غير موجودين — تخطي");
@@ -58,15 +114,16 @@ export async function publishToFacebook(opts: FacebookPublishOptions): Promise<F
   }
 
   const videoBuffer = await readFile(opts.videoFilePath);
-  const form = new FormData();
-  form.append("source", new Blob([videoBuffer]), "video.mp4");
-  form.append("description", buildDescription(opts.description, opts.tags));
-  form.append("title", opts.title);
-  form.append("published", "true");
+  const boundary = `----FB${Date.now()}${Math.random().toString(36).slice(2)}`;
+
+  const body = buildMultipartBody(videoBuffer, {
+    description: buildDescription(opts.description, opts.tags),
+    published: "true",
+  }, boundary);
 
   const url = `https://graph.facebook.com/${API_VERSION}/${PAGE_ID}/videos?access_token=${ACCESS_TOKEN}`;
-  const res = await fetch(url, { method: "POST", body: form });
-  const data = await res.json() as any;
+
+  const data = await httpsPostMultipart(url, body, boundary);
 
   if (data.error) throw new Error(`Facebook API: ${data.error.message}`);
 
