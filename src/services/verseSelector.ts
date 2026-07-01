@@ -7,6 +7,7 @@
 import OpenAI from "openai";
 import { PrismaClient, ContentType } from "@prisma/client";
 import { getSurahMeta, getVerse } from "./verseFetcher";
+import { getFreeModels } from "./modelRegistry";
 
 const prisma = new PrismaClient();
 const client = new OpenAI({
@@ -28,12 +29,7 @@ export interface SelectedRange {
   toAyah: number;
 }
 
-const FREE_MODELS = [
-  "openai/gpt-oss-120b:free",
-  "nvidia/nemotron-3-ultra-550b-a55b:free",
-  "nex-agi/nex-n2-pro:free",
-  "poolside/laguna-m.1:free",
-];
+const FREE_MODELS = getFreeModels();
 
 async function aiSelectRange(
   currentSurah: number,

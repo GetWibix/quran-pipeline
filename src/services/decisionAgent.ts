@@ -10,6 +10,7 @@ import OpenAI from "openai";
 import { PrismaClient, ContentType } from "@prisma/client";
 import { VerseData } from "./verseFetcher";
 import { remainingVideoUploadsToday } from "./quotaTracker";
+import { getFreeModels } from "./modelRegistry";
 
 const prisma = new PrismaClient();
 const client = new OpenAI({
@@ -21,12 +22,7 @@ const client = new OpenAI({
   },
 });
 
-const FREE_MODELS = [
-  "openai/gpt-oss-120b:free",
-  "nvidia/nemotron-3-ultra-550b-a55b:free",
-  "nex-agi/nex-n2-pro:free",
-  "poolside/laguna-m.1:free",
-];
+const FREE_MODELS = getFreeModels();
 
 export interface GeneratedMetadata {
   title: string;

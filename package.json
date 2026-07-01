@@ -17,6 +17,7 @@
     "setup:verify": "ts-node src/scripts/setupPlatforms.ts --verify",
     "e2e": "node dist/scripts/e2eTest.js",
     "publish": "node dist/scripts/triggerPublish.js",
+    "refresh-models": "npx tsx src/scripts/refreshModels.ts",
     "test": "echo \"لا يوجد اختبارات بعد\" && exit 0"
   },
   "keywords": [

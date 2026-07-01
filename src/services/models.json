@@ -1,0 +1,32 @@
+[
+  {
+    "id": "google/gemma-4-31b-it:free",
+    "score": 76,
+    "testedAt": "2026-07-01T12:01:37.099Z"
+  },
+  {
+    "id": "nvidia/nemotron-3-nano-30b-a3b:free",
+    "score": 70,
+    "testedAt": "2026-07-01T12:01:37.100Z"
+  },
+  {
+    "id": "nvidia/nemotron-3-super-120b-a12b:free",
+    "score": 65,
+    "testedAt": "2026-07-01T12:01:37.100Z"
+  },
+  {
+    "id": "nvidia/nemotron-nano-12b-v2-vl:free",
+    "score": 64,
+    "testedAt": "2026-07-01T12:01:37.100Z"
+  },
+  {
+    "id": "liquid/lfm-2.5-1.2b-instruct:free",
+    "score": 60,
+    "testedAt": "2026-07-01T12:01:37.100Z"
+  },
+  {
+    "id": "cohere/north-mini-code:free",
+    "score": 34,
+    "testedAt": "2026-07-01T12:01:37.100Z"
+  }
+]
