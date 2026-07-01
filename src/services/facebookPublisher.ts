@@ -39,12 +39,30 @@ function buildDescription(description: string, tags: string[]): string {
   return `${description}\n\n${hashtags}`;
 }
 
+function httpsPost(url: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(url);
+    const options = {
+      hostname: parsed.hostname,
+      path: parsed.pathname + parsed.search,
+      method: "POST",
+      headers: { "Content-Length": "0" },
+    };
+    const req = httpsRequest(options, (res) => {
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => { try { resolve(JSON.parse(data)); } catch { reject(new Error(data)); } });
+    });
+    req.on("error", reject);
+    req.end();
+  });
+}
+
 async function addEngagementComment(videoId: string): Promise<void> {
   try {
     const comment = ENGAGEMENT_COMMENTS[Math.floor(Math.random() * ENGAGEMENT_COMMENTS.length)];
     const url = `https://graph.facebook.com/${API_VERSION}/${videoId}/comments?message=${encodeURIComponent(comment)}&access_token=${ACCESS_TOKEN}`;
-    const res = await fetch(url, { method: "POST" });
-    const data = await res.json() as any;
+    const data = await httpsPost(url);
     if (data.error) console.warn(`⚠️ فشل تعليق فيسبوك التلقائي: ${data.error.message}`);
     else console.log(`💬 تم إضافة تعليق تلقائي على فيسبوك ${videoId}`);
   } catch (err) {
