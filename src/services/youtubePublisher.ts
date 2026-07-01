@@ -118,7 +118,8 @@ export async function publishVideo(
     }
   }
 
-  // 4. إضافة تعليق تلقائي لزيادة التفاعل
+  // 4. إضافة تعليق تلقائي لزيادة التفاعل (مع تأخير لانتظار معالجة يوتيوب)
+  await new Promise((r) => setTimeout(r, 15000));
   await addEngagementComment(videoId, opts.title);
 
   return {
