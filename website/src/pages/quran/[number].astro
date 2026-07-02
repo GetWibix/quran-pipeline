@@ -41,14 +41,13 @@ const breadcrumbSchema = {
 const ayahsRes = await fetch(`https://api.alquran.cloud/v1/surah/${surah.number}`);
 const ayahsData = await ayahsRes.json();
 const ayahs = ayahsData.data.ayahs;
-const ayahsJson = JSON.stringify(ayahs);
 ---
 
 <BaseLayout title={surah.name} description={`سورة ${surah.name} - ${surah.numberOfAyahs} آية`} canonical={`https://quran.waxbix.com/quran/${surah.number}`}>
   <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
   <Header />
 
-  <section class="pt-32 pb-16 relative min-h-screen">
+  <section id="main-content" class="pt-32 pb-16 relative min-h-screen">
     <div class="hero-glow"></div>
     <div class="max-w-4xl mx-auto px-4">
       <a href="/quran" class="text-primary hover:text-secondary transition-colors mb-6 inline-block">← العودة إلى السور</a>
@@ -65,14 +64,13 @@ const ayahsJson = JSON.stringify(ayahs);
             <div class="text-text-muted text-xs mb-2">الآية {ayah.numberInSurah}</div>
             <div class="arabic-verse mb-3">{ayah.text}</div>
             <button
-              onclick={`playAudio(${ayah.numberInSurah})`}
-              class="text-primary hover:text-secondary transition-colors text-sm"
-              id={`play-btn-${ayah.numberInSurah}`}
+              data-ayah={ayah.numberInSurah}
+              class="play-btn text-primary hover:text-secondary transition-colors text-sm"
               aria-label={`استماع للآية ${ayah.numberInSurah}`}
             >
               <Icon name="play" size={14} class="inline ml-1" aria-hidden="true" /> استمع
             </button>
-            <audio id={`audio-${ayah.numberInSurah}`} preload="none"></audio>
+            <audio data-audio={ayah.numberInSurah} preload="none"></audio>
           </div>
         ))}
       </div>
@@ -83,28 +81,48 @@ const ayahsJson = JSON.stringify(ayahs);
 </BaseLayout>
 
 <script>
-  window.playAudio = function (ayahNumber) {
-    const surahNumber = window.location.pathname.split('/').pop();
-    const audio = document.getElementById(`audio-${ayahNumber}`);
-    const btn = document.getElementById(`play-btn-${ayahNumber}`);
-    const num = surahNumber.toString().padStart(3, '0');
-    const a = ayahNumber.toString().padStart(3, '0');
-    const url = `https://everyayah.com/data/Abdul_Basit_Murattal_64kbps/${num}${a}.mp3`;
+  const surahNumber = window.location.pathname.split('/').pop();
+  let currentAudio = null;
+  let currentBtn = null;
 
-    if (audio.src !== url) {
-      audio.src = url;
-    }
+  document.querySelectorAll('.play-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const ayahNumber = btn.getAttribute('data-ayah');
+      const audio = document.querySelector(`[data-audio="${ayahNumber}"]`);
+      const num = surahNumber.toString().padStart(3, '0');
+      const a = ayahNumber.toString().padStart(3, '0');
+      const url = `https://everyayah.com/data/Abdul_Basit_Murattal_64kbps/${num}${a}.mp3`;
 
-    if (audio.paused) {
-      audio.play();
-      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" width="14" height="14" class="inline ml-1" fill="currentColor"><path d="M48 64C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/></svg> إيقاف';
-    } else {
-      audio.pause();
-      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="14" height="14" class="inline ml-1" fill="currentColor"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg> استمع';
-    }
+      if (currentAudio && currentAudio !== audio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        const prevBtn = currentBtn;
+        if (prevBtn) {
+          prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="14" height="14" class="inline ml-1" fill="currentColor"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg> استمع';
+        }
+      }
 
-    audio.onended = () => {
-      btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="14" height="14" class="inline ml-1" fill="currentColor"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg> استمع';
-    };
-  };
+      if (audio.src !== url) {
+        audio.src = url;
+      }
+
+      if (audio.paused) {
+        audio.play();
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" width="14" height="14" class="inline ml-1" fill="currentColor"><path d="M48 64C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/></svg> إيقاف';
+        currentAudio = audio;
+        currentBtn = btn;
+      } else {
+        audio.pause();
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="14" height="14" class="inline ml-1" fill="currentColor"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg> استمع';
+        currentAudio = null;
+        currentBtn = null;
+      }
+
+      audio.onended = () => {
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="14" height="14" class="inline ml-1" fill="currentColor"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg> استمع';
+        currentAudio = null;
+        currentBtn = null;
+      };
+    });
+  });
 </script>

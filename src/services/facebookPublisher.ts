@@ -11,6 +11,8 @@ export interface FacebookPublishOptions {
   surahName?: string;
   fromAyah?: number;
   toAyah?: number;
+  /** وقت النشر المجدول (ISO 8601). إذا محدد، كينشر مجدول بدل النشر الفوري */
+  scheduledPublishTime?: string;
 }
 
 export interface FacebookPublishResult {
@@ -143,10 +145,16 @@ export async function publishToFacebook(opts: FacebookPublishOptions): Promise<F
   const videoBuffer = await readFile(opts.videoFilePath);
   const boundary = `----FB${Date.now()}${Math.random().toString(36).slice(2)}`;
 
-  const body = buildMultipartBody(videoBuffer, {
+  const fields: Record<string, string> = {
     description: buildDescription(opts.description, opts.tags),
-    published: "true",
-  }, boundary);
+    published: opts.scheduledPublishTime ? "false" : "true",
+  };
+
+  if (opts.scheduledPublishTime) {
+    fields.scheduled_publish_time = String(Math.floor(new Date(opts.scheduledPublishTime).getTime() / 1000));
+  }
+
+  const body = buildMultipartBody(videoBuffer, fields, boundary);
 
   const url = `https://graph.facebook.com/${API_VERSION}/${PAGE_ID}/videos?access_token=${ACCESS_TOKEN}`;
 
@@ -162,6 +170,6 @@ export async function publishToFacebook(opts: FacebookPublishOptions): Promise<F
 
   return {
     facebookVideoId: videoId,
-    postUrl: videoId ? `https://facebook.com/${PAGE_ID}/videos/${videoId}` : "",
+    postUrl: videoId ? `https://www.facebook.com/watch/?v=${videoId}` : "",
   };
 }

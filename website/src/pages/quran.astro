@@ -12,7 +12,7 @@ const surahsJson = JSON.stringify(surahs);
 <BaseLayout title="القرآن الكريم" canonical="https://quran.waxbix.com/quran" description="اقرأ القرآن الكريم واستمع إلى آياته">
   <Header />
 
-  <section class="pt-32 pb-16 relative min-h-screen">
+  <section id="main-content" class="pt-32 pb-16 relative min-h-screen">
     <div class="hero-glow"></div>
     <div class="max-w-6xl mx-auto px-4">
       <h1 class="text-4xl md:text-5xl font-bold text-center mb-4">
@@ -21,11 +21,13 @@ const surahsJson = JSON.stringify(surahs);
       <p class="text-text-secondary text-center text-lg mb-8">اقرأ واستمع إلى آيات القرآن الكريم</p>
 
       <div class="max-w-md mx-auto mb-8">
+        <label for="search-input" class="sr-only">ابحث عن سورة</label>
         <input
           type="text"
           id="search-input"
           placeholder="ابحث عن سورة..."
-          class="w-full px-4 py-3 bg-card border border-border rounded-xl text-white placeholder-text-muted focus:outline-none focus:border-primary transition-colors"
+          class="w-full px-4 py-3 bg-card border border-border rounded-xl text-white placeholder-text-muted focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+          autocomplete="off"
         />
       </div>
 
@@ -56,6 +58,12 @@ const surahsJson = JSON.stringify(surahs);
     const filtered = surahs.filter((s) =>
       s.name.includes(filter) || s.englishName.toLowerCase().includes(filter.toLowerCase())
     );
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div class="col-span-full text-center text-text-muted py-12">لا توجد نتائج للبحث</div>';
+      return;
+    }
+
     container.innerHTML = filtered
       .map(
         (s) => `

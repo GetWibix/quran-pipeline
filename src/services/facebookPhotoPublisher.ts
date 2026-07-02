@@ -135,6 +135,6 @@ export async function publishPhotoToFacebook(
 
   return {
     facebookPhotoId: photoId,
-    postUrl: photoId ? `https://facebook.com/photo.php?fbid=${photoId}` : "",
+    postUrl: photoId ? `https://www.facebook.com/photo/?fbid=${photoId}` : "",
   };
 }

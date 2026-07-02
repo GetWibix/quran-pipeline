@@ -252,6 +252,7 @@ async function processJob(job: Job<ContentGenerationJobData>) {
           surahName,
           fromAyah: generated.fromAyah,
           toAyah: generated.toAyah,
+          scheduledPublishTime: scheduledAt,
         },
         {
           youtube: routing.youtube,
@@ -280,6 +281,12 @@ async function processJob(job: Job<ContentGenerationJobData>) {
     });
 
     // ─── إشعار Telegram ──────────────────────────────────────
+    const mainLink = youtubeVideoUrl
+      ?? multiResult.facebook?.postUrl
+      ?? multiResult.instagram?.postUrl
+      ?? multiResult.threads?.postUrl
+      ?? "";
+
     const publishedPlatforms = [
       youtubeVideoUrl && `🎬 يوتيوب: ${youtubeVideoUrl}`,
       multiResult.facebook?.facebookVideoId && `📘 فيسبوك: ${multiResult.facebook.postUrl}`,
@@ -289,7 +296,7 @@ async function processJob(job: Job<ContentGenerationJobData>) {
 
     await notifyPublishSuccess({
       title: seoOutput.title,
-      videoUrl: youtubeVideoUrl ?? "",
+      videoUrl: mainLink,
       surahName,
       fromAyah: generated.fromAyah,
       toAyah: generated.toAyah,

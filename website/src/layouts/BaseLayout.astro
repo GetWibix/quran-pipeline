@@ -32,12 +32,14 @@ const canonicalUrl = canonical || siteUrl;
     <link rel="alternate" type="application/rss+xml" title="NOR Quran" href="/rss.xml" />
     <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
 
-    <!-- Preconnect to external origins -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
     <link rel="dns-prefetch" href="https://everyayah.com" />
     <link rel="dns-prefetch" href="https://api.alquran.cloud" />
+
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@300;400;500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@300;400;500;600;700;800&display=swap" media="print" onload="this.media='all'" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
@@ -95,7 +97,6 @@ const canonicalUrl = canonical || siteUrl;
       }
     `} />
 
-    <!-- JSON-LD: SoftwareApplication (homepage only) -->
     {canonicalUrl === siteUrl && (
       <script type="application/ld+json" set:html={`
         {
@@ -120,6 +121,9 @@ const canonicalUrl = canonical || siteUrl;
     )}
   </head>
   <body class="min-h-screen bg-bg-dark text-white">
+    <a href="#main-content" class="skip-link">
+      تخطى إلى المحتوى
+    </a>
     <slot />
   </body>
 </html>

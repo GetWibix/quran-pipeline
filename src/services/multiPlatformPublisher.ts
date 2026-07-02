@@ -12,6 +12,8 @@ export interface MultiPlatformPublishOptions {
   surahName?: string;
   fromAyah?: number;
   toAyah?: number;
+  /** وقت النشر المجدول (ISO 8601) — كيبعت لـ Facebook باش ينشر مجدول */
+  scheduledPublishTime?: string;
 }
 
 export interface PlatformRouting {
@@ -57,6 +59,7 @@ export async function publishToAllPlatforms(
         surahName: opts.surahName,
         fromAyah: opts.fromAyah,
         toAyah: opts.toAyah,
+        scheduledPublishTime: opts.scheduledPublishTime,
       })
         .then((r) => { result.facebook = r; })
         .catch((e) => {

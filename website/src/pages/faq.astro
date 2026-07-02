@@ -42,7 +42,7 @@ const faqs = [
 <BaseLayout title="الأسئلة الشائعة" canonical="https://quran.waxbix.com/faq" description="أجوبة على الأسئلة المتكررة حول مشروع NOR Quran">
   <Header />
 
-  <section class="pt-32 pb-16 relative min-h-screen">
+  <section id="main-content" class="pt-32 pb-16 relative min-h-screen">
     <div class="hero-glow"></div>
     <div class="max-w-4xl mx-auto px-4">
       <h1 class="text-4xl md:text-5xl font-bold text-center mb-4">
@@ -50,16 +50,28 @@ const faqs = [
       </h1>
       <p class="text-text-secondary text-center text-lg mb-12">إجابات على أكثر الأسئلة تكرراً</p>
 
-      <div class="space-y-4">
-        {faqs.map((faq) => (
-          <div class="glow-card p-6">
-            <button class="faq-btn w-full flex items-center justify-between text-right" data-target={faq.q}>
-              <span class="font-bold text-lg">{faq.q}</span>
-              <svg class="w-5 h-5 text-text-secondary transform transition-transform duration-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            <div class="faq-answer hidden mt-4 text-text-secondary leading-relaxed">
+      <div class="space-y-4" role="list">
+        {faqs.map((faq, i) => (
+          <div class="glow-card p-6" role="listitem">
+            <h3>
+              <button
+                class="faq-btn w-full flex items-center justify-between text-right"
+                aria-expanded="false"
+                aria-controls={`faq-answer-${i}`}
+                id={`faq-btn-${i}`}
+              >
+                <span class="font-bold text-lg">{faq.q}</span>
+                <svg class="w-5 h-5 text-text-secondary transform transition-transform duration-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </h3>
+            <div
+              id={`faq-answer-${i}`}
+              role="region"
+              aria-labelledby={`faq-btn-${i}`}
+              class="faq-answer hidden mt-4 text-text-secondary leading-relaxed"
+            >
               {faq.a}
             </div>
           </div>
@@ -73,11 +85,32 @@ const faqs = [
 
 <script>
   document.querySelectorAll('.faq-btn').forEach((btn) => {
+    const answer = btn.nextElementSibling;
+    const icon = btn.querySelector('svg');
+
+    function open() {
+      answer.classList.remove('hidden');
+      btn.setAttribute('aria-expanded', 'true');
+      icon.classList.add('rotate-180');
+    }
+
+    function close() {
+      answer.classList.add('hidden');
+      btn.setAttribute('aria-expanded', 'false');
+      icon.classList.remove('rotate-180');
+    }
+
     btn.addEventListener('click', () => {
-      const answer = btn.nextElementSibling;
-      const icon = btn.querySelector('svg');
-      answer.classList.toggle('hidden');
-      icon.classList.toggle('rotate-180');
+      const isOpen = btn.getAttribute('aria-expanded') === 'true';
+      isOpen ? close() : open();
+    });
+
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const isOpen = btn.getAttribute('aria-expanded') === 'true';
+        isOpen ? close() : open();
+      }
     });
   });
 </script>
