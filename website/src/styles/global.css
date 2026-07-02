@@ -190,3 +190,17 @@
     transition: none !important;
   }
 }
+
+@media (hover: none) and (pointer: coarse) {
+  .play-btn {
+    opacity: 1 !important;
+  }
+
+  .ayah-item::before {
+    height: 40%;
+  }
+
+  .surah-card:hover {
+    transform: none !important;
+  }
+}

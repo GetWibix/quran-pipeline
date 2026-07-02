@@ -51,31 +51,31 @@ const firstAyah = ayahs[0]?.text.replace(/[\u0617-\u061A\u064B-\u0652]/g, '').tr
   <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
   <Header />
 
-  <section id="main-content" class="pt-24 pb-16 min-h-screen">
+  <section id="main-content" class="pt-20 md:pt-24 pb-16 min-h-screen">
     <div class="max-w-4xl mx-auto px-4">
 
-      <a href="/quran" class="inline-flex items-center gap-2 text-sm text-text-muted hover:text-accent transition-colors mb-6">
+      <a href="/quran" class="inline-flex items-center gap-2 text-sm text-text-muted hover:text-accent transition-colors mb-6 py-2 min-h-[44px]">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
         </svg>
         العودة إلى السور
       </a>
 
-      <div class="flex flex-col md:flex-row gap-8 items-start mb-10">
-        <div class="w-48 h-48 rounded-2xl bg-gradient-to-br from-accent/30 to-accent/10 border border-accent/20 flex-shrink-0 flex items-center justify-center mx-auto md:mx-0">
+      <div class="flex flex-col md:flex-row gap-6 md:gap-8 items-start mb-10">
+        <div class="w-24 h-24 md:w-48 md:h-48 rounded-2xl bg-gradient-to-br from-accent/30 to-accent/10 border border-accent/20 flex-shrink-0 flex items-center justify-center mx-auto md:mx-0">
           <div class="text-center">
-            <div class="text-5xl font-bold text-accent font-amiri">{surah.number}</div>
-            <div class="text-xs text-text-muted mt-1">سورة</div>
+            <div class="text-3xl md:text-5xl font-bold text-accent font-amiri">{surah.number}</div>
+            <div class="text-[10px] md:text-xs text-text-muted mt-1">سورة</div>
           </div>
         </div>
         <div class="flex-1 text-center md:text-right">
-          <h1 class="text-4xl font-bold font-amiri mb-2">{surah.name}</h1>
-          <p class="text-text-secondary text-lg">{surah.englishName} — {surah.englishNameTranslation}</p>
-          <div class="flex flex-wrap gap-2 mt-4 justify-center md:justify-start">
-            <span class="px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">{revelationAr}</span>
-            <span class="px-3 py-1 rounded-full bg-card text-text-secondary text-xs font-medium">{surah.numberOfAyahs} آية</span>
+          <h1 class="text-3xl md:text-4xl font-bold font-amiri mb-2">{surah.name}</h1>
+          <p class="text-text-secondary text-sm md:text-lg">{surah.englishName} — {surah.englishNameTranslation}</p>
+          <div class="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
+            <span class="px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-medium min-h-[28px] flex items-center">{revelationAr}</span>
+            <span class="px-3 py-1.5 rounded-full bg-card text-text-secondary text-xs font-medium min-h-[28px] flex items-center">{surah.numberOfAyahs} آية</span>
           </div>
-          <p class="text-text-muted text-sm mt-4 leading-relaxed font-amiri">﴿ {firstAyah.slice(0, 100)}﴾</p>
+          <p class="text-text-muted text-sm mt-4 leading-relaxed font-amiri line-clamp-2 md:line-clamp-none">﴿ {firstAyah.slice(0, 100)}﴾</p>
         </div>
       </div>
 
@@ -92,21 +92,23 @@ const firstAyah = ayahs[0]?.text.replace(/[\u0617-\u061A\u064B-\u0652]/g, '').tr
       <div id="ayahs-container" class="space-y-2">
         {ayahs.map((ayah) => (
           <div
-            class="ayah-item group flex items-center gap-4 p-4 rounded-xl bg-card hover:bg-card-hover border border-border hover:border-accent/20 transition-all cursor-pointer"
+            class="ayah-item group flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl bg-card hover:bg-card-hover border border-border hover:border-accent/20 transition-all cursor-pointer"
             id={`ayah-${ayah.numberInSurah}`}
+            role="button"
+            tabindex={0}
           >
-            <div class="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/20 transition-colors">
-              <span class="text-accent text-xs font-bold">{ayah.numberInSurah}</span>
+            <div class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/20 transition-colors">
+              <span class="text-accent text-[11px] md:text-xs font-bold">{ayah.numberInSurah}</span>
             </div>
             <div class="flex-1 text-center">
-              <div class="arabic-verse text-lg md:text-xl">{ayah.text}</div>
+              <div class="arabic-verse text-base md:text-xl">{ayah.text}</div>
             </div>
             <button
               data-ayah={ayah.numberInSurah}
-              class="play-btn w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 flex-shrink-0"
+              class="play-btn w-11 h-11 md:w-11 md:h-11 rounded-full bg-accent text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 flex-shrink-0 active:scale-95"
               aria-label={`استماع للآية ${ayah.numberInSurah}`}
             >
-              <svg class="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 384 512">
+              <svg class="w-4 h-4 mr-0.5" fill="currentColor" viewBox="0 0 384 512">
                 <path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/>
               </svg>
             </button>
@@ -126,6 +128,9 @@ const firstAyah = ayahs[0]?.text.replace(/[\u0617-\u061A\u064B-\u0652]/g, '').tr
   let currentBtn = null;
 
   document.querySelectorAll('.play-btn').forEach((btn) => {
+    const playIcon = '<svg class="w-4 h-4 mr-0.5" fill="currentColor" viewBox="0 0 384 512"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg>';
+    const pauseIcon = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 320 512"><path d="M48 64C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/></svg>';
+
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       const ayahNumber = btn.getAttribute('data-ayah');
@@ -139,7 +144,7 @@ const firstAyah = ayahs[0]?.text.replace(/[\u0617-\u061A\u064B-\u0652]/g, '').tr
         currentAudio.currentTime = 0;
         const prevBtn = currentBtn;
         if (prevBtn) {
-          prevBtn.innerHTML = '<svg class="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 384 512"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg>';
+          prevBtn.innerHTML = playIcon;
           prevBtn.classList.remove('bg-red-500');
           prevBtn.classList.add('bg-accent');
         }
@@ -151,14 +156,14 @@ const firstAyah = ayahs[0]?.text.replace(/[\u0617-\u061A\u064B-\u0652]/g, '').tr
 
       if (audio.paused) {
         audio.play();
-        btn.innerHTML = '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 320 512"><path d="M48 64C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/></svg>';
+        btn.innerHTML = pauseIcon;
         btn.classList.add('bg-red-500');
         btn.classList.remove('bg-accent');
         currentAudio = audio;
         currentBtn = btn;
       } else {
         audio.pause();
-        btn.innerHTML = '<svg class="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 384 512"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg>';
+        btn.innerHTML = playIcon;
         btn.classList.remove('bg-red-500');
         btn.classList.add('bg-accent');
         currentAudio = null;
@@ -166,7 +171,7 @@ const firstAyah = ayahs[0]?.text.replace(/[\u0617-\u061A\u064B-\u0652]/g, '').tr
       }
 
       audio.onended = () => {
-        btn.innerHTML = '<svg class="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 384 512"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg>';
+        btn.innerHTML = playIcon;
         btn.classList.remove('bg-red-500');
         btn.classList.add('bg-accent');
         currentAudio = null;
