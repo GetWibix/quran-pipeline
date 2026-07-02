@@ -6,8 +6,7 @@ import Footer from '../../components/Footer.astro';
 export async function getStaticPaths() {
   const res = await fetch('https://api.alquran.cloud/v1/surah');
   const data = await res.json();
-  const surahs = data.data;
-  return surahs.map((surah) => ({
+  return data.data.map((surah) => ({
     params: { number: String(surah.number) },
     props: { surah },
   }));
@@ -27,156 +26,258 @@ export interface Props {
 const { surah } = Astro.props;
 const revelationAr = surah.revelationType === 'Meccan' ? 'مكية' : 'مدنية';
 
-const breadcrumbSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'NOR Quran', item: 'https://quran.waxbix.com' },
-    { '@type': 'ListItem', position: 2, name: 'القرآن الكريم', item: 'https://quran.waxbix.com/quran' },
-    { '@type': 'ListItem', position: 3, name: surah.name, item: `https://quran.waxbix.com/quran/${surah.number}` },
-  ],
-};
-
 const ayahsRes = await fetch(`https://api.alquran.cloud/v1/surah/${surah.number}`);
 const ayahsData = await ayahsRes.json();
 const ayahs = ayahsData.data.ayahs;
 const firstAyah = ayahs[0]?.text.replace(/[\u0617-\u061A\u064B-\u0652]/g, '').trim() || '';
+const ayahsJson = JSON.stringify(ayahs.map(a => ({ numberInSurah: a.numberInSurah, text: a.text })));
+
+const gradientFrom = surah.number % 3 === 0 ? 'from-emerald-600' : surah.number % 3 === 1 ? 'from-accent' : 'from-green-700';
+const gradientVia = surah.number % 3 === 0 ? 'via-emerald-800' : surah.number % 3 === 1 ? 'via-accent/80' : 'via-green-900';
+const gradientTo = 'to-bg-dark';
 ---
 
 <BaseLayout
-  title={surah.name}
-  description={`سورة ${surah.name} - ${surah.numberOfAyahs} آية ${revelationAr}`}
+  title={`${surah.name} - القرآن الكريم`}
+  description={`سورة ${surah.name} - ${surah.numberOfAyahs} آية ${revelationAr} بصوت الشيخ عبد الباسط`}
   canonical={`https://quran.waxbix.com/quran/${surah.number}`}
 >
-  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
   <Header />
 
-  <section id="main-content" class="pt-20 md:pt-24 pb-16 min-h-screen">
-    <div class="max-w-4xl mx-auto px-4">
-
-      <a href="/quran" class="inline-flex items-center gap-2 text-sm text-text-muted hover:text-accent transition-colors mb-6 py-2 min-h-[44px]">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        العودة إلى السور
-      </a>
-
-      <div class="flex flex-col md:flex-row gap-6 md:gap-8 items-start mb-10">
-        <div class="w-24 h-24 md:w-48 md:h-48 rounded-2xl bg-gradient-to-br from-accent/30 to-accent/10 border border-accent/20 flex-shrink-0 flex items-center justify-center mx-auto md:mx-0">
-          <div class="text-center">
-            <div class="text-3xl md:text-5xl font-bold text-accent font-amiri">{surah.number}</div>
-            <div class="text-[10px] md:text-xs text-text-muted mt-1">سورة</div>
-          </div>
-        </div>
-        <div class="flex-1 text-center md:text-right">
-          <h1 class="text-3xl md:text-4xl font-bold font-amiri mb-2">{surah.name}</h1>
-          <p class="text-text-secondary text-sm md:text-lg">{surah.englishName} — {surah.englishNameTranslation}</p>
-          <div class="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
-            <span class="px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-medium min-h-[28px] flex items-center">{revelationAr}</span>
-            <span class="px-3 py-1.5 rounded-full bg-card text-text-secondary text-xs font-medium min-h-[28px] flex items-center">{surah.numberOfAyahs} آية</span>
-          </div>
-          <p class="text-text-muted text-sm mt-4 leading-relaxed font-amiri line-clamp-2 md:line-clamp-none">﴿ {firstAyah.slice(0, 100)}﴾</p>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-lg font-bold flex items-center gap-2">
-          <svg class="w-5 h-5 text-accent" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+  <div class="min-h-screen flex flex-col">
+    <!-- Spotify-style Album Header -->
+    <div class={`bg-gradient-to-b ${gradientFrom} ${gradientVia} ${gradientTo} pt-16 md:pt-20`}>
+      <div class="max-w-4xl mx-auto px-4 pt-8 pb-6 md:pb-8">
+        <a href="/quran" class="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white transition-colors mb-6 py-2 min-h-[44px]">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          الآيات
-        </h2>
-        <span class="text-text-muted text-sm">{ayahs.length} آية</span>
-      </div>
+          رجوع
+        </a>
 
-      <div id="ayahs-container" class="space-y-2">
-        {ayahs.map((ayah) => (
-          <div
-            class="ayah-item group flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl bg-card hover:bg-card-hover border border-border hover:border-accent/20 transition-all cursor-pointer"
-            id={`ayah-${ayah.numberInSurah}`}
-            role="button"
-            tabindex={0}
-          >
-            <div class="w-7 h-7 md:w-8 md:h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/20 transition-colors">
-              <span class="text-accent text-[11px] md:text-xs font-bold">{ayah.numberInSurah}</span>
+        <div class="relative flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-end">
+          <div class="flex gap-3 md:gap-4 items-end">
+            <div class="w-40 h-40 md:w-56 md:h-56 rounded-xl shadow-2xl bg-gradient-to-br from-accent/40 to-emerald-700 flex-shrink-0 flex items-center justify-center -mt-4">
+              <div class="text-center">
+                <div class="text-5xl md:text-7xl font-bold text-white font-amiri">{surah.number}</div>
+                <div class="text-xs text-white/60 mt-1">سورة</div>
+              </div>
             </div>
-            <div class="flex-1 text-center">
-              <div class="arabic-verse text-base md:text-xl">{ayah.text}</div>
-            </div>
-            <button
-              data-ayah={ayah.numberInSurah}
-              class="play-btn w-11 h-11 md:w-11 md:h-11 rounded-full bg-accent text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 flex-shrink-0 active:scale-95"
-              aria-label={`استماع للآية ${ayah.numberInSurah}`}
-            >
-              <svg class="w-4 h-4 mr-0.5" fill="currentColor" viewBox="0 0 384 512">
-                <path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/>
-              </svg>
-            </button>
-            <audio data-audio={ayah.numberInSurah} preload="none"></audio>
           </div>
-        ))}
+
+          <div class="flex-1 min-w-0 text-center md:text-right pb-1">
+            <p class="text-[10px] md:text-xs text-white/60 uppercase tracking-widest mb-1">القرآن الكريم</p>
+            <h1 class="text-3xl md:text-5xl lg:text-6xl font-bold text-white font-amiri">{surah.name}</h1>
+            <div class="flex flex-wrap gap-x-3 gap-y-1 mt-1 justify-center md:justify-start">
+              <span class="text-sm md:text-base text-white/80">{surah.englishName}</span>
+              <span class="text-white/40 hidden md:inline">·</span>
+              <span class="text-sm md:text-base text-white/60">{surah.englishNameTranslation}</span>
+            </div>
+            <div class="flex items-center gap-2 mt-3 justify-center md:justify-start">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Abdul_Basit_%27Abd_us-Samad_with_King_Faisal.jpg/200px-Abdul_Basit_%27Abd_us-Samad_with_King_Faisal.jpg"
+                alt="الشيخ عبد الباسط"
+                class="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover ring-2 ring-white/20 flex-shrink-0"
+                loading="lazy"
+              />
+              <div>
+                <p class="text-xs text-white/50">القارئ</p>
+                <p class="text-sm md:text-base text-white font-medium leading-tight">الشيخ عبد الباسط عبد الصمد</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meta + Play All -->
+        <div class="flex items-center justify-between mt-2 md:mt-4">
+          <div class="flex items-center gap-3 text-xs md:text-sm text-white/60">
+            <span>{surah.numberOfAyahs} آية</span>
+            <span>·</span>
+            <span>{revelationAr}</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4 mt-4">
+          <button id="play-all-btn" class="w-14 h-14 rounded-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center shadow-xl shadow-accent/30 transition-all hover:scale-105 active:scale-95 flex-shrink-0">
+            <svg class="w-6 h-6 mr-1" fill="currentColor" viewBox="0 0 384 512">
+              <path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/>
+            </svg>
+          </button>
+          <div class="text-xs md:text-sm text-white/60">
+            <span id="play-all-label" class="font-bold text-white text-sm md:text-base">شغل الكل</span>
+            <br class="hidden md:block" />
+            <span id="play-all-meta" class="hidden md:inline text-white/50">استمع إلى السورة كاملة</span>
+          </div>
+        </div>
       </div>
     </div>
-  </section>
+
+    <!-- Ayahs Section - Spotify Tracklist Style -->
+    <div class="flex-1 bg-bg-dark px-4 pb-4" style="margin-top: -1px;">
+      <div class="max-w-4xl mx-auto">
+        <!-- Track header row (like Spotify) -->
+        <div class="flex items-center gap-4 px-3 py-2 border-b border-white/5 text-xs text-text-muted sticky top-0 bg-bg-dark z-10">
+          <div class="w-7 md:w-8 flex-shrink-0 text-center">#</div>
+          <div class="flex-1 pr-2">الآية</div>
+          <div class="w-8 flex-shrink-0 text-center">
+            <svg class="w-3.5 h-3.5 mx-auto" fill="currentColor" viewBox="0 0 320 512">
+              <path d="M48 64C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/>
+            </svg>
+          </div>
+        </div>
+
+        <div id="ayahs-container" class="space-y-0">
+          {ayahs.map((ayah, idx) => (
+            <div
+              class="group flex items-center gap-4 px-3 py-2 rounded-md hover:bg-white/5 transition-colors cursor-pointer"
+              id={`ayah-${ayah.numberInSurah}`}
+              role="button"
+              tabindex={0}
+            >
+              <div class="w-7 md:w-8 flex-shrink-0 text-center">
+                <span class="text-xs md:text-sm text-text-muted group-hover:hidden">{ayah.numberInSurah}</span>
+                <button
+                  data-ayah={ayah.numberInSurah}
+                  class="play-btn w-7 h-7 hidden group-hover:flex items-center justify-center mx-auto hover:scale-110 transition-transform"
+                  aria-label={`استماع للآية ${ayah.numberInSurah}`}
+                >
+                  <svg class="w-3.5 h-3.5 text-white mr-0.5" fill="currentColor" viewBox="0 0 384 512">
+                    <path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="flex-1 min-w-0 pr-2">
+                <div class="arabic-verse text-base md:text-xl text-white group-hover:text-white transition-colors line-clamp-2">{ayah.text}</div>
+              </div>
+              <div class="w-8 flex-shrink-0 flex items-center justify-center">
+                <button
+                  data-ayah={ayah.numberInSurah}
+                  class="play-btn hover:scale-110 transition-transform"
+                  aria-label={`استماع للآية ${ayah.numberInSurah}`}
+                >
+                  <svg class="w-3.5 h-3.5 md:w-4 md:h-4 text-text-muted hover:text-accent transition-colors mr-0.5" fill="currentColor" viewBox="0 0 384 512">
+                    <path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/>
+                  </svg>
+                </button>
+              </div>
+              <audio data-audio={ayah.numberInSurah} preload="none"></audio>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
 
   <Footer />
 </BaseLayout>
+
+<script id="ayahs-data" type="application/json" set:html={ayahsJson}></script>
 
 <script>
   const surahNumber = window.location.pathname.split('/').pop();
   let currentAudio = null;
   let currentBtn = null;
+  let currentRow = null;
 
-  document.querySelectorAll('.play-btn').forEach((btn) => {
-    const playIcon = '<svg class="w-4 h-4 mr-0.5" fill="currentColor" viewBox="0 0 384 512"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg>';
-    const pauseIcon = '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 320 512"><path d="M48 64C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/></svg>';
+  const playSvg = '<svg class="w-3.5 h-3.5 text-white mr-0.5" fill="currentColor" viewBox="0 0 384 512"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg>';
+  const pauseSvg = '<svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 320 512"><path d="M48 64C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/></svg>';
 
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const ayahNumber = btn.getAttribute('data-ayah');
-      const audio = document.querySelector(`[data-audio="${ayahNumber}"]`);
-      const num = surahNumber.toString().padStart(3, '0');
-      const a = ayahNumber.toString().padStart(3, '0');
-      const url = `https://everyayah.com/data/Abdul_Basit_Murattal_64kbps/${num}${a}.mp3`;
+  function stopCurrent() {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      if (currentBtn) {
+        currentBtn.innerHTML = playSvg;
+        currentBtn.classList.remove('text-red-400');
+        currentBtn.classList.add('text-text-muted');
+      }
+      if (currentRow) {
+        currentRow.classList.remove('bg-accent/5');
+      }
+      currentAudio = null;
+      currentBtn = null;
+      currentRow = null;
+    }
+  }
 
-      if (currentAudio && currentAudio !== audio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        const prevBtn = currentBtn;
-        if (prevBtn) {
-          prevBtn.innerHTML = playIcon;
-          prevBtn.classList.remove('bg-red-500');
-          prevBtn.classList.add('bg-accent');
+  function playAyah(btn) {
+    const ayahNumber = btn.getAttribute('data-ayah');
+    const audio = document.querySelector(`[data-audio="${ayahNumber}"]`);
+    const row = btn.closest('[role="button"]');
+    const num = surahNumber.toString().padStart(3, '0');
+    const a = ayahNumber.toString().padStart(3, '0');
+    const url = `https://everyayah.com/data/Abdul_Basit_Murattal_64kbps/${num}${a}.mp3`;
+
+    stopCurrent();
+
+    if (audio.src !== url) audio.src = url;
+
+    audio.play();
+    btn.innerHTML = pauseSvg;
+    btn.classList.remove('text-text-muted');
+    btn.classList.add('text-red-400');
+    if (row) row.classList.add('bg-accent/5');
+    currentAudio = audio;
+    currentBtn = btn;
+    currentRow = row;
+
+    audio.onended = () => {
+      stopCurrent();
+      const nextAyah = parseInt(ayahNumber) + 1;
+      if (nextAyah <= document.querySelectorAll('.play-btn').length) {
+        const nextBtn = document.querySelector(`.play-btn[data-ayah="${nextAyah}"]`);
+        if (nextBtn) {
+          playAyah(nextBtn);
         }
       }
+    };
+  }
 
-      if (audio.src !== url) {
-        audio.src = url;
-      }
+  // Attach click to all play buttons
+  document.querySelectorAll('.play-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const ayahNumber = btn.getAttribute('data-ayah');
+      const audio = document.querySelector(`[data-audio="${ayahNumber}"]`);
 
-      if (audio.paused) {
-        audio.play();
-        btn.innerHTML = pauseIcon;
-        btn.classList.add('bg-red-500');
-        btn.classList.remove('bg-accent');
-        currentAudio = audio;
-        currentBtn = btn;
+      if (currentAudio === audio) {
+        stopCurrent();
       } else {
-        audio.pause();
-        btn.innerHTML = playIcon;
-        btn.classList.remove('bg-red-500');
-        btn.classList.add('bg-accent');
-        currentAudio = null;
-        currentBtn = null;
+        playAyah(btn);
       }
-
-      audio.onended = () => {
-        btn.innerHTML = playIcon;
-        btn.classList.remove('bg-red-500');
-        btn.classList.add('bg-accent');
-        currentAudio = null;
-        currentBtn = null;
-      };
     });
   });
+
+  // Play All button
+  document.getElementById('play-all-btn')?.addEventListener('click', () => {
+    stopCurrent();
+    const firstBtn = document.querySelector('.play-btn');
+    if (firstBtn) playAyah(firstBtn);
+  });
+
+  // Keyboard support for rows
+  document.querySelectorAll('[role="button"]').forEach((row) => {
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const btn = row.querySelector('.play-btn');
+        if (btn) btn.click();
+      }
+    });
+  });
+
+  // Touch: keep play buttons visible
+  if ('ontouchstart' in window) {
+    document.querySelectorAll('.play-btn').forEach((btn) => {
+      btn.style.display = 'flex';
+    });
+    document.querySelectorAll('.group-hover\\:hidden').forEach((el) => {
+      el.style.display = 'none';
+    });
+    document.querySelectorAll('.hidden.group-hover\\:flex').forEach((el) => {
+      el.classList.remove('hidden', 'group-hover:flex');
+      el.classList.add('flex');
+    });
+  }
 </script>
