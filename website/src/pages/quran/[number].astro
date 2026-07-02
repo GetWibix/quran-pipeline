@@ -2,7 +2,6 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
-import Icon from '../../components/Icon.astro';
 
 export async function getStaticPaths() {
   const res = await fetch('https://api.alquran.cloud/v1/surah');
@@ -41,34 +40,75 @@ const breadcrumbSchema = {
 const ayahsRes = await fetch(`https://api.alquran.cloud/v1/surah/${surah.number}`);
 const ayahsData = await ayahsRes.json();
 const ayahs = ayahsData.data.ayahs;
+const firstAyah = ayahs[0]?.text.replace(/[\u0617-\u061A\u064B-\u0652]/g, '').trim() || '';
 ---
 
-<BaseLayout title={surah.name} description={`سورة ${surah.name} - ${surah.numberOfAyahs} آية`} canonical={`https://quran.waxbix.com/quran/${surah.number}`}>
+<BaseLayout
+  title={surah.name}
+  description={`سورة ${surah.name} - ${surah.numberOfAyahs} آية ${revelationAr}`}
+  canonical={`https://quran.waxbix.com/quran/${surah.number}`}
+>
   <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
   <Header />
 
-  <section id="main-content" class="pt-32 pb-16 relative min-h-screen">
-    <div class="hero-glow"></div>
+  <section id="main-content" class="pt-24 pb-16 min-h-screen">
     <div class="max-w-4xl mx-auto px-4">
-      <a href="/quran" class="text-primary hover:text-secondary transition-colors mb-6 inline-block">← العودة إلى السور</a>
 
-      <div class="text-center mb-8">
-        <div class="text-4xl font-bold font-amiri mb-2 gradient-text">{surah.name}</div>
-        <div class="text-text-secondary">{surah.englishName} — {surah.englishNameTranslation}</div>
-        <div class="text-text-muted text-sm mt-1">{revelationAr} · {surah.numberOfAyahs} آية</div>
+      <a href="/quran" class="inline-flex items-center gap-2 text-sm text-text-muted hover:text-accent transition-colors mb-6">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        العودة إلى السور
+      </a>
+
+      <div class="flex flex-col md:flex-row gap-8 items-start mb-10">
+        <div class="w-48 h-48 rounded-2xl bg-gradient-to-br from-accent/30 to-accent/10 border border-accent/20 flex-shrink-0 flex items-center justify-center mx-auto md:mx-0">
+          <div class="text-center">
+            <div class="text-5xl font-bold text-accent font-amiri">{surah.number}</div>
+            <div class="text-xs text-text-muted mt-1">سورة</div>
+          </div>
+        </div>
+        <div class="flex-1 text-center md:text-right">
+          <h1 class="text-4xl font-bold font-amiri mb-2">{surah.name}</h1>
+          <p class="text-text-secondary text-lg">{surah.englishName} — {surah.englishNameTranslation}</p>
+          <div class="flex flex-wrap gap-2 mt-4 justify-center md:justify-start">
+            <span class="px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">{revelationAr}</span>
+            <span class="px-3 py-1 rounded-full bg-card text-text-secondary text-xs font-medium">{surah.numberOfAyahs} آية</span>
+          </div>
+          <p class="text-text-muted text-sm mt-4 leading-relaxed font-amiri">﴿ {firstAyah.slice(0, 100)}﴾</p>
+        </div>
       </div>
 
-      <div id="ayahs-container" class="space-y-6">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-lg font-bold flex items-center gap-2">
+          <svg class="w-5 h-5 text-accent" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+          </svg>
+          الآيات
+        </h2>
+        <span class="text-text-muted text-sm">{ayahs.length} آية</span>
+      </div>
+
+      <div id="ayahs-container" class="space-y-2">
         {ayahs.map((ayah) => (
-          <div class="glow-card p-6 text-center" id={`ayah-${ayah.numberInSurah}`}>
-            <div class="text-text-muted text-xs mb-2">الآية {ayah.numberInSurah}</div>
-            <div class="arabic-verse mb-3">{ayah.text}</div>
+          <div
+            class="ayah-item group flex items-center gap-4 p-4 rounded-xl bg-card hover:bg-card-hover border border-border hover:border-accent/20 transition-all cursor-pointer"
+            id={`ayah-${ayah.numberInSurah}`}
+          >
+            <div class="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 group-hover:bg-accent/20 transition-colors">
+              <span class="text-accent text-xs font-bold">{ayah.numberInSurah}</span>
+            </div>
+            <div class="flex-1 text-center">
+              <div class="arabic-verse text-lg md:text-xl">{ayah.text}</div>
+            </div>
             <button
               data-ayah={ayah.numberInSurah}
-              class="play-btn text-primary hover:text-secondary transition-colors text-sm"
+              class="play-btn w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:scale-110 flex-shrink-0"
               aria-label={`استماع للآية ${ayah.numberInSurah}`}
             >
-              <Icon name="play" size={14} class="inline ml-1" aria-hidden="true" /> استمع
+              <svg class="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 384 512">
+                <path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/>
+              </svg>
             </button>
             <audio data-audio={ayah.numberInSurah} preload="none"></audio>
           </div>
@@ -86,7 +126,8 @@ const ayahs = ayahsData.data.ayahs;
   let currentBtn = null;
 
   document.querySelectorAll('.play-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       const ayahNumber = btn.getAttribute('data-ayah');
       const audio = document.querySelector(`[data-audio="${ayahNumber}"]`);
       const num = surahNumber.toString().padStart(3, '0');
@@ -98,7 +139,9 @@ const ayahs = ayahsData.data.ayahs;
         currentAudio.currentTime = 0;
         const prevBtn = currentBtn;
         if (prevBtn) {
-          prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="14" height="14" class="inline ml-1" fill="currentColor"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg> استمع';
+          prevBtn.innerHTML = '<svg class="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 384 512"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg>';
+          prevBtn.classList.remove('bg-red-500');
+          prevBtn.classList.add('bg-accent');
         }
       }
 
@@ -108,18 +151,24 @@ const ayahs = ayahsData.data.ayahs;
 
       if (audio.paused) {
         audio.play();
-        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" width="14" height="14" class="inline ml-1" fill="currentColor"><path d="M48 64C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/></svg> إيقاف';
+        btn.innerHTML = '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 320 512"><path d="M48 64C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/></svg>';
+        btn.classList.add('bg-red-500');
+        btn.classList.remove('bg-accent');
         currentAudio = audio;
         currentBtn = btn;
       } else {
         audio.pause();
-        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="14" height="14" class="inline ml-1" fill="currentColor"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg> استمع';
+        btn.innerHTML = '<svg class="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 384 512"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg>';
+        btn.classList.remove('bg-red-500');
+        btn.classList.add('bg-accent');
         currentAudio = null;
         currentBtn = null;
       }
 
       audio.onended = () => {
-        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" width="14" height="14" class="inline ml-1" fill="currentColor"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg> استمع';
+        btn.innerHTML = '<svg class="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 384 512"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg>';
+        btn.classList.remove('bg-red-500');
+        btn.classList.add('bg-accent');
         currentAudio = null;
         currentBtn = null;
       };
