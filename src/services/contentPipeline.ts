@@ -9,7 +9,7 @@ import { selectNextRange } from "./verseSelector";
 import { getVerse, getSurahMeta, VerseData } from "./verseFetcher";
 import {
   downloadAyahAudio, buildSurahAudio, extractAyahAudio,
-  SurahAudioIndex, Reciter, RECITERS,
+  SurahAudioIndex, Reciter, RECITERS, RECITER_ARABIC_NAMES,
 } from "./audioFetcher";
 import { composeScene } from "./visualComposer";
 import { renderVideo, RenderOptions, cleanupWorkDir, SceneInput } from "./videoRenderer";
@@ -21,6 +21,7 @@ const BACKGROUNDS_DIR = path.join(__dirname, "../../assets/backgrounds");
 const LANDSCAPE_BG_DIR = path.join(BACKGROUNDS_DIR, "landscape");
 const PORTRAIT_BG_DIR = path.join(BACKGROUNDS_DIR, "portrait");
 const VIDEOS_DIR = path.join(__dirname, "../../assets/videos");
+const AUDIO_DIR = path.join(__dirname, "../../assets/audio");
 
 async function listDir(dir: string, ext: string): Promise<string[]> {
   try {
@@ -63,7 +64,21 @@ export async function generateContent(
   let fullSurahAudio: { filePath: string; index: SurahAudioIndex } | null = null;
   if (contentType === ContentType.LONG_VIDEO) {
     const first = await getVerse(range.surahNumber, 1);
-    fullSurahAudio = await buildSurahAudio(reciter, range.surahNumber, first.numberOfAyahsInSurah);
+
+    // تحقق من وجود ملف سورة كامل محمّل مسبقاً في assets/audio/
+    const sufFile = `surah-${String(range.surahNumber).padStart(3, "0")}-`;
+    const existing = await readdir(AUDIO_DIR)
+      .then((files) => files.find((f) => f.startsWith(sufFile) && f.endsWith(".mp3")))
+      .catch(() => undefined);
+
+    if (existing) {
+      const customReciter = existing.replace(/\.mp3$/, "").replace(sufFile, "");
+      const reciterArabic = RECITER_ARABIC_NAMES[customReciter] ?? customReciter;
+      console.log(`🎧 استخدام ملف سورة محمّل: ${existing} (${reciterArabic})`);
+      fullSurahAudio = await buildSurahAudio(customReciter, range.surahNumber, first.numberOfAyahsInSurah);
+    } else {
+      fullSurahAudio = await buildSurahAudio(reciter, range.surahNumber, first.numberOfAyahsInSurah);
+    }
   }
 
   const workDir = await mkdtemp(path.join(tmpdir(), "quran-gen-"));
