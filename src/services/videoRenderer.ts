@@ -154,7 +154,7 @@ async function renderWithVideoBackground(
   ffmpegArgs.push("-i", mergedAudioPath);
 
   ffmpegArgs.push("-filter_complex",
-    `[0:v]scale=${dims}:force_original_aspect_ratio=increase,crop=${dims},setpts=PTS-STARTPTS[bgv];${filterChain.replace(/\[0:v\]/g, "[bgv]")}`);
+    `[0:v]scale=${dims},setpts=PTS-STARTPTS[bgv];${filterChain.replace(/\[0:v\]/g, "[bgv]")}`);
 
   if (opts.scenes.length > 0) {
     ffmpegArgs.push("-map", finalLabel);
@@ -218,7 +218,7 @@ async function renderWithMultiBackgrounds(
     const dur = opts.scenes[i].durationSeconds.toFixed(3);
 
     filterParts.push(
-      `[${bgIn}:v]trim=duration=${dur},setpts=PTS-STARTPTS,scale=${dims}:force_original_aspect_ratio=increase,crop=${dims}[bg${i}t]`
+      `[${bgIn}:v]trim=duration=${dur},setpts=PTS-STARTPTS,scale=${dims}[bg${i}t]`
     );
     filterParts.push(
       `[bg${i}t][${imgIn}:v]overlay${segLabel}`
