@@ -147,6 +147,19 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       generated.videoPath = newVideoPath;
     }
 
+    // قصاصة الشورتس من الفيديو الطويل — إعادة تسمية أيضاً
+    let shortVideoPath: string | undefined;
+    if (generated.shortVideoPath) {
+      const newShortPath = generated.shortVideoPath.replace(
+        /[^/\\]+\.mp4$/, `${safeName || "video"}-shorts.mp4`
+      );
+      if (newShortPath !== generated.shortVideoPath) {
+        await rename(generated.shortVideoPath, newShortPath);
+        generated.shortVideoPath = newShortPath;
+      }
+      shortVideoPath = generated.shortVideoPath;
+    }
+
     // ─── تحسين SEO عبر seoEngine ──────────────────────────────
     const surahName = generated.verses[0].surahNameArabic;
     const verseText = generated.verses.map((v) => v.textArabic).join(" ");
@@ -272,6 +285,61 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       console.log(`⏭️ تخطي باقي المنصات (كلها disabled)`);
     }
 
+    // ─── نشر قصاصة الشورتس (إن وجدت) ─────────────────────────
+    let shortYoutubeVideoId: string | null = null;
+    let shortMultiResult: Awaited<ReturnType<typeof publishToAllPlatforms>> = {
+      youtube: null, facebook: null, instagram: null, threads: null,
+      facebookStory: null, instagramStory: null, errors: [],
+    };
+
+    if (shortVideoPath) {
+      console.log(`📱 نشر قصاصة الشورتس من الفيديو الطويل...`);
+      const shortScheduledAt = new Date(Date.now() + 86400000).toISOString();
+
+      if (routing.youtube) {
+        const shortRes = await publishVideo({
+          videoFilePath: shortVideoPath,
+          title: seoOutput.title,
+          description: finalDescription,
+          tags: seoOutput.tags,
+          isShort: true,
+          scheduledPublishTime: shortScheduledAt,
+          surahName,
+          fromAyah: generated.fromAyah,
+          toAyah: generated.toAyah,
+        }).catch((e) => {
+          console.warn(`⚠️ فشل نشر الشورتس على يوتيوب:`, e instanceof Error ? e.message : String(e));
+          return null;
+        });
+        shortYoutubeVideoId = shortRes?.youtubeVideoId ?? null;
+      }
+
+      if (shouldPublishOthers) {
+        const shortUrl = await uploadToR2(shortVideoPath).catch(() => undefined);
+
+        shortMultiResult = await publishToAllPlatforms(
+          {
+            videoFilePath: shortVideoPath,
+            title: seoOutput.title,
+            description: finalDescription,
+            tags: seoOutput.tags,
+            isShort: true,
+            videoUrl: shortUrl ?? "",
+            surahName,
+            fromAyah: generated.fromAyah,
+            toAyah: generated.toAyah,
+            scheduledPublishTime: shortScheduledAt,
+          },
+          { youtube: false, facebook: routing.facebook, instagram: routing.instagram, threads: routing.threads },
+          shortYoutubeVideoId ?? undefined,
+          undefined,
+        ).catch((e) => {
+          console.warn(`⚠️ فشل نشر الشورتس على المنصات:`, e instanceof Error ? e.message : String(e));
+          return shortMultiResult;
+        });
+      }
+    }
+
     // ─── تحديث السجل ─────────────────────────────────────────
     await prisma.publishedContent.update({
       where: { id: record.id },
@@ -316,6 +384,7 @@ async function processJob(job: Job<ContentGenerationJobData>) {
     await cleanupWorkDir(generated.workDir);
     await unlink(generated.videoPath).catch(() => {});
     if (publicVideoUrl) await deleteFromR2(generated.videoPath);
+    if (shortVideoPath) await unlink(shortVideoPath).catch(() => {});
 
     return {
       success: true,
