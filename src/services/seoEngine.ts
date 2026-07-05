@@ -159,19 +159,30 @@ function buildDescription(input: SeoInput, hashtags: string[]): string {
     .map((t) => (t.startsWith("#") ? t : `#${t}`))
     .join(" ");
 
-  return [
-    firstLine,
+  const clean = (s: string) => s.replace(/[\u0610-\u0615\u064B-\u065F\u0670\u06D6-\u06ED\u08D0-\u08FF\u200B-\u200F\u2028-\u202E\uFEFF]/g, "");
+
+  const verseLine = input.verseText ? clean(input.verseText).slice(0, 2000) : "";
+
+  const parts = [
+    clean(firstLine).slice(0, 150),
     "",
     `🎙️ القارئ: ${input.reciterArabic}`,
     `📖 سورة ${input.surahName} (${input.fromAyah}-${input.toAyah})`,
     "",
     "📜 نص الآيات:",
-    input.verseText,
+    verseLine || "",
     "",
     cta,
     "",
     formattedTags,
-  ].join("\n");
+  ];
+
+  let result = parts.join("\n");
+  if (result.length > 4800) {
+    result = result.slice(0, 4777) + "...";
+  }
+
+  return result;
 }
 
 // ============================================================
