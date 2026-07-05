@@ -24,13 +24,15 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: website/package-lock.json
+          node-version: 20
 
       - run: npm ci
 
+      - run: node -v && npx astro --version
+
       - run: npm run build
+        env:
+          NODE_ENV: production
 
       - uses: peaceiris/actions-gh-pages@v4
         with:
