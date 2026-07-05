@@ -101,7 +101,8 @@ ${versesList}
 }
 
 export async function selectNextRange(
-  contentType: ContentType
+  contentType: ContentType,
+  forceSurahNumber?: number
 ): Promise<SelectedRange> {
   const progress = await prisma.readingProgress.upsert({
     where: { contentType },
@@ -110,6 +111,14 @@ export async function selectNextRange(
   });
 
   let { currentSurah, currentAyah } = progress;
+
+  if (forceSurahNumber) {
+    if (currentSurah !== forceSurahNumber) {
+      currentSurah = forceSurahNumber;
+      currentAyah = 1;
+    }
+  }
+
   const surahMeta = await getSurahMeta(currentSurah);
 
   let fromAyah = currentAyah;
@@ -140,8 +149,13 @@ export async function selectNextRange(
   let nextAyah = toAyah + 1;
 
   if (nextAyah > surahMeta.numberOfAyahs) {
-    nextSurah = currentSurah >= TOTAL_SURAHS ? 1 : currentSurah + 1;
-    nextAyah = 1;
+    if (forceSurahNumber) {
+      nextSurah = forceSurahNumber;
+      nextAyah = 1;
+    } else {
+      nextSurah = currentSurah >= TOTAL_SURAHS ? 1 : currentSurah + 1;
+      nextAyah = 1;
+    }
   }
 
   await prisma.readingProgress.update({

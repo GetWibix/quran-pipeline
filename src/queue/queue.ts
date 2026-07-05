@@ -39,6 +39,8 @@ export interface ContentGenerationJobData {
   forcePublishAt?: string;
   /** إذا كانت مهمة بوستر بدل فيديو */
   posterData?: PosterJobData;
+  /** رقم سورة إجباري (مثلاً الجمعة = سورة الكهف 18) */
+  forceSurahNumber?: number;
 }
 
 export const contentQueue = new Queue<ContentGenerationJobData>(

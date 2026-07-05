@@ -42,11 +42,12 @@ function getAvailableVideoBackgrounds(): string[] {
 
 export async function generateContent(
   contentType: ContentType,
-  reciterKey: keyof typeof RECITERS = "alafasy"
+  reciterKey: keyof typeof RECITERS = "alafasy",
+  forceSurahNumber?: number
 ): Promise<GeneratedContent> {
   const reciter = RECITERS[reciterKey];
 
-  const range = await selectNextRange(contentType);
+  const range = await selectNextRange(contentType, forceSurahNumber);
 
   const workDir = await mkdtemp(path.join(tmpdir(), "quran-gen-"));
   const scenesDir = path.join(workDir, "scenes");
@@ -62,7 +63,7 @@ export async function generateContent(
   const sceneBackgrounds: string[] = [];
 
   let totalDuration = 0;
-  const MAX_SHORT_SEC = 60;
+  const MAX_DURATION_SEC = contentType === ContentType.LONG_VIDEO ? 600 : 60;
 
   const ayahNumbers: number[] = [];
   for (let ayah = range.fromAyah; ayah <= range.toAyah; ayah++) {
@@ -89,7 +90,7 @@ export async function generateContent(
     const audioResult = ayahAudioMap.get(ayah)!;
     const { filePath: audioPath, durationSeconds } = audioResult;
 
-    if (verses.length > 0 && totalDuration + durationSeconds > MAX_SHORT_SEC) break;
+    if (verses.length > 0 && totalDuration + durationSeconds > MAX_DURATION_SEC) break;
 
     verses.push(verse);
     const imageOutPath = path.join(scenesDir, `${range.surahNumber}-${ayah}.png`);
@@ -110,7 +111,7 @@ export async function generateContent(
     sceneInputs.push({ imagePath: imageOutPath, audioPath, durationSeconds });
     totalDuration += durationSeconds;
 
-    if (totalDuration >= MAX_SHORT_SEC) break;
+    if (totalDuration >= MAX_DURATION_SEC) break;
   }
 
   const actualLastAyah = range.fromAyah + verses.length - 1;
