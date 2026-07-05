@@ -118,24 +118,34 @@ export async function publishPhotoToFacebook(
   }
 
   const boundary = `----FB${Date.now()}${Math.random().toString(36).slice(2)}`;
-  const body = buildMultipartBody(imageBuffer, {
-    message: caption,
-    published: "true",
+
+  // Step 1: Upload photo to album (published=false) to get photo_id
+  const uploadBody = buildMultipartBody(imageBuffer, {
+    published: "false",
   }, boundary);
 
-  const url = `https://graph.facebook.com/${API_VERSION}/${PAGE_ID}/photos?access_token=${ACCESS_TOKEN}`;
-  const data = await httpsPostMultipart(url, body, boundary);
+  const uploadUrl = `https://graph.facebook.com/${API_VERSION}/${PAGE_ID}/photos?access_token=${ACCESS_TOKEN}`;
+  const uploadData = await httpsPostMultipart(uploadUrl, uploadBody, boundary);
 
-  if (data.error) throw new Error(`Facebook Photo API: ${data.error.message}`);
+  if (uploadData.error) throw new Error(`Facebook Photo API (upload): ${uploadData.error.message}`);
 
-  const photoId = String(data.id ?? "");
+  const photoId = String(uploadData.id ?? "");
+  if (!photoId) throw new Error("لم يتم الحصول على photo_id من Facebook");
 
-  if (photoId) {
-    addEngagementComment(photoId);
+  // Step 2: Post to page feed with the uploaded photo
+  const feedUrl = `https://graph.facebook.com/${API_VERSION}/${PAGE_ID}/feed?message=${encodeURIComponent(caption)}&attached_media=${encodeURIComponent(JSON.stringify([{ media_fbid: photoId }]))}&access_token=${ACCESS_TOKEN}`;
+  const feedData = await httpsPost(feedUrl);
+
+  if (feedData.error) throw new Error(`Facebook Photo API (feed): ${feedData.error.message}`);
+
+  const postId = String(feedData.id ?? "");
+
+  if (postId) {
+    addEngagementComment(postId);
   }
 
   return {
-    facebookPhotoId: photoId,
-    postUrl: photoId ? `https://www.facebook.com/photo/?fbid=${photoId}` : "",
+    facebookPhotoId: postId,
+    postUrl: postId ? `https://www.facebook.com/${PAGE_ID}/posts/${postId}` : "",
   };
 }
