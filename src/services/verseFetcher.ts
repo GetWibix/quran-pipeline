@@ -105,7 +105,7 @@ export async function getVerseRange(
   surahNumber: number,
   fromAyah: number,
   toAyah: number,
-  concurrency = 5
+  concurrency = 3
 ): Promise<VerseData[]> {
   const ayahs: number[] = [];
   for (let ayah = fromAyah; ayah <= toAyah; ayah++) {
@@ -120,7 +120,7 @@ export async function getVerseRange(
     );
     results.push(...batchResults);
     if (i + concurrency < ayahs.length) {
-      await sleep(200);
+      await sleep(800 + Math.random() * 400);
     }
   }
 
