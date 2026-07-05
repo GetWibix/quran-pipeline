@@ -85,16 +85,16 @@
   }
 
   .section-title {
-    @apply text-3xl md:text-4xl font-bold text-center mb-4;
+    @apply text-2xl xs:text-3xl md:text-4xl font-bold text-center mb-3 sm:mb-4;
   }
 
   .section-subtitle {
-    @apply text-text-secondary text-lg text-center max-w-2xl mx-auto mb-12;
+    @apply text-text-secondary text-sm xs:text-base md:text-lg text-center max-w-2xl mx-auto mb-8 sm:mb-12 px-4;
   }
 
   .arabic-verse {
     font-family: 'Amiri', serif;
-    @apply text-2xl leading-loose;
+    @apply text-xl xs:text-2xl leading-loose;
   }
 
   .skip-link {
@@ -121,23 +121,23 @@
 
 .hero-glow {
   position: absolute;
-  width: 600px;
-  height: 600px;
+  width: min(600px, 150vw);
+  height: min(600px, 150vw);
   border-radius: 50%;
   background: radial-gradient(circle, rgba(52, 211, 153, 0.12) 0%, transparent 70%);
-  top: -200px;
-  left: -200px;
+  top: clamp(-300px, -30vw, -100px);
+  left: clamp(-300px, -30vw, -100px);
   pointer-events: none;
 }
 
 .hero-glow-2 {
   position: absolute;
-  width: 500px;
-  height: 500px;
+  width: min(500px, 120vw);
+  height: min(500px, 120vw);
   border-radius: 50%;
   background: radial-gradient(circle, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
-  bottom: -200px;
-  right: -200px;
+  bottom: clamp(-300px, -30vw, -100px);
+  right: clamp(-300px, -30vw, -100px);
   pointer-events: none;
 }
 

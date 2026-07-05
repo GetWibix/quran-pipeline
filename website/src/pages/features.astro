@@ -51,20 +51,20 @@ const features = [
 <BaseLayout title="الميزات" description="جميع ميزات نظام NOR Quran لنشر القرآن الكريم آلياً" canonical="https://quran.waxbix.com/features">
   <Header />
 
-  <section id="main-content" class="pt-32 pb-16 relative min-h-screen">
+  <section id="main-content" class="pt-32 pb-10 xs:pb-12 sm:pb-16 relative min-h-screen overflow-hidden">
     <div class="hero-glow"></div>
     <div class="max-w-6xl mx-auto px-4">
-          <h1 class="text-4xl md:text-5xl font-bold text-center mb-4 text-white">
+          <h1 class="text-3xl xs:text-4xl md:text-5xl font-bold text-center mb-3 sm:mb-4 text-white">
         الميزات
       </h1>
-      <p class="text-text-secondary text-center text-lg mb-12">كل ما تحتاج لنشر القرآن الكريم آلياً باحترافية</p>
+      <p class="text-text-secondary text-center text-sm xs:text-base md:text-lg mb-8 sm:mb-12">كل ما تحتاج لنشر القرآن الكريم آلياً باحترافية</p>
 
-      <div class="space-y-6">
+      <div class="space-y-4 xs:space-y-6">
         {features.map((feat) => (
-          <div class="glow-card p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start">
+          <div class="glow-card p-4 xs:p-5 sm:p-6 md:p-8 flex flex-col sm:flex-row gap-4 sm:gap-6 items-start">
             <div class="flex-shrink-0"><Icon name={feat.icon} size={36} class="text-gold" /></div>
             <div>
-              <h2 class="text-2xl font-bold mb-2">{feat.title}</h2>
+              <h2 class="text-lg xs:text-xl md:text-2xl font-bold mb-2">{feat.title}</h2>
               <p class="text-text-secondary leading-relaxed">{feat.description}</p>
             </div>
           </div>

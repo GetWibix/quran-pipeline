@@ -9,8 +9,8 @@ const { value, label, suffix = '' } = Astro.props;
 const displayValue = value.toLocaleString('en');
 ---
 
-<div class="text-center p-6">
-  <div class="text-4xl md:text-5xl font-bold gradient-text mb-2" data-count={value}>
+<div class="text-center p-3 xs:p-4 sm:p-6">
+  <div class="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold gradient-text mb-1 sm:mb-2" data-count={value}>
     {displayValue}
   </div>
   <div class="text-text-secondary text-sm">
