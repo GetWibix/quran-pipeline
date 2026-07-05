@@ -40,8 +40,12 @@ async function pickImageBackground(): Promise<string> {
   return path.join(BACKGROUNDS_DIR, chosen);
 }
 
-async function getVideoBackgrounds(): Promise<string[]> {
+async function getLandscapeVideoBackgrounds(): Promise<string[]> {
   return listDir(LANDSCAPE_BG_DIR, ".mp4");
+}
+
+async function getPortraitVideoBackgrounds(): Promise<string[]> {
+  return listDir(PORTRAIT_BG_DIR, ".mp4");
 }
 
 export async function generateContent(
@@ -63,8 +67,9 @@ export async function generateContent(
   const sceneInputs: SceneInput[] = [];
   const aspectRatio = contentType === ContentType.SHORT ? "9:16" : "16:9";
   const backgroundPath = await pickImageBackground();
-  const useVideoBackground = contentType === ContentType.LONG_VIDEO;
-  const availableVideoBackgrounds = useVideoBackground ? await getVideoBackgrounds() : [];
+  const availableVideoBackgrounds = contentType === ContentType.SHORT
+    ? await getPortraitVideoBackgrounds()
+    : await getLandscapeVideoBackgrounds();
   const sceneBackgrounds: string[] = [];
 
   let totalDuration = 0;
