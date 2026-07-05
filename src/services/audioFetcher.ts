@@ -26,11 +26,12 @@ export const RECITER_WEIGHTS: Record<string, number> = {
   ghamadi: 1,
 };
 
-export const RECITER_ARABIC_NAMES: Record<Reciter, string> = {
+export const RECITER_ARABIC_NAMES: Record<string, string> = {
   "Alafasy_128kbps": "مشاري العفاسي",
   "Abdul_Basit_Murattal_192kbps": "عبدالباسط عبدالصمد",
   "Ghamadi_40kbps": "سعد الغامدي",
   "Maher_AlMuaiqly_64kbps": "ماهر المعيقلي",
+  "IslamSobhi": "إسلام صبحي",
 };
 
 const EVERYAYAH_BASE = "https://everyayah.com/data";
@@ -43,7 +44,7 @@ function pad3(n: number): string {
 }
 
 export function buildAudioUrl(
-  reciter: Reciter,
+  reciter: string,
   surahNumber: number,
   ayahNumber: number
 ): string {
@@ -52,12 +53,14 @@ export function buildAudioUrl(
   )}.mp3`;
 }
 
-function surahFileName(reciter: Reciter, surahNumber: number): string {
-  return `surah-${String(surahNumber).padStart(3, "0")}-${reciter}.mp3`;
+function surahFileName(reciter: string, surahNumber: number): string {
+  const safe = reciter.replace(/[^a-zA-Z0-9_-]/g, "");
+  return `surah-${String(surahNumber).padStart(3, "0")}-${safe}.mp3`;
 }
 
-function indexFileName(reciter: Reciter, surahNumber: number): string {
-  return `surah-${String(surahNumber).padStart(3, "0")}-${reciter}.json`;
+function indexFileName(reciter: string, surahNumber: number): string {
+  const safe = reciter.replace(/[^a-zA-Z0-9_-]/g, "");
+  return `surah-${String(surahNumber).padStart(3, "0")}-${safe}.json`;
 }
 
 export interface AyahTimestamp {
@@ -109,32 +112,66 @@ export async function downloadAyahAudio(
 /**
  * كيبني ملف الصوت الكامل للسورة من آيات فردية + index timestamps
  * أول مرة ينزّل الآيات ويجمعهم بملف واحد، بعدها يرجع الموجود
+ * إذا كان في ملف جاهز assets/audio/ (مثل إسلام صبحي)، يبني index بنسبة أطوال النص
  */
 export async function buildSurahAudio(
-  reciter: Reciter,
+  reciter: string,
   surahNumber: number,
   totalVerses: number
 ): Promise<{ filePath: string; index: SurahAudioIndex }> {
   await mkdir(AUDIO_DIR, { recursive: true });
 
+  const { readFile, access } = await import("fs/promises");
+
   const fullPath = path.join(AUDIO_DIR, surahFileName(reciter, surahNumber));
   const indexPath = path.join(AUDIO_DIR, indexFileName(reciter, surahNumber));
 
-  const { readFile, access } = await import("fs/promises");
+  // 1. الملف + index موجودين → استعملهم
   try {
     await access(fullPath);
     await access(indexPath);
     const index: SurahAudioIndex = JSON.parse(await readFile(indexPath, "utf-8"));
     return { filePath: fullPath, index };
   } catch {
-    // مش موجود — نولّده
+    // مش موجود — نولّد
   }
 
-  console.log(`🎧 بناء ملف سورة ${surahNumber} كاملة (${totalVerses} آية) — ${reciter}...`);
+  // 2. ملف جاهز موجود بدون index → نبني index من أطوال النص
+  try {
+    await access(fullPath);
+    const { getVerse } = await import("./verseFetcher");
+    console.log(`📊 بناء index لـ ${reciter} — سورة ${surahNumber} (${totalVerses} آية)...`);
+
+    const verses = await Promise.all(
+      Array.from({ length: totalVerses }, (_, i) => getVerse(surahNumber, i + 1))
+    );
+    const charCounts = verses.map((v) => v.textArabic.length);
+    const totalChars = charCounts.reduce((a, b) => a + b, 0);
+    const totalDuration = await getAudioDuration(fullPath);
+
+    const ayahs: AyahTimestamp[] = [];
+    let cursor = 0;
+    for (let i = 0; i < totalVerses; i++) {
+      const dur = (charCounts[i] / totalChars) * totalDuration;
+      ayahs.push({ ayah: i + 1, startSec: cursor, endSec: cursor + dur });
+      cursor += dur;
+    }
+
+    const index: SurahAudioIndex = {
+      surahNumber, reciter, totalVerses, totalDurationSec: totalDuration, ayahs,
+    };
+    await writeFile(indexPath, JSON.stringify(index, null, 2));
+    console.log(`   ✅ index بنجاح (${totalDuration.toFixed(1)}ث، ${totalVerses} آية)`);
+    return { filePath: fullPath, index };
+  } catch {
+    // مش موجود جاهز — ننزّل من EveryAyah
+  }
+
+  // 3. تنزيل من EveryAyah
+  console.log(`🎧 تحميل سورة ${surahNumber} (${totalVerses} آية) — ${reciter}...`);
   const tmpDir = path.join(TMP_CONCAT_DIR, `${surahNumber}-${Date.now()}`);
   await mkdir(tmpDir, { recursive: true });
 
-  const durFile = path.join(tmpDir, "durations.txt");
   const concatFile = path.join(tmpDir, "files.txt");
   const durations: number[] = [];
 
@@ -173,11 +210,7 @@ export async function buildSurahAudio(
   ]);
 
   const index: SurahAudioIndex = {
-    surahNumber,
-    reciter,
-    totalVerses,
-    totalDurationSec: cursor,
-    ayahs,
+    surahNumber, reciter, totalVerses, totalDurationSec: cursor, ayahs,
   };
   await writeFile(indexPath, JSON.stringify(index, null, 2));
 
