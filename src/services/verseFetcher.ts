@@ -43,18 +43,29 @@ interface AlQuranEditionsResponse {
   data: AlQuranAyahResponse[];
 }
 
+async function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
 /**
  * كيجيب آية واحدة محددة (سورة:آية) مع النص + الترجمات
  * مثال: getVerse(1, 1) => الفاتحة، الآية 1
  */
 export async function getVerse(
   surahNumber: number,
-  ayahNumber: number
+  ayahNumber: number,
+  attempt = 1
 ): Promise<VerseData> {
   const editions = "quran-uthmani,fr.hamidullah,en.sahih";
   const url = `${BASE_URL}/ayah/${surahNumber}:${ayahNumber}/editions/${editions}`;
 
   const res = await fetch(url);
+  if (res.status === 429 && attempt <= 5) {
+    const delay = Math.min(1000 * Math.pow(2, attempt), 15000);
+    console.warn(`⏳ rate limit (429) للآية ${surahNumber}:${ayahNumber} — ننتظر ${delay}مس (محاولة ${attempt}/5)`);
+    await sleep(delay + Math.random() * 1000);
+    return getVerse(surahNumber, ayahNumber, attempt + 1);
+  }
   if (!res.ok) {
     throw new Error(
       `فشل جلب الآية ${surahNumber}:${ayahNumber} — HTTP ${res.status}`
@@ -93,13 +104,27 @@ export async function getVerse(
 export async function getVerseRange(
   surahNumber: number,
   fromAyah: number,
-  toAyah: number
+  toAyah: number,
+  concurrency = 5
 ): Promise<VerseData[]> {
   const ayahs: number[] = [];
   for (let ayah = fromAyah; ayah <= toAyah; ayah++) {
     ayahs.push(ayah);
   }
-  return Promise.all(ayahs.map((ayah) => getVerse(surahNumber, ayah)));
+
+  const results: VerseData[] = [];
+  for (let i = 0; i < ayahs.length; i += concurrency) {
+    const batch = ayahs.slice(i, i + concurrency);
+    const batchResults = await Promise.all(
+      batch.map((ayah) => getVerse(surahNumber, ayah))
+    );
+    results.push(...batchResults);
+    if (i + concurrency < ayahs.length) {
+      await sleep(200);
+    }
+  }
+
+  return results;
 }
 
 /**
