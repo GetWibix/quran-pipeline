@@ -72,6 +72,10 @@ model PublishedContent {
 
   @@index([status])
   @@index([contentType, publishedAt])
+  @@index([facebookVideoId])
+  @@index([youtubeVideoId])
+  @@index([publishedAt])
+  @@index([status, publishedAt])
 }
 
 /// قرارات الوكيل بخصوص الجدولة — سجل تدقيق (audit log) لشفافية القرارات
@@ -121,6 +125,7 @@ model PublishExperiment {
   createdAt          DateTime              @default(now())
 
   @@index([contentType])
+  @@index([createdAt])
 }
 
 /// نتائج تجارب الجدولة

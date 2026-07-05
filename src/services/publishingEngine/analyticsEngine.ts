@@ -1,6 +1,7 @@
-import { PrismaClient, ContentType } from "@prisma/client";
+import { ContentType } from "@prisma/client";
 import { fetchVideoStats } from "../youtubePublisher";
 import { canAfford, QUOTA_COSTS } from "../quotaTracker";
+import prisma from "../../lib/prisma";
 import {
   PerformanceMetrics,
   TimeSlotEvaluation,
@@ -10,8 +11,6 @@ import {
   ANALYSIS_DELAY_HOURS,
 } from "./types";
 import { recordPatternPerformance } from "../seoEngine";
-
-const prisma = new PrismaClient();
 
 function calculatePerformanceScore(metrics: PerformanceMetrics): number {
   const normalizedViews = Math.min(metrics.views / MAX_EXPECTED.views, 1);
@@ -104,6 +103,16 @@ export async function collectAndAnalyzeExperiments(): Promise<number> {
   }
 
   let analyzed = 0;
+  const results: {
+    experimentId: string;
+    stats: { views: number; likes: number; comments: number };
+    contentType: ContentType;
+    scheduledHour: number;
+    scheduledMinute: number;
+    score: number;
+    titlePatternId: number | null;
+  }[] = [];
+
   for (const experiment of pendingExperiments) {
     const content = experiment.publishedContent;
     if (!content?.youtubeVideoId) continue;
@@ -128,35 +137,54 @@ export async function collectAndAnalyzeExperiments(): Promise<number> {
 
       const score = calculatePerformanceScore(metrics);
 
-      await prisma.experimentResult.create({
-        data: {
-          experimentId: experiment.id,
-          views: stats.views,
-          likes: stats.likes,
-          comments: stats.comments,
-          watchTimeMinutes: content.watchTimeMinutes,
-          subscribersGained: 0,
-          performanceScore: score,
-        },
+      results.push({
+        experimentId: experiment.id,
+        stats: { views: stats.views, likes: stats.likes, comments: stats.comments },
+        contentType: experiment.contentType,
+        scheduledHour: experiment.scheduledHour,
+        scheduledMinute: experiment.scheduledMinute,
+        score,
+        titlePatternId: content.titlePatternId,
       });
-
-      await updateTimeSlotScore(
-        experiment.contentType,
-        experiment.scheduledHour,
-        experiment.scheduledMinute,
-        score
-      );
-
-      if (content.titlePatternId) {
-        await recordPatternPerformance(content.titlePatternId, experiment.contentType, stats.views).catch((err) => {
-          console.warn("⚠️ فشل تحديث أداء نمط العنوان:", err instanceof Error ? err.message : err);
-        });
-      }
 
       analyzed++;
     } catch (err) {
       console.warn(`⚠️ فشل تحليل تجربة ${experiment.id}:`, err instanceof Error ? err.message : err);
     }
+  }
+
+  if (results.length > 0) {
+    const operations: any[] = [];
+
+    for (const r of results) {
+      operations.push(
+        prisma.experimentResult.create({
+          data: {
+            experimentId: r.experimentId,
+            views: r.stats.views,
+            likes: r.stats.likes,
+            comments: r.stats.comments,
+            watchTimeMinutes: 0,
+            subscribersGained: 0,
+            performanceScore: r.score,
+          },
+        })
+      );
+
+      if (r.titlePatternId) {
+        operations.push(
+          recordPatternPerformance(r.titlePatternId, r.contentType, r.stats.views)
+        );
+      }
+    }
+
+    for (const r of results) {
+      operations.push(
+        updateTimeSlotScore(r.contentType, r.scheduledHour, r.scheduledMinute, r.score)
+      );
+    }
+
+    await Promise.all(operations);
   }
 
   console.log(`📊 تم تحليل ${analyzed}/${pendingExperiments.length} تجربة`);

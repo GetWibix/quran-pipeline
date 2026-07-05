@@ -123,8 +123,6 @@ export async function downloadAyahRangeAudio(
     );
     files.push(filePath);
     totalDuration += durationSeconds;
-    // تأخير بسيط لتجنب الضغط على السيرفر
-    await new Promise((r) => setTimeout(r, 200));
   }
 
   return { files, totalDuration };

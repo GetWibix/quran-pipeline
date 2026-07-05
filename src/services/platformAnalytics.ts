@@ -1,18 +1,9 @@
-/**
- * platformAnalytics.ts
- * يجلب إحصائيات التفاعل لكل منصة (فيسبوك، انستغرام) ويحدّث سجل PublishedContent
- * لكل منصة عتبة engagement خاصة بها لاتخاذ قرارات النشر
- */
-
-import { PrismaClient, ContentType } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { ContentType } from "@prisma/client";
+import prisma from "../lib/prisma";
 
 const API_VERSION = "v22.0";
 const META_TOKEN = process.env.META_PAGE_ACCESS_TOKEN ?? "";
 const IG_USER_ID = process.env.INSTAGRAM_BUSINESS_ID ?? "";
-
-// ─── منصة فيسبوك ─────────────────────────────────────────────
 
 interface FacebookPostInsights {
   reactions: number;
@@ -21,10 +12,6 @@ interface FacebookPostInsights {
   videoViews: number;
 }
 
-/**
- * يجلب تفاعل منشور فيسبوك عبر Graph API
- * Graph API: /{post-id}/insights?metric=post_reactions_by_type_total,post_comments,post_shares,post_video_views
- */
 async function fetchFacebookPostInsights(
   postId: string
 ): Promise<FacebookPostInsights | null> {
@@ -57,10 +44,6 @@ async function fetchFacebookPostInsights(
   }
 }
 
-/**
- * يجلب تفاعل ميديا انستغرام عبر Graph API
- * /{media-id}/insights?metric=engagement,impressions,reach,saved,video_views
- */
 async function fetchInstagramMediaInsights(
   mediaId: string
 ): Promise<number | null> {
@@ -84,7 +67,6 @@ async function fetchInstagramMediaInsights(
     const engagement = extractValue("engagement");
     const impressions = extractValue("impressions");
 
-    // engagement / impressions = معدل التفاعل
     if (impressions === 0) return 0;
     return engagement / impressions;
   } catch (err) {
@@ -93,16 +75,11 @@ async function fetchInstagramMediaInsights(
   }
 }
 
-// ─── Public API ───────────────────────────────────────────────
-
 export interface PlatformEngagement {
   facebook: { score: number; details: FacebookPostInsights } | null;
   instagram: { score: number } | null;
 }
 
-/**
- * يجلب تفاعل جميع المنصات لفيديو معين
- */
 export async function fetchAllPlatformEngagement(
   facebookPostId: string | null,
   instagramMediaId: string | null
@@ -123,9 +100,6 @@ export async function fetchAllPlatformEngagement(
   };
 }
 
-/**
- * يحدّث engagement scores لكل المنصات في قاعدة البيانات
- */
 export async function updatePlatformEngagements(): Promise<{
   updated: number;
   facebook: { count: number; avgEngagement: number };
@@ -146,11 +120,12 @@ export async function updatePlatformEngagements(): Promise<{
     },
   });
 
-  let updated = 0;
   let fbCount = 0;
   let fbTotalEngagement = 0;
   let igCount = 0;
   let igTotalEngagement = 0;
+  const fbUpdates: { id: string; score: number }[] = [];
+  const igUpdates: { id: string; score: number }[] = [];
 
   for (const video of videos) {
     try {
@@ -160,33 +135,40 @@ export async function updatePlatformEngagements(): Promise<{
       );
 
       if (engagement.facebook) {
-        await prisma.publishedContent.update({
-          where: { id: video.id },
-          data: { facebookEngagement: engagement.facebook.score },
-        });
+        fbUpdates.push({ id: video.id, score: engagement.facebook.score });
         fbCount++;
         fbTotalEngagement += engagement.facebook.score;
       }
 
       if (engagement.instagram) {
-        await prisma.publishedContent.update({
-          where: { id: video.id },
-          data: { instagramEngagement: engagement.instagram.score },
-        });
+        igUpdates.push({ id: video.id, score: engagement.instagram.score });
         igCount++;
         igTotalEngagement += engagement.instagram.score;
       }
-
-      updated++;
     } catch (err) {
       console.warn(`⚠️ فشل تحديث ${video.id}:`, err instanceof Error ? err.message : String(err));
     }
+  }
 
-    await new Promise((r) => setTimeout(r, 300));
+  if (fbUpdates.length > 0 || igUpdates.length > 0) {
+    await prisma.$transaction([
+      ...fbUpdates.map((u) =>
+        prisma.publishedContent.update({
+          where: { id: u.id },
+          data: { facebookEngagement: u.score },
+        })
+      ),
+      ...igUpdates.map((u) =>
+        prisma.publishedContent.update({
+          where: { id: u.id },
+          data: { instagramEngagement: u.score },
+        })
+      ),
+    ]);
   }
 
   return {
-    updated,
+    updated: fbUpdates.length + igUpdates.length,
     facebook: {
       count: fbCount,
       avgEngagement: fbCount > 0 ? fbTotalEngagement / fbCount : 0,
@@ -198,9 +180,6 @@ export async function updatePlatformEngagements(): Promise<{
   };
 }
 
-/**
- * يحسب متوسط engagement score لآخر N فيديو لمنصة محددة
- */
 export async function getPlatformAvgEngagement(
   platform: "youtube" | "facebook" | "instagram",
   count: number = 5
@@ -235,9 +214,6 @@ export async function getPlatformAvgEngagement(
   return sum / recent.length;
 }
 
-/**
- * يقرر لكل منصة هل نزيد النشر بناءً على عتبة engagement خاصة
- */
 export interface PlatformPublishDecision {
   youtube: { shouldIncrease: boolean; score: number };
   facebook: { shouldIncrease: boolean; score: number };

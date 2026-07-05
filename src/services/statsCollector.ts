@@ -1,13 +1,6 @@
-/**
- * statsCollector.ts
- * يجيب إحصائيات الفيديوهات المنشورة من يوتيوب، ويحلل أفضل أوقات النشر
- * بناءً على المشاهدات الفعلية.
- */
-
-import { PrismaClient, ContentType } from "@prisma/client";
+import { ContentType } from "@prisma/client";
 import { fetchVideoStats } from "./youtubePublisher";
-
-const prisma = new PrismaClient();
+import prisma from "../lib/prisma";
 
 export interface OptimalHours {
   SHORT: number[];
@@ -21,11 +14,6 @@ const DEFAULT_OPTIMAL_HOURS: OptimalHours = {
   POSTER: [9],
 };
 
-/**
- * يسحب إحصائيات كل الفيديوهات المنشورة اللي عندها youtubeVideoId
- * وما زالت ما تحدثتش إحصائياتها اليوم.
- * كيستهلك ~5 units لكل فيديو (YouTube API quota).
- */
 export async function collectAllStats(): Promise<number> {
   const videos = await prisma.publishedContent.findMany({
     where: {
@@ -41,26 +29,28 @@ export async function collectAllStats(): Promise<number> {
   }
 
   let updated = 0;
+  const updates: { id: string; views: number; likes: number; comments: number; engagementScore: number }[] = [];
+
   for (const video of videos) {
     try {
       const stats = await fetchVideoStats(video.youtubeVideoId!);
       const engagementScore = calculateEngagementScore(stats.views, stats.likes, stats.comments);
-
-      await prisma.publishedContent.update({
-        where: { id: video.id },
-        data: {
-          views: stats.views,
-          likes: stats.likes,
-          comments: stats.comments,
-          engagementScore,
-        },
-      });
+      updates.push({ id: video.id, ...stats, engagementScore });
       updated++;
     } catch (err) {
       console.warn(`⚠️ فشل جلب إحصائيات ${video.id}:`, err instanceof Error ? err.message : err);
     }
+  }
 
-    await new Promise((r) => setTimeout(r, 300));
+  if (updates.length > 0) {
+    await prisma.$transaction(
+      updates.map((u) =>
+        prisma.publishedContent.update({
+          where: { id: u.id },
+          data: { views: u.views, likes: u.likes, comments: u.comments, engagementScore: u.engagementScore },
+        })
+      )
+    );
   }
 
   console.log(`📊 تم تحديث ${updated}/${videos.length} فيديو`);
@@ -72,10 +62,6 @@ function calculateEngagementScore(views: number, likes: number, comments: number
   return (likes + comments) / views;
 }
 
-/**
- * يحلل أفضل أوقات النشر حسب المشاهدات الفعلية.
- * كيرجع ترتيب الساعات (0-23 UTC) من الأعلى مشاهدات للأقل.
- */
 export async function analyzeOptimalHours(): Promise<OptimalHours> {
   const THIRTY_DAYS_AGO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
@@ -130,25 +116,16 @@ export async function analyzeOptimalHours(): Promise<OptimalHours> {
   return result;
 }
 
-/**
- * يسجل أحسن أوقات النشر في AgentDecisionLog للشفافية والتدقيق
- */
 export async function persistOptimalHours(hours: OptimalHours): Promise<void> {
-  const { PrismaClient: PC } = await import("@prisma/client");
-  const p = new PC();
-  await p.agentDecisionLog.create({
+  await prisma.agentDecisionLog.create({
     data: {
       decisionType: "OPTIMAL_HOURS_UPDATE",
       reasoning: `تم تحليل بيانات 30 يوم وتحديث أوقات النشر.`,
       contextData: hours as any,
     },
   });
-  await p.$disconnect();
 }
 
-/**
- * يجيب آخر أوقات نشر محفوظة من التحليل، أو يرجع الافتراضية
- */
 export async function getOptimalHours(): Promise<OptimalHours> {
   const lastLog = await prisma.agentDecisionLog.findFirst({
     where: { decisionType: "OPTIMAL_HOURS_UPDATE" },
