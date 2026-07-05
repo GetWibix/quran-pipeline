@@ -18,6 +18,7 @@ import { notifyPublishSuccess, notifyPublishFailure } from "../services/notifier
 import { cleanupWorkDir } from "../services/videoRenderer";
 import { generatePoster } from "../services/posterService";
 import { publishPhotoToFacebook } from "../services/facebookPhotoPublisher";
+import { SITE_LINK } from "../site";
 import { selectNextRange } from "../services/verseSelector";
 import { getVerse, getSurahMeta, VerseData } from "../services/verseFetcher";
 import { RECITER_ARABIC_NAMES, RECITERS, RECITER_WEIGHTS } from "../services/audioFetcher";
@@ -27,7 +28,7 @@ import path from "path";
 const prisma = new PrismaClient();
 
 function getDefaultRouting(): PlatformRouting {
-  return { youtube: true, facebook: true, instagram: true, threads: true };
+  return { youtube: true, facebook: true, instagram: true, threads: true, facebookStory: true, instagramStory: true };
 }
 
 function pickReciter(): (keyof typeof RECITERS) {
@@ -72,7 +73,7 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       // ─── AI يولد caption ─────────────────────────────
       const metadata = await generateMetadata(verseData, posterContentType, "", "alafasy");
       const scheduledAt = await getNextOptimalPublishTime(posterContentType);
-      const caption = metadata.description;
+      const caption = metadata.description + SITE_LINK;
       const label = posterTitle;
 
       const imageBuffer = await generatePoster({ surahName: label, verses });
@@ -179,6 +180,8 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       finalDescription = `${seoOutput.description}\n\n${chapters}`;
     }
 
+    finalDescription += SITE_LINK;
+
     const scheduledAt = job.data.forcePublishAt ?? (await getNextOptimalPublishTime(contentType));
 
     const record = await prisma.publishedContent.create({
@@ -234,6 +237,8 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       facebook: null,
       instagram: null,
       threads: null,
+      facebookStory: null,
+      instagramStory: null,
       errors: [],
     };
 
@@ -292,6 +297,8 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       multiResult.facebook?.facebookVideoId && `📘 فيسبوك: ${multiResult.facebook.postUrl}`,
       multiResult.instagram?.instagramMediaId && `📸 انستغرام: ${multiResult.instagram.postUrl}`,
       multiResult.threads?.threadsPostId && `🧵 تريدز: ${multiResult.threads.postUrl}`,
+      multiResult.facebookStory?.storyId && `📱 قصة فيسبوك`,
+      multiResult.instagramStory?.instagramMediaId && `📱 قصة انستغرام`,
     ].filter(Boolean).join("\n");
 
     await notifyPublishSuccess({

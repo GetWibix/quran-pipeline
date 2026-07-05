@@ -20,6 +20,8 @@ export interface PlatformRouting {
   facebook?: boolean;
   instagram?: boolean;
   threads?: boolean;
+  facebookStory?: boolean;
+  instagramStory?: boolean;
 }
 
 export interface PosterJobData {

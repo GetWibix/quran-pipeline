@@ -1,6 +1,7 @@
 import { readFile } from "fs/promises";
 import { request as httpsRequest } from "https";
 import { generateComment } from "./commentGenerator";
+import { SITE_LINK_SHORT } from "../site";
 
 export interface FacebookPublishOptions {
   videoFilePath: string;
@@ -69,7 +70,7 @@ async function addEngagementComment(videoId: string, opts?: FacebookPublishOptio
         "اللهم اجعل القرآن ربيع قلوبنا 🌙 انشر تؤجر 🤲",
         "لا تنسوا مشاركة الفيديو مع أحبابكم 🤲 جعلها الله في ميزان حسناتكم",
       ];
-      comment = fallback[Math.floor(Math.random() * fallback.length)];
+      comment = fallback[Math.floor(Math.random() * fallback.length)] + SITE_LINK_SHORT;
     }
 
     const url = `https://graph.facebook.com/${API_VERSION}/${videoId}/comments?message=${encodeURIComponent(comment)}&access_token=${ACCESS_TOKEN}`;
@@ -151,7 +152,14 @@ export async function publishToFacebook(opts: FacebookPublishOptions): Promise<F
   };
 
   if (opts.scheduledPublishTime) {
-    fields.scheduled_publish_time = String(Math.floor(new Date(opts.scheduledPublishTime).getTime() / 1000));
+    let publishTime = new Date(opts.scheduledPublishTime).getTime();
+    const minTime = Date.now() + 15 * 60 * 1000;
+    if (publishTime < minTime) {
+      publishTime = minTime;
+      console.log("⏰ Facebook: وقت الجدولة قريب جداً — تم التمديد لـ +15 دقيقة");
+    }
+    fields.scheduled_publish_time = String(Math.floor(publishTime / 1000));
+    fields.unpublished_content_type = "SCHEDULED";
   }
 
   const body = buildMultipartBody(videoBuffer, fields, boundary);

@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { getFreeModels } from "./modelRegistry";
+import { SITE_LINK_SHORT} from "../site";
 
 const client = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
@@ -21,6 +22,24 @@ const FALLBACK_COMMENTS = [
   "اللهم ارزقنا تدبر القرآن والعمل به 🤲",
 ];
 
+const PROMPT_KEYWORDS = [
+  "اكتب تعليقاً", "تعليقاً مناسباً", "عنوان الفيديو", "السورة:",
+  "system", "user:", "assistant:", "أنت مسلم",
+];
+
+const ARABIC_REGEX = /[\u0600-\u06FF]/;
+
+function isValidComment(text: string, title: string, surahName: string): boolean {
+  if (text.length < 10 || text.length > 300) return false;
+  const arabicCount = (text.match(ARABIC_REGEX) || []).length;
+  if (arabicCount < text.length * 0.3) return false;
+  if (text.includes(title) || text.includes(surahName)) return false;
+  for (const keyword of PROMPT_KEYWORDS) {
+    if (text.includes(keyword)) return false;
+  }
+  return true;
+}
+
 export async function generateComment(
   title: string,
   surahName: string,
@@ -36,30 +55,24 @@ export async function generateComment(
         messages: [
           {
             role: "system",
-            content: `أنت مسلم متحمس تنشر محتوى قرآنياً على يوتيوب.
-اكتب تعليقاً قصيراً وجذاباً (جملة إلى جملتين) على الفيديو التالي.
-اجعل التعليق متنوعاً: مرة تشجيع على التدبر، مرة دعاء، مرة تأمل في الآيات.
-لا تكرر نفس الأسلوب دائماً.
-اكتب التعليق فقط بالعربية الفصحى أو العامية الخفيفة.
-لا تستخدم علامات تنصيص.`,
+            content: `اكتب تعليقاً قصيراً وجذاباً (جملة إلى جملتين) بالفصحى على هذا الفيديو القرآني. تنوع بين دعاء، تشجيع على التدبر، أو تأمل.`,
           },
           {
             role: "user",
-            content: `عنوان الفيديو: ${title}
-السورة: ${surahName} (${fromAyah}-${toAyah})
-اكتب تعليقاً مناسباً:`,
+            content: `السورة: ${surahName} (${fromAyah}-${toAyah})
+التعليق:`,
           },
         ],
         max_tokens: 60,
         temperature: 0.9,
       });
 
-      const text = response.choices[0]?.message?.content?.trim();
-      if (text && text.length > 5) return text;
+      const text = response.choices[0]?.message?.content?.trim() ?? "";
+      if (isValidComment(text, title, surahName)) return text + SITE_LINK_SHORT;
     } catch {
       continue;
     }
   }
 
-  return FALLBACK_COMMENTS[Math.floor(Math.random() * FALLBACK_COMMENTS.length)];
+  return FALLBACK_COMMENTS[Math.floor(Math.random() * FALLBACK_COMMENTS.length)] + SITE_LINK_SHORT;
 }

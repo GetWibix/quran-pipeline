@@ -50,6 +50,37 @@ async function waitForContainer(containerId: string, timeoutMs = 300_000): Promi
   throw new Error("Instagram: انتهت مهلة انتظار معالجة الفيديو");
 }
 
+export async function publishToInstagramStory(opts: InstagramPublishOptions): Promise<InstagramPublishResult> {
+  if (!isConfigured()) {
+    console.warn("⚠️ Instagram Story: INSTAGRAM_BUSINESS_ID أو ACCESS_TOKEN غير موجودين — تخطي");
+    return { instagramMediaId: "", postUrl: "" };
+  }
+
+  if (!opts.videoUrl) {
+    console.warn("⚠️ Instagram Story: videoUrl مطلوب — تخطي");
+    return { instagramMediaId: "", postUrl: "" };
+  }
+
+  const container = await apiPost(`/${IG_USER_ID}/media`, {
+    media_type: "STORIES",
+    video_url: opts.videoUrl,
+  });
+
+  const containerId = String(container.id);
+  await waitForContainer(containerId);
+
+  const publish = await apiPost(`/${IG_USER_ID}/media_publish`, {
+    creation_id: containerId,
+  });
+
+  const mediaId = String(publish.id);
+  console.log(`📱 قصة انستغرام منشورة: ${mediaId}`);
+  return {
+    instagramMediaId: mediaId,
+    postUrl: mediaId ? `https://instagram.com/p/${mediaId}` : "",
+  };
+}
+
 export async function publishToInstagram(opts: InstagramPublishOptions): Promise<InstagramPublishResult> {
   if (!isConfigured()) {
     console.warn("⚠️ Instagram: INSTAGRAM_BUSINESS_ID أو META_PAGE_ACCESS_TOKEN غير موجودين — تخطي");

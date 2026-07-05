@@ -141,7 +141,7 @@ async function main() {
 
   // نشر على فيسبوك (مباشر بدون R2)
   let multiResult: Awaited<ReturnType<typeof publishToAllPlatforms>> = {
-    youtube: null, facebook: null, instagram: null, threads: null, errors: [],
+    youtube: null, facebook: null, instagram: null, threads: null, facebookStory: null, instagramStory: null, errors: [],
   };
 
   const r2Configured = !!(process.env.R2_ACCOUNT_ID && process.env.R2_ACCESS_KEY && process.env.R2_SECRET_KEY);

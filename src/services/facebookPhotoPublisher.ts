@@ -1,4 +1,5 @@
 import { request as httpsRequest } from "https";
+import { SITE_LINK_SHORT } from "../site";
 
 export interface FacebookPhotoResult {
   facebookPhotoId: string;
@@ -15,7 +16,7 @@ const ENGAGEMENT_COMMENTS = [
   "لا تنسوا مشاركة هذه الآيات مع أحبابكم لتعم البركة 🤲",
   "اللهم اجعل القرآن ربيع قلوبنا 🌙 انشر تؤجر 🤲",
   "ذكر الله يطمئن القلوب 💚 شارك مع من تحب",
-];
+].map(c => c + SITE_LINK_SHORT);
 
 function isConfigured(): boolean {
   return Boolean(PAGE_ID && ACCESS_TOKEN);

@@ -1,6 +1,7 @@
 import { publishToFacebook, FacebookPublishOptions, FacebookPublishResult } from "./facebookPublisher";
-import { publishToInstagram, InstagramPublishOptions, InstagramPublishResult } from "./instagramPublisher";
+import { publishToInstagram, publishToInstagramStory, InstagramPublishOptions, InstagramPublishResult } from "./instagramPublisher";
 import { publishToThreads, ThreadsPublishOptions, ThreadsPublishResult } from "./threadsPublisher";
+import { publishToFacebookStory, FacebookStoryResult } from "./facebookStoryPublisher";
 
 export interface MultiPlatformPublishOptions {
   videoFilePath: string;
@@ -12,7 +13,6 @@ export interface MultiPlatformPublishOptions {
   surahName?: string;
   fromAyah?: number;
   toAyah?: number;
-  /** وقت النشر المجدول (ISO 8601) — كيبعت لـ Facebook باش ينشر مجدول */
   scheduledPublishTime?: string;
 }
 
@@ -21,6 +21,8 @@ export interface PlatformRouting {
   facebook?: boolean;
   instagram?: boolean;
   threads?: boolean;
+  facebookStory?: boolean;
+  instagramStory?: boolean;
 }
 
 export interface MultiPlatformResult {
@@ -28,6 +30,8 @@ export interface MultiPlatformResult {
   facebook: FacebookPublishResult | null;
   instagram: InstagramPublishResult | null;
   threads: ThreadsPublishResult | null;
+  facebookStory: FacebookStoryResult | null;
+  instagramStory: InstagramPublishResult | null;
   errors: { platform: string; error: string }[];
 }
 
@@ -43,6 +47,8 @@ export async function publishToAllPlatforms(
     facebook: null,
     instagram: null,
     threads: null,
+    facebookStory: null,
+    instagramStory: null,
     errors: [],
   };
 
@@ -108,6 +114,40 @@ export async function publishToAllPlatforms(
     );
   }
 
+  if (routing.facebookStory !== false && opts.videoUrl) {
+    promises.push(
+      publishToFacebookStory({
+        videoUrl: opts.videoUrl,
+        title: opts.title,
+      })
+        .then((r) => { result.facebookStory = r; })
+        .catch((e) => {
+          const msg = e instanceof Error ? e.message : String(e);
+          errors.push({ platform: "facebookStory", error: msg });
+          console.error(`❌ Facebook Story فشل: ${msg}`);
+        }),
+    );
+  }
+
+  if (routing.instagramStory !== false && opts.videoUrl) {
+    promises.push(
+      publishToInstagramStory({
+        videoFilePath: opts.videoFilePath,
+        title: opts.title,
+        description: opts.description,
+        tags: opts.tags,
+        isShort: opts.isShort,
+        videoUrl: opts.videoUrl,
+      })
+        .then((r) => { result.instagramStory = r; })
+        .catch((e) => {
+          const msg = e instanceof Error ? e.message : String(e);
+          errors.push({ platform: "instagramStory", error: msg });
+          console.error(`❌ Instagram Story فشل: ${msg}`);
+        }),
+    );
+  }
+
   await Promise.all(promises);
   result.errors = errors;
 
@@ -116,6 +156,8 @@ export async function publishToAllPlatforms(
     result.facebook?.facebookVideoId && "Facebook",
     result.instagram?.instagramMediaId && "Instagram",
     result.threads?.threadsPostId && "Threads",
+    result.facebookStory?.storyId && "Facebook Story",
+    result.instagramStory?.instagramMediaId && "Instagram Story",
   ].filter(Boolean);
 
   console.log(`📢 تم النشر على: ${published.join(", ") || "لا شيء"}`);
