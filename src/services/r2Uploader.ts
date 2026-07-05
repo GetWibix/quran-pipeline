@@ -12,7 +12,7 @@
  */
 
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { readFile } from "fs/promises";
+import { createReadStream } from "fs";
 
 const ACCOUNT_ID = process.env.R2_ACCOUNT_ID ?? "";
 const ACCESS_KEY = process.env.R2_ACCESS_KEY ?? "";
@@ -58,7 +58,6 @@ export async function uploadToR2(localPath: string): Promise<string | undefined>
 
   const filename = localPath.split("/").pop() || `video-${Date.now()}.mp4`;
   const key = `videos/${filename}`;
-  const fileBuffer = await readFile(localPath);
 
   console.log(`☁️  رفع الفيديو إلى R2: ${key}`);
 
@@ -66,7 +65,7 @@ export async function uploadToR2(localPath: string): Promise<string | undefined>
     await s3.send(new PutObjectCommand({
       Bucket: BUCKET,
       Key: key,
-      Body: fileBuffer,
+      Body: createReadStream(localPath),
       ContentType: "video/mp4",
     }));
   } catch (err) {

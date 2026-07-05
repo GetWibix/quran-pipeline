@@ -1,4 +1,4 @@
-import { PrismaClient, ContentType } from "@prisma/client";
+import { ContentType } from "@prisma/client";
 import { getTopTimeSlots } from "./analyticsEngine";
 import { getAdaptiveExperiments } from "./adaptiveOptimizer";
 import {
@@ -10,7 +10,7 @@ import {
   getDefaultPublishMinute,
 } from "./types";
 
-const prisma = new PrismaClient();
+import prisma from "../../lib/prisma";
 
 async function getExperimentalTime(contentType: ContentType): Promise<{ hour: number; minute: number }> {
   const existingExperiments = await prisma.timeSlotScore.findMany({

@@ -21,6 +21,7 @@ const DIMENSIONS: Record<AspectRatio, { width: number; height: number }> = {
 
 let fontsRegistered = false;
 const imageCache = new Map<string, any>();
+const IMAGE_CACHE_MAX = 5;
 
 function ensureFontsRegistered(fontsDir: string) {
   if (fontsRegistered) return;
@@ -85,6 +86,10 @@ export async function composeScene(opts: ComposeSceneOptions): Promise<string> {
   if (!opts.transparent) {
     let bg = imageCache.get(opts.backgroundImagePath);
     if (!bg) {
+      if (imageCache.size >= IMAGE_CACHE_MAX) {
+        const firstKey = imageCache.keys().next().value;
+        if (firstKey) imageCache.delete(firstKey);
+      }
       bg = await loadImage(opts.backgroundImagePath);
       imageCache.set(opts.backgroundImagePath, bg);
     }

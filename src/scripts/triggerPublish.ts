@@ -4,7 +4,7 @@
  * Usage: npx ts-node src/scripts/triggerPublish.ts [SHORT|LONG_VIDEO]
  */
 
-import { PrismaClient, ContentType } from "@prisma/client";
+import { ContentType } from "@prisma/client";
 import { generateContent } from "../services/contentPipeline";
 import { generateMetadata, getNextOptimalPublishTime } from "../services/decisionAgent";
 import { generateSeoMetadata } from "../services/seoEngine";
@@ -16,8 +16,7 @@ import { notifyPublishSuccess, notifyPublishFailure } from "../services/notifier
 import { cleanupWorkDir } from "../services/videoRenderer";
 import { RECITER_ARABIC_NAMES, RECITERS, RECITER_WEIGHTS } from "../services/audioFetcher";
 import { rename, unlink } from "fs/promises";
-
-const prisma = new PrismaClient();
+import prisma from "../lib/prisma";
 const contentType = (process.argv[2]?.toUpperCase() === "LONG_VIDEO" ? "LONG_VIDEO" : "SHORT") as ContentType;
 
 async function main() {

@@ -25,13 +25,12 @@
  *   npm run e2e                                               ← عبر السكربت
  */
 
-import { PrismaClient, ContentType } from "@prisma/client";
+import { ContentType } from "@prisma/client";
 import { generateContent } from "../services/contentPipeline";
 import { generateMetadata, getNextOptimalPublishTime } from "../services/decisionAgent";
 import { cleanupWorkDir } from "../services/videoRenderer";
 import { RECITER_ARABIC_NAMES, RECITERS } from "../services/audioFetcher";
-
-const prisma = new PrismaClient();
+import prisma from "../lib/prisma";
 
 function parseArgs() {
   const args = process.argv.slice(2);

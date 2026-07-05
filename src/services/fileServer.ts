@@ -14,6 +14,7 @@
 import { createServer } from "http";
 import { createReadStream, existsSync } from "fs";
 import { extname, join, normalize } from "path";
+import os from "os";
 
 const PORT = parseInt(process.env.FILE_SERVER_PORT || "3456", 10);
 const VIDEOS_DIR = normalize(join(__dirname, "../../assets/videos"));
@@ -83,7 +84,6 @@ export function getFileServerBase(): string {
   if (configured) return configured.replace(/\/+$/, "");
 
   // نحاول نكتشف IP السيرفر تلقائياً
-  const os = require("os");
   const ifaces = os.networkInterfaces();
   for (const name of Object.keys(ifaces)) {
     for (const iface of ifaces[name] || []) {

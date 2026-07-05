@@ -1,4 +1,4 @@
-import { writeFile, mkdtemp } from "fs/promises";
+import { writeFile, mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
 import { execFile } from "child_process";
@@ -203,5 +203,5 @@ async function renderWithStaticImages(
 }
 
 export async function cleanupWorkDir(workDir: string): Promise<void> {
-  await execFileAsync("rm", ["-rf", workDir]);
+  await rm(workDir, { recursive: true, force: true });
 }

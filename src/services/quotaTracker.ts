@@ -10,9 +10,7 @@
  * - videos.list / search (قراءة)     => 1-5 units (نستخدمها لسحب الـ analytics)
  */
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../lib/prisma";
 
 export const QUOTA_COSTS = {
   VIDEO_INSERT: 1600,

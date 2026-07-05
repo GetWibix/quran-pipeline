@@ -55,15 +55,14 @@ export async function generateComment(
         messages: [
           {
             role: "system",
-            content: `اكتب تعليقاً قصيراً وجذاباً (جملة إلى جملتين) بالفصحى على هذا الفيديو القرآني. تنوع بين دعاء، تشجيع على التدبر، أو تأمل.`,
+            content: "Write 1 short Arabic dua (supplication) for this Quran video. No list. Just the dua.",
           },
           {
             role: "user",
-            content: `السورة: ${surahName} (${fromAyah}-${toAyah})
-التعليق:`,
+            content: `سورة ${surahName} ${fromAyah}-${toAyah}`,
           },
         ],
-        max_tokens: 60,
+        max_tokens: 100,
         temperature: 0.9,
       });
 

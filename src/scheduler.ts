@@ -5,10 +5,8 @@ import { remainingVideoUploadsToday } from "./services/quotaTracker";
 import { notifyDailySummary } from "./services/notifier";
 import { collectAllStats, analyzeOptimalHours, persistOptimalHours } from "./services/statsCollector";
 import { updatePlatformEngagements, decidePlatformIncreases } from "./services/platformAnalytics";
-import { PrismaClient } from "@prisma/client";
 import { targetHourToUtc } from "./services/publishingEngine/types";
-
-const prisma = new PrismaClient();
+import prisma from "./lib/prisma";
 const QUOTA_SAFE_MARGIN = 2;
 const FB_MAX_DAILY = 6;
 const FB_BASE_COUNT = 3;
@@ -277,6 +275,16 @@ cron.schedule("0 22 * * *", async () => {
 
   console.log(`📊 ملخص اليوم: ${publishedToday} فيديو (فيسبوك: ${fbToday})`);
 });
+
+async function shutdown(signal: string) {
+  console.log(`\n🛑 استقبلت ${signal} — إيقاف المجدول...`);
+  await prisma.$disconnect().catch(() => {});
+  await connection.quit().catch(() => {});
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
 
 console.log("📅 Quran Scheduler — تشغيل cron jobs...");
 console.log(`🌙 التوليد الليلي 02:00 | 📊 إحصائيات 22:30, 23:00 | 🔄 توكن 03:00`);

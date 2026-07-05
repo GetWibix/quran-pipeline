@@ -1,7 +1,7 @@
-import { PrismaClient, ContentType } from "@prisma/client";
+import { ContentType } from "@prisma/client";
 import { AdaptiveCandidate, CONFIDENCE_THRESHOLD, MIN_SAMPLES_FOR_ADAPTIVE } from "./types";
 
-const prisma = new PrismaClient();
+import prisma from "../../lib/prisma";
 
 export async function getAdaptiveExperiments(contentType: ContentType): Promise<AdaptiveCandidate | null> {
   const bestSlot = await prisma.timeSlotScore.findFirst({
