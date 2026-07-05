@@ -7,9 +7,12 @@ import { ContentType } from "@prisma/client";
 
 import { selectNextRange } from "./verseSelector";
 import { getVerse, getSurahMeta, VerseData } from "./verseFetcher";
-import { getCachedAyahAudio, ensureSurahAudioCache, Reciter, RECITERS } from "./audioFetcher";
+import {
+  downloadAyahAudio, buildSurahAudio, extractAyahAudio,
+  SurahAudioIndex, Reciter, RECITERS,
+} from "./audioFetcher";
 import { composeScene } from "./visualComposer";
-import { renderVideo, cleanupWorkDir, SceneInput } from "./videoRenderer";
+import { renderVideo, RenderOptions, cleanupWorkDir, SceneInput } from "./videoRenderer";
 import prisma from "../lib/prisma";
 
 const execFileAsync = promisify(execFile);
@@ -57,9 +60,10 @@ export async function generateContent(
 
   const range = await selectNextRange(contentType, forceSurahNumber);
 
+  let fullSurahAudio: { filePath: string; index: SurahAudioIndex } | null = null;
   if (contentType === ContentType.LONG_VIDEO) {
     const first = await getVerse(range.surahNumber, 1);
-    await ensureSurahAudioCache(reciter, range.surahNumber, first.numberOfAyahsInSurah);
+    fullSurahAudio = await buildSurahAudio(reciter, range.surahNumber, first.numberOfAyahsInSurah);
   }
 
   const workDir = await mkdtemp(path.join(tmpdir(), "quran-gen-"));
@@ -92,7 +96,17 @@ export async function generateContent(
   const audioResults = await Promise.all(
     ayahNumbers.map(async (ayah) => {
       const audioOutPath = path.join(audioDir, `${range.surahNumber}-${ayah}.mp3`);
-      const result = await getCachedAyahAudio(reciter, range.surahNumber, ayah, audioOutPath);
+
+      if (fullSurahAudio) {
+        return {
+          ayah,
+          ...(await extractAyahAudio(
+            fullSurahAudio.filePath, fullSurahAudio.index, ayah, audioOutPath
+          )),
+        };
+      }
+
+      const result = await downloadAyahAudio(reciter, range.surahNumber, ayah, audioOutPath);
       return { ayah, ...result };
     })
   );
@@ -129,55 +143,52 @@ export async function generateContent(
     if (totalDuration >= MAX_DURATION_SEC) break;
   }
 
-  const actualLastAyah = range.fromAyah + verses.length - 1;
-  if (actualLastAyah !== range.toAyah) {
-    const meta = await getSurahMeta(range.surahNumber);
-    let ns = range.surahNumber, na = actualLastAyah + 1;
-    if (na > meta.numberOfAyahs) { ns = range.surahNumber >= 114 ? 1 : range.surahNumber + 1; na = 1; }
-    await prisma.readingProgress.update({ where: { contentType }, data: { currentSurah: ns, currentAyah: na } });
-  }
+  const actualLastAyah = verses[verses.length - 1]?.ayahNumber ?? range.fromAyah;
 
-  await mkdir(VIDEOS_DIR, { recursive: true });
-  const finalVideoPath = path.join(
-    VIDEOS_DIR,
-    `${contentType}-${range.surahNumber}-${range.fromAyah}-${actualLastAyah}.mp4`
-  );
-  await renderVideo({
+  const videoFilename = `${contentType}-${Date.now()}.mp4`;
+  const finalVideoPath = path.join(VIDEOS_DIR, videoFilename);
+
+  const renderOpts: RenderOptions = {
     scenes: sceneInputs,
     aspectRatio,
     outputPath: finalVideoPath,
-    maxThreads: 2,
-    videoBackgroundPaths: sceneBackgrounds.length > 0 ? sceneBackgrounds : undefined,
-  });
+  };
+  if (sceneBackgrounds.length > 0) {
+    renderOpts.videoBackgroundPaths = sceneBackgrounds;
+  }
+  await renderVideo(renderOpts);
 
   let shortVideoPath: string | undefined;
   if (contentType === ContentType.LONG_VIDEO) {
-    shortVideoPath = path.join(
-      VIDEOS_DIR,
-      `SHORT-${range.surahNumber}-${range.fromAyah}-${actualLastAyah}.mp4`
-    );
-    const cropDuration = Math.min(totalDuration, 60);
+    const shortName = `SHORT-${path.basename(finalVideoPath)}`;
+    const shortOut = path.join(VIDEOS_DIR, shortName);
     await execFileAsync("ffmpeg", [
-      "-y", "-i", finalVideoPath,
-      "-t", String(cropDuration),
+      "-i", finalVideoPath,
       "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
-      "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-      "-c:a", "aac", "-b:a", "128k",
-      shortVideoPath,
+      "-t", "60",
+      "-preset", "veryfast",
+      "-y", shortOut,
     ]);
+    shortVideoPath = shortOut;
+  }
+
+  if (actualLastAyah !== range.toAyah) {
+    const meta = await getSurahMeta(range.surahNumber);
+    let ns = range.surahNumber, na = actualLastAyah + 1;
+    if (na > meta.numberOfAyahs) {
+      ns = range.surahNumber >= 114 ? 1 : range.surahNumber + 1;
+      na = 1;
+    }
+    await prisma.readingProgress.update({
+      where: { contentType },
+      data: { currentSurah: ns, currentAyah: na },
+    });
   }
 
   return {
-    videoPath: finalVideoPath,
-    shortVideoPath,
-    workDir,
-    contentType,
-    surahNumber: range.surahNumber,
-    fromAyah: range.fromAyah,
-    toAyah: actualLastAyah,
-    reciter,
-    verses,
-    totalDurationSeconds: totalDuration,
+    videoPath: finalVideoPath, shortVideoPath, workDir, contentType,
+    surahNumber: range.surahNumber, fromAyah: range.fromAyah, toAyah: actualLastAyah,
+    reciter, verses, totalDurationSeconds: totalDuration,
     sceneDurations: sceneInputs.map((s) => s.durationSeconds),
   };
 }

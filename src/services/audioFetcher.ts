@@ -1,21 +1,8 @@
-/**
- * audioFetcher.ts
- * كيحمّل ملف صوت الآية من EveryAyah.com (تسجيلات قراء معتمدين، آية بآية)
- *
- * بنية الرابط: https://everyayah.com/data/{Reciter_Folder}/{SSSAAA}.mp3
- * SSS = رقم السورة (3 أرقام، padded) | AAA = رقم الآية (3 أرقام، padded)
- *
- * قائمة القراء المتوفرين (أسماء المجلدات الرسمية فالسيرفر):
- * - Alafasy_128kbps          => مشاري العفاسي
- * - Abdul_Basit_Murattal_192kbps => عبدالباسط عبدالصمد (مرتل)
- * - Ghamadi_40kbps           => سعد الغامدي
- * - Maher_AlMuaiqly_64kbps   => ماهر المعيقلي
- */
-
-import { writeFile, copyFile, mkdir, access } from "fs/promises";
+import { writeFile, unlink } from "fs/promises";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import path from "path";
+import { mkdir } from "fs/promises";
 
 const execFileAsync = promisify(execFile);
 
@@ -32,12 +19,11 @@ export const RECITERS: Record<string, Reciter> = {
   maher: "Maher_AlMuaiqly_64kbps",
 };
 
-// أوزان الاختيار العشوائي (تفضيل الجودة العالية)
 export const RECITER_WEIGHTS: Record<string, number> = {
-  abdulbasit: 4, // 192kbps — أفضل جودة
-  alafasy: 3,    // 128kbps — جودة جيدة
-  maher: 2,      // 64kbps  — متوسط
-  ghamadi: 1,     // 40kbps  — أقل جودة
+  abdulbasit: 4,
+  alafasy: 3,
+  maher: 2,
+  ghamadi: 1,
 };
 
 export const RECITER_ARABIC_NAMES: Record<Reciter, string> = {
@@ -48,19 +34,14 @@ export const RECITER_ARABIC_NAMES: Record<Reciter, string> = {
 };
 
 const EVERYAYAH_BASE = "https://everyayah.com/data";
-const AUDIO_CACHE_DIR = path.join(__dirname, "../../assets/audio-cache");
+
+const AUDIO_DIR = path.join(__dirname, "../../assets/audio");
+const TMP_CONCAT_DIR = path.join(AUDIO_DIR, ".tmp-concat");
 
 function pad3(n: number): string {
   return n.toString().padStart(3, "0");
 }
 
-function cachePath(reciter: Reciter, surahNumber: number, ayahNumber: number): string {
-  return path.join(AUDIO_CACHE_DIR, reciter, `${pad3(surahNumber)}${pad3(ayahNumber)}.mp3`);
-}
-
-/**
- * كيبني الرابط المباشر لملف صوت آية معينة
- */
 export function buildAudioUrl(
   reciter: Reciter,
   surahNumber: number,
@@ -71,76 +52,30 @@ export function buildAudioUrl(
   )}.mp3`;
 }
 
-/**
- * كيتأكد أن كل آيات السورة محمّلة في cache — لو ناقصة يحمّل الباقي
- * كيرجع true إذا كلشي موجود، false إذا فشل شي
- */
-export async function ensureSurahAudioCache(
-  reciter: Reciter,
-  surahNumber: number,
-  totalVerses: number
-): Promise<boolean> {
-  const dir = path.join(AUDIO_CACHE_DIR, reciter);
-  await mkdir(dir, { recursive: true });
+function surahFileName(reciter: Reciter, surahNumber: number): string {
+  return `surah-${String(surahNumber).padStart(3, "0")}-${reciter}.mp3`;
+}
 
-  const missing: number[] = [];
-  for (let ayah = 1; ayah <= totalVerses; ayah++) {
-    try {
-      await access(cachePath(reciter, surahNumber, ayah));
-    } catch {
-      missing.push(ayah);
-    }
-  }
+function indexFileName(reciter: Reciter, surahNumber: number): string {
+  return `surah-${String(surahNumber).padStart(3, "0")}-${reciter}.json`;
+}
 
-  if (missing.length === 0) return true;
+export interface AyahTimestamp {
+  ayah: number;
+  startSec: number;
+  endSec: number;
+}
 
-  console.log(`📥 تحميل ${missing.length} آية صوت من سورة ${surahNumber} (${reciter})...`);
-
-  let success = 0;
-  for (const ayah of missing) {
-    try {
-      const url = buildAudioUrl(reciter, surahNumber, ayah);
-      const res = await fetch(url);
-      if (!res.ok) continue;
-      const buffer = Buffer.from(await res.arrayBuffer());
-      if (buffer.length < 1000) continue;
-      await writeFile(cachePath(reciter, surahNumber, ayah), buffer);
-      success++;
-    } catch {
-      // نتجاوز الفاشل
-    }
-  }
-
-  console.log(`   ✅ ${success}/${missing.length} آية`);
-  return success === missing.length;
+export interface SurahAudioIndex {
+  surahNumber: number;
+  reciter: string;
+  totalVerses: number;
+  totalDurationSec: number;
+  ayahs: AyahTimestamp[];
 }
 
 /**
- * كيجيب الصوت من الـ cache (أو يحمّله إذا ما موجود)، كينسخه إلى outputPath
- */
-export async function getCachedAyahAudio(
-  reciter: Reciter,
-  surahNumber: number,
-  ayahNumber: number,
-  outputPath: string
-): Promise<{ filePath: string; durationSeconds: number }> {
-  const cached = cachePath(reciter, surahNumber, ayahNumber);
-
-  try {
-    await access(cached);
-    await copyFile(cached, outputPath);
-  } catch {
-    await downloadAyahAudio(reciter, surahNumber, ayahNumber, cached);
-    await copyFile(cached, outputPath);
-  }
-
-  const durationSeconds = await getAudioDuration(outputPath);
-  return { filePath: outputPath, durationSeconds };
-}
-
-/**
- * كيحمّل ملف صوت آية واحدة وكيحفظه محلياً
- * كيرجع المسار المحلي + مدة الملف بالثواني (عبر ffprobe)
+ * كيحمّل ملف صوت آية واحدة من EveryAyah وكيحفظه محلياً
  */
 export async function downloadAyahAudio(
   reciter: Reciter,
@@ -159,7 +94,6 @@ export async function downloadAyahAudio(
 
   const buffer = Buffer.from(await res.arrayBuffer());
   if (buffer.length < 1000) {
-    // ملف صغير جداً = احتمال خطأ (404 page بشكل mp3 وهمي)
     throw new Error(
       `الملف المحمّل صغير جداً (${buffer.length} bytes) — راجع الرابط: ${url}`
     );
@@ -173,37 +107,109 @@ export async function downloadAyahAudio(
 }
 
 /**
- * كيحمّل عدة آيات متتالية ويدمجهم لاحقاً (مفيد لفيديو سورة كاملة)
- * كيرجع لائحة بالملفات + المدة الإجمالية
+ * كيبني ملف الصوت الكامل للسورة من آيات فردية + index timestamps
+ * أول مرة ينزّل الآيات ويجمعهم بملف واحد، بعدها يرجع الموجود
  */
-export async function downloadAyahRangeAudio(
+export async function buildSurahAudio(
   reciter: Reciter,
   surahNumber: number,
-  fromAyah: number,
-  toAyah: number,
-  outputDir: string
-): Promise<{ files: string[]; totalDuration: number }> {
-  const files: string[] = [];
-  let totalDuration = 0;
+  totalVerses: number
+): Promise<{ filePath: string; index: SurahAudioIndex }> {
+  await mkdir(AUDIO_DIR, { recursive: true });
 
-  for (let ayah = fromAyah; ayah <= toAyah; ayah++) {
-    const outPath = `${outputDir}/${pad3(surahNumber)}${pad3(ayah)}.mp3`;
-    const { filePath, durationSeconds } = await downloadAyahAudio(
-      reciter,
-      surahNumber,
-      ayah,
-      outPath
-    );
-    files.push(filePath);
-    totalDuration += durationSeconds;
+  const fullPath = path.join(AUDIO_DIR, surahFileName(reciter, surahNumber));
+  const indexPath = path.join(AUDIO_DIR, indexFileName(reciter, surahNumber));
+
+  const { readFile, access } = await import("fs/promises");
+  try {
+    await access(fullPath);
+    await access(indexPath);
+    const index: SurahAudioIndex = JSON.parse(await readFile(indexPath, "utf-8"));
+    return { filePath: fullPath, index };
+  } catch {
+    // مش موجود — نولّده
   }
 
-  return { files, totalDuration };
+  console.log(`🎧 بناء ملف سورة ${surahNumber} كاملة (${totalVerses} آية) — ${reciter}...`);
+  const tmpDir = path.join(TMP_CONCAT_DIR, `${surahNumber}-${Date.now()}`);
+  await mkdir(tmpDir, { recursive: true });
+
+  const durFile = path.join(tmpDir, "durations.txt");
+  const concatFile = path.join(tmpDir, "files.txt");
+  const durations: number[] = [];
+
+  for (let ayah = 1; ayah <= totalVerses; ayah++) {
+    const ayahTmp = path.join(tmpDir, `${pad3(surahNumber)}${pad3(ayah)}.mp3`);
+    const url = buildAudioUrl(reciter, surahNumber, ayah);
+
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`فشل تحميل آية ${surahNumber}:${ayah} — HTTP ${res.status}`);
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (buffer.length < 1000) throw new Error(`ملف صغير جداً للآية ${surahNumber}:${ayah}`);
+    await writeFile(ayahTmp, buffer);
+
+    const { stdout } = await execFileAsync("ffprobe", [
+      "-v", "error", "-show_entries", "format=duration",
+      "-of", "default=noprint_wrappers=1:nokey=1", ayahTmp,
+    ]);
+    durations.push(parseFloat(stdout.trim()));
+
+    const entry = `file '${ayahTmp}'\n`;
+    await writeFile(concatFile, entry, { flag: "a" });
+  }
+
+  const ayahs: AyahTimestamp[] = [];
+  let cursor = 0;
+  for (let i = 0; i < totalVerses; i++) {
+    ayahs.push({ ayah: i + 1, startSec: cursor, endSec: cursor + durations[i] });
+    cursor += durations[i];
+  }
+
+  await execFileAsync("ffmpeg", [
+    "-f", "concat", "-safe", "0",
+    "-i", concatFile,
+    "-c", "copy",
+    fullPath,
+  ]);
+
+  const index: SurahAudioIndex = {
+    surahNumber,
+    reciter,
+    totalVerses,
+    totalDurationSec: cursor,
+    ayahs,
+  };
+  await writeFile(indexPath, JSON.stringify(index, null, 2));
+
+  await execFileAsync("rm", ["-rf", tmpDir]);
+
+  console.log(`   ✅ ملف السورة: ${fullPath} (${(cursor / 60).toFixed(1)} دقيقة)`);
+  return { filePath: fullPath, index };
 }
 
 /**
- * كيحسب مدة ملف صوتي بالثواني عبر ffprobe (لازم يكون مثبت على السيرفر)
+ * كيستخرج آية من ملف السورة الكامل إلى مسار مؤقت للـ render
  */
+export async function extractAyahAudio(
+  surahFilePath: string,
+  index: SurahAudioIndex,
+  ayahNumber: number,
+  outputPath: string
+): Promise<{ filePath: string; durationSeconds: number }> {
+  const info = index.ayahs.find((a) => a.ayah === ayahNumber);
+  if (!info) throw new Error(`الآية ${ayahNumber} مو مسجلة في index السورة`);
+
+  await execFileAsync("ffmpeg", [
+    "-ss", String(info.startSec),
+    "-i", surahFilePath,
+    "-t", String(info.endSec - info.startSec),
+    "-c", "copy",
+    "-y", outputPath,
+  ]);
+
+  return { filePath: outputPath, durationSeconds: info.endSec - info.startSec };
+}
+
 export async function getAudioDuration(filePath: string): Promise<number> {
   const { stdout } = await execFileAsync("ffprobe", [
     "-v",
