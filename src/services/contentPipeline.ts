@@ -1,10 +1,5 @@
-/**
- * contentPipeline.ts
- * نقطة الدخول الرئيسية: كيربط verseFetcher + audioFetcher + visualComposer + videoRenderer
- * فعملية واحدة متكاملة => فيديو MP4 جاهز للنشر
- */
-
 import { mkdir, mkdtemp } from "fs/promises";
+import { statSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
 import { ContentType } from "@prisma/client";
@@ -14,19 +9,7 @@ import { getVerse, getSurahMeta, VerseData } from "./verseFetcher";
 import { downloadAyahAudio, Reciter, RECITERS } from "./audioFetcher";
 import { composeScene } from "./visualComposer";
 import { renderVideo, cleanupWorkDir, SceneInput } from "./videoRenderer";
-
-export interface GeneratedContent {
-  videoPath: string;
-  workDir: string;
-  contentType: ContentType;
-  surahNumber: number;
-  fromAyah: number;
-  toAyah: number;
-  reciter: Reciter;
-  verses: VerseData[];
-  totalDurationSeconds: number;
-  sceneDurations: number[]; // مدة كل مشهد/آية بالثواني — للـ Chapters
-}
+import prisma from "../lib/prisma";
 
 const BACKGROUNDS_DIR = path.join(__dirname, "../../assets/backgrounds");
 const VIDEOS_DIR = path.join(__dirname, "../../assets/videos");
@@ -52,25 +35,19 @@ function pickBackground(): string {
 
 function getAvailableVideoBackgrounds(): string[] {
   return VIDEO_BACKGROUNDS.filter((f) => {
-    try { require("fs").statSync(path.join(BACKGROUNDS_DIR, f)); return true; }
+    try { statSync(path.join(BACKGROUNDS_DIR, f)); return true; }
     catch { return false; }
   }).map((f) => path.join(BACKGROUNDS_DIR, f));
 }
 
-/**
- * الدالة الرئيسية: كتولّد فيديو كامل (Short أو طويل) بدءاً من "الآية التالية"
- * حسب التقدم المخزن فقاعدة البيانات
- */
 export async function generateContent(
   contentType: ContentType,
   reciterKey: keyof typeof RECITERS = "alafasy"
 ): Promise<GeneratedContent> {
   const reciter = RECITERS[reciterKey];
 
-  // 1. تحديد المقطع التالي (verseSelector كيحدّث قاعدة البيانات تلقائياً)
   const range = await selectNextRange(contentType);
 
-  // 2. مجلد عمل مؤقت لهاد التوليد
   const workDir = await mkdtemp(path.join(tmpdir(), "quran-gen-"));
   const scenesDir = path.join(workDir, "scenes");
   const audioDir = path.join(workDir, "audio");
@@ -82,31 +59,41 @@ export async function generateContent(
   const aspectRatio = contentType === ContentType.SHORT ? "9:16" : "16:9";
   const backgroundPath = pickBackground();
   const availableVideoBackgrounds = getAvailableVideoBackgrounds();
-  const sceneBackgrounds: string[] = []; // خلفية فيديو مختلفة لكل مشهد
+  const sceneBackgrounds: string[] = [];
 
   let totalDuration = 0;
   const MAX_SHORT_SEC = 60;
 
-  // 3. لكل آية: جلب + صوت + رسم — الآيات تضاف كاملة، لا نقطعها
-  // أول آية تضاف دائماً كاملة (حتى لو طالت عن 60 ثانية)
-  // الآيات التالية تضاف فقط إذا كانت المجموع لا يتجاوز 60 ثانية
+  const ayahNumbers: number[] = [];
   for (let ayah = range.fromAyah; ayah <= range.toAyah; ayah++) {
-    if (totalDuration >= MAX_SHORT_SEC) break;
+    ayahNumbers.push(ayah);
+  }
 
-    const verse = await getVerse(range.surahNumber, ayah);
-    const audioOutPath = path.join(audioDir, `${range.surahNumber}-${ayah}.mp3`);
-    const { filePath: audioPath, durationSeconds } = await downloadAyahAudio(
-      reciter, range.surahNumber, ayah, audioOutPath
-    );
+  const verseResults = await Promise.all(
+    ayahNumbers.map((ayah) => getVerse(range.surahNumber, ayah))
+  );
 
-    // أول آية: نضيفها كاملة دائماً
-    // ما عدا الأولى: نضيف فقط إذا ما كانتش هتتجاوز الحد
+  const audioResults = await Promise.all(
+    ayahNumbers.map(async (ayah) => {
+      const audioOutPath = path.join(audioDir, `${range.surahNumber}-${ayah}.mp3`);
+      const result = await downloadAyahAudio(reciter, range.surahNumber, ayah, audioOutPath);
+      return { ayah, ...result };
+    })
+  );
+
+  const ayahAudioMap = new Map(audioResults.map((r) => [r.ayah, r]));
+
+  for (let i = 0; i < ayahNumbers.length; i++) {
+    const ayah = ayahNumbers[i];
+    const verse = verseResults[i];
+    const audioResult = ayahAudioMap.get(ayah)!;
+    const { filePath: audioPath, durationSeconds } = audioResult;
+
     if (verses.length > 0 && totalDuration + durationSeconds > MAX_SHORT_SEC) break;
 
     verses.push(verse);
     const imageOutPath = path.join(scenesDir, `${range.surahNumber}-${ayah}.png`);
 
-    // نختار خلفية فيديو عشوائية لهاذ المشهد
     const useTransparent = availableVideoBackgrounds.length > 0;
     if (useTransparent) {
       const chosen = availableVideoBackgrounds[Math.floor(Math.random() * availableVideoBackgrounds.length)];
@@ -124,22 +111,16 @@ export async function generateContent(
     totalDuration += durationSeconds;
 
     if (totalDuration >= MAX_SHORT_SEC) break;
-    await new Promise((r) => setTimeout(r, 200));
   }
 
-  // نعدل التقدم في قاعدة البيانات ليعكس العدد الفعلي للآيات المستخدمة
   const actualLastAyah = range.fromAyah + verses.length - 1;
   if (actualLastAyah !== range.toAyah) {
-    const { PrismaClient } = await import("@prisma/client");
-    const p = new PrismaClient();
     const meta = await getSurahMeta(range.surahNumber);
     let ns = range.surahNumber, na = actualLastAyah + 1;
     if (na > meta.numberOfAyahs) { ns = range.surahNumber >= 114 ? 1 : range.surahNumber + 1; na = 1; }
-    await p.readingProgress.update({ where: { contentType }, data: { currentSurah: ns, currentAyah: na } });
-    await p.$disconnect();
+    await prisma.readingProgress.update({ where: { contentType }, data: { currentSurah: ns, currentAyah: na } });
   }
 
-  // 4. الرندر النهائي
   await mkdir(VIDEOS_DIR, { recursive: true });
   const finalVideoPath = path.join(
     VIDEOS_DIR,
@@ -165,4 +146,17 @@ export async function generateContent(
     totalDurationSeconds: totalDuration,
     sceneDurations: sceneInputs.map((s) => s.durationSeconds),
   };
+}
+
+export interface GeneratedContent {
+  videoPath: string;
+  workDir: string;
+  contentType: ContentType;
+  surahNumber: number;
+  fromAyah: number;
+  toAyah: number;
+  reciter: Reciter;
+  verses: VerseData[];
+  totalDurationSeconds: number;
+  sceneDurations: number[];
 }

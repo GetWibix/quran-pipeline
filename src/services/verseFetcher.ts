@@ -95,13 +95,11 @@ export async function getVerseRange(
   fromAyah: number,
   toAyah: number
 ): Promise<VerseData[]> {
-  const verses: VerseData[] = [];
+  const ayahs: number[] = [];
   for (let ayah = fromAyah; ayah <= toAyah; ayah++) {
-    verses.push(await getVerse(surahNumber, ayah));
-    // تأخير صغير لتجنب rate limiting
-    await new Promise((r) => setTimeout(r, 150));
+    ayahs.push(ayah);
   }
-  return verses;
+  return Promise.all(ayahs.map((ayah) => getVerse(surahNumber, ayah)));
 }
 
 /**
