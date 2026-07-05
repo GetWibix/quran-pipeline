@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /404.html
+
+Sitemap: https://quran.waxbix.com/sitemap.xml
+
+# Crawl-delay: 1

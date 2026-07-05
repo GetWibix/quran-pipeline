@@ -1,0 +1,206 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    direction: rtl;
+  }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background-color: #0a1628;
+    color: #ffffff;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: rgba(52, 211, 153, 0.3);
+    color: #ffffff;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0a1628;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(52, 211, 153, 0.3);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(52, 211, 153, 0.5);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-l from-primary to-secondary;
+  }
+
+  .glow-card {
+    @apply border border-border bg-card backdrop-blur-sm rounded-2xl transition-all duration-300;
+  }
+
+  .glow-card:hover {
+    @apply border-primary/30 bg-card-hover shadow-lg shadow-primary/10 -translate-y-0.5;
+  }
+
+  .glass-header {
+    @apply fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-bg-dark/80 border-b border-border transition-all duration-300;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary-dark text-white font-bold rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-dark;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border border-border text-white font-semibold rounded-xl transition-all duration-300 hover:bg-card-hover hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-dark;
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-gold text-bg-dark font-bold rounded-xl transition-all duration-300 hover:bg-gold-dark hover:shadow-lg hover:shadow-gold/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-dark;
+  }
+
+  .btn-outline-gold {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 border border-gold/40 text-gold-light font-semibold rounded-xl transition-all duration-300 hover:bg-gold/10 hover:border-gold/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold focus-visible:ring-offset-2 focus-visible:ring-offset-bg-dark;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl font-bold text-center mb-4;
+  }
+
+  .section-subtitle {
+    @apply text-text-secondary text-lg text-center max-w-2xl mx-auto mb-12;
+  }
+
+  .arabic-verse {
+    font-family: 'Amiri', serif;
+    @apply text-2xl leading-loose;
+  }
+
+  .skip-link {
+    @apply fixed top-3 right-3 z-[100] px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg opacity-0 pointer-events-none transition-all duration-200 focus-visible:opacity-100 focus-visible:pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary;
+    transform: translateY(-100%);
+  }
+
+  .skip-link:focus-visible {
+    transform: translateY(0);
+  }
+}
+
+.animated-gradient {
+  background: linear-gradient(-45deg, #0a1628, #1a1a3e, #162447, #0a1628);
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.hero-glow {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.12) 0%, transparent 70%);
+  top: -200px;
+  left: -200px;
+  pointer-events: none;
+}
+
+.hero-glow-2 {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.1) 0%, transparent 70%);
+  bottom: -200px;
+  right: -200px;
+  pointer-events: none;
+}
+
+.surah-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.surah-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, transparent 60%, rgba(52, 211, 153, 0.05));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.surah-card:hover::after {
+  opacity: 1;
+}
+
+.ayah-item {
+  position: relative;
+}
+
+.ayah-item::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  background: #34d399;
+  border-radius: 0 3px 3px 0;
+  transition: all 0.3s ease;
+  transform: translateY(-50%);
+}
+
+.ayah-item:hover::before {
+  height: 60%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surah-card::after,
+  .ayah-item::before,
+  .surah-card,
+  .ayah-item {
+    transition: none !important;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .play-btn {
+    opacity: 1 !important;
+  }
+
+  .ayah-item::before {
+    height: 40%;
+  }
+
+  .surah-card:hover {
+    transform: none !important;
+  }
+}

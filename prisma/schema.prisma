@@ -1,0 +1,170 @@
+// schema.prisma
+// تتبع تقدم القراءة عبر القرآن + سجل المحتوى المنشور + بيانات التفاعل
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ContentType {
+  SHORT
+  LONG_VIDEO
+  POSTER
+}
+
+enum PublishStatus {
+  PENDING
+  GENERATING
+  READY
+  PUBLISHED
+  FAILED
+}
+
+/// كيتتبع آخر نقطة وصلنا ليها فالقراءة التسلسلية للقرآن
+/// صف واحد فقط فهاد الجدول (singleton) لكل نوع محتوى (SHORT يقرا بسرعة، LONG_VIDEO يقرا أبطأ)
+model ReadingProgress {
+  id              Int         @id @default(autoincrement())
+  contentType     ContentType @unique
+  currentSurah    Int         @default(1)
+  currentAyah     Int         @default(1)
+  updatedAt       DateTime    @updatedAt
+}
+
+/// سجل كل فيديو تم توليده/نشره — أساس قرارات الوكيل المستقبلية
+model PublishedContent {
+  id                String        @id @default(cuid())
+  contentType       ContentType
+  surahNumber       Int
+  fromAyah          Int
+  toAyah            Int
+  reciter           String
+  videoFilePath     String?
+  youtubeVideoId     String?
+  facebookVideoId    String?
+  instagramMediaId   String?
+  threadsPostId      String?
+  title             String
+  description       String
+  status            PublishStatus @default(PENDING)
+  scheduledAt        DateTime?
+  publishedAt        DateTime?
+
+  // بيانات التفاعل (كيتم تحديثها لاحقاً عبر job دوري يسحب من YouTube Analytics API)
+  views             Int           @default(0)
+  likes             Int           @default(0)
+  comments          Int           @default(0)
+  watchTimeMinutes  Float         @default(0)
+  engagementScore   Float         @default(0) // محسوب: (likes+comments)/views * watchTime weight
+
+  // تفاعل خاص بكل منصة
+  facebookEngagement  Float?      // engagement score على فيسبوك
+  instagramEngagement Float?      // engagement score على انستغرام
+
+  titlePatternId      Int?        // معرف نمط العنوان المستخدم (SEO)
+  publishExperiments  PublishExperiment[] // التجارب الجدولية المرتبطة
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([status])
+  @@index([contentType, publishedAt])
+}
+
+/// قرارات الوكيل بخصوص الجدولة — سجل تدقيق (audit log) لشفافية القرارات
+model AgentDecisionLog {
+  id            String   @id @default(cuid())
+  decisionType  String   // "SCHEDULE_TIME" | "EXTRA_SHORT_TRIGGERED" | "RECITER_SELECTION"
+  reasoning     String   // تفسير نصي بالـ LLM لشنو وعلاش اتخذ القرار
+  contextData   Json?    // بيانات إضافية (مثل متوسط التفاعل آخر 7 أيام)
+  createdAt     DateTime @default(now())
+}
+
+/// عداد استخدام الـ YouTube API quota اليومي — حارس قبل أي عملية رفع
+model QuotaUsage {
+  id          Int      @id @default(autoincrement())
+  date        DateTime @unique @db.Date // يوم واحد = صف واحد (UTC، نفس توقيت يوتيوب)
+  unitsUsed   Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
+/// سجل أداء كل تايم سلوت للنشر — لتحسين جدولة المحتوى
+model TimeSlotScore {
+  id               String      @id @default(cuid())
+  contentType      ContentType
+  hour             Int
+  minute           Int
+  performanceScore Float       @default(0)
+  sampleCount      Int         @default(0)
+  confidence       Float       @default(0)
+  lastAnalyzedAt   DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@unique([contentType, hour, minute])
+  @@index([contentType, performanceScore])
+}
+
+/// سجل التجارب الجدولية (A/B testing للتايم سلوتس)
+model PublishExperiment {
+  id                 String                @id @default(cuid())
+  contentType        ContentType
+  scheduledHour      Int
+  scheduledMinute    Int
+  isExperimental     Boolean               @default(false)
+  publishedContentId String
+  publishedContent   PublishedContent      @relation(fields: [publishedContentId], references: [id])
+  experimentResult   ExperimentResult?
+  createdAt          DateTime              @default(now())
+
+  @@index([contentType])
+}
+
+/// نتائج تجارب الجدولة
+model ExperimentResult {
+  id                String           @id @default(cuid())
+  experimentId      String           @unique
+  experiment        PublishExperiment @relation(fields: [experimentId], references: [id])
+  views             Int              @default(0)
+  likes             Int              @default(0)
+  comments          Int              @default(0)
+  watchTimeMinutes  Float            @default(0)
+  subscribersGained Int              @default(0)
+  performanceScore  Float            @default(0)
+  createdAt         DateTime         @default(now())
+}
+
+/// تقارير النشر الدورية (يومية/أسبوعية/شهرية)
+model PublishReport {
+  id                  String   @id @default(cuid())
+  reportType          String   // "DAILY" | "WEEKLY" | "MONTHLY"
+  periodStart         DateTime
+  periodEnd           DateTime
+  totalVideos         Int      @default(0)
+  experimentsCount    Int      @default(0)
+  bestHour            Int?
+  worstHour           Int?
+  avgPerformanceScore Float    @default(0)
+  improvementRate     Float    @default(0)
+  recommendations     Json?
+  detailedData        Json?
+  createdAt           DateTime @default(now())
+}
+
+/// أداء أنماط العناوين (SEO titles)
+model TitlePatternPerformance {
+  id              Int          @id @default(autoincrement())
+  patternId       Int
+  contentType     ContentType
+  avgViews        Float        @default(0)
+  sampleCount     Int          @default(0)
+  lastUsedAt      DateTime     @default(now())
+  lastAnalyzedAt  DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([patternId, contentType])
+}

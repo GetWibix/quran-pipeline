@@ -1,0 +1,48 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import Icon from '../components/Icon.astro';
+
+const techs = [
+  { name: 'TypeScript', usage: 'لغة البرمجة الأساسية', icon: 'book' },
+  { name: 'Node.js', usage: 'بيئة التشغيل', icon: 'nodejs' },
+  { name: 'PostgreSQL', usage: 'قاعدة البيانات', icon: 'database' },
+  { name: 'Redis', usage: 'قائمة المهام والتخزين المؤقت', icon: 'redis' },
+  { name: 'Docker', usage: 'النشر والحاويات', icon: 'docker' },
+  { name: 'FFmpeg', usage: 'تركيب الفيديو والصوت', icon: 'video-editing' },
+  { name: 'YouTube API v3', usage: 'رفع الفيديوهات', icon: 'youtube' },
+  { name: 'OpenRouter', usage: 'الذكاء الاصطناعي المجاني', icon: 'robot' },
+  { name: 'Prisma', usage: 'إدارة قاعدة البيانات', icon: 'orm' },
+  { name: 'BullMQ', usage: 'إدارة قائمة الانتظار', icon: 'queue' },
+  { name: 'Cloudflare R2', usage: 'التخزين السحابي', icon: 'cloud' },
+];
+---
+
+<BaseLayout title="التقنيات" description="التقنيات المستخدمة في بناء نظام NOR Quran" canonical="https://quran.waxbix.com/tech-stack">
+  <Header />
+
+  <section id="main-content" class="pt-32 pb-16 relative min-h-screen">
+    <div class="hero-glow"></div>
+    <div class="max-w-5xl mx-auto px-4">
+      <h1 class="text-4xl md:text-5xl font-bold text-center mb-4">
+        <span class="gradient-text">التقنيات</span>
+      </h1>
+      <p class="text-text-secondary text-center text-lg mb-12">التقنيات والأدوات المستخدمة في بناء النظام</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {techs.map((tech) => (
+          <div class="glow-card p-5 flex items-center gap-4">
+            <Icon name={tech.icon} size={24} class="text-primary" />
+            <div>
+              <h3 class="font-bold">{tech.name}</h3>
+              <p class="text-text-secondary text-sm">{tech.usage}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <Footer />
+</BaseLayout>

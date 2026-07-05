@@ -1,0 +1,502 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { reciters, defaultReciter } from '../../utils/reciters';
+
+export async function getStaticPaths() {
+  const res = await fetch('https://api.alquran.cloud/v1/surah');
+  const data = await res.json();
+  return data.data.map((surah) => ({
+    params: { number: String(surah.number) },
+    props: { surah },
+  }));
+}
+
+export interface Props {
+  surah: {
+    number: number;
+    name: string;
+    englishName: string;
+    englishNameTranslation: string;
+    numberOfAyahs: number;
+    revelationType: string;
+  };
+}
+
+const { surah } = Astro.props;
+const revelationAr = surah.revelationType === 'Meccan' ? 'مكية' : 'مدنية';
+
+const ayahsRes = await fetch(`https://api.alquran.cloud/v1/surah/${surah.number}`);
+const ayahsData = await ayahsRes.json();
+const ayahs = ayahsData.data.ayahs;
+const ayahsJson = JSON.stringify(ayahs.map(a => ({ numberInSurah: a.numberInSurah, text: a.text })));
+const recitersJson = JSON.stringify(reciters);
+
+const gradientFrom = surah.number % 3 === 0 ? 'from-emerald-600' : surah.number % 3 === 1 ? 'from-accent' : 'from-green-700';
+const gradientVia = surah.number % 3 === 0 ? 'via-emerald-800' : surah.number % 3 === 1 ? 'via-accent/80' : 'via-green-900';
+const gradientTo = 'to-bg-dark';
+---
+
+<BaseLayout
+  title={`سورة ${surah.name} - القرآن الكريم`}
+  description={`استمع إلى سورة ${surah.name} (${surah.englishName}) مكتوبة كاملة بصوت أشهر القراء. ${surah.numberOfAyahs} آية ${revelationAr}. استماع وتحميل وتفسير.`}
+  canonical={`https://quran.waxbix.com/quran/${surah.number}`}
+  ogImage={`https://quran.waxbix.com/og-quran.png`}
+>
+  <Header />
+
+  <div class="min-h-screen flex flex-col">
+    <div class={`bg-gradient-to-b ${gradientFrom} ${gradientVia} ${gradientTo} pt-16 md:pt-20`}>
+      <div class="max-w-4xl mx-auto px-4 pt-8 pb-6 md:pb-8">
+        <a href="/quran" class="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white transition-colors mb-6 py-2 min-h-[44px]">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          رجوع
+        </a>
+
+        <div class="relative flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-end">
+          <div class="flex gap-3 md:gap-4 items-end">
+            <div class="w-40 h-40 md:w-56 md:h-56 rounded-xl shadow-2xl bg-gradient-to-br from-accent/40 to-emerald-700 flex-shrink-0 flex items-center justify-center -mt-4">
+              <div class="text-center">
+                <div class="text-5xl md:text-7xl font-bold text-white font-amiri">{surah.number}</div>
+                <div class="text-xs text-white/60 mt-1">سورة</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex-1 min-w-0 text-center md:text-right pb-1">
+            <p class="text-[10px] md:text-xs text-white/60 uppercase tracking-widest mb-1">القرآن الكريم</p>
+            <h1 class="text-3xl md:text-5xl lg:text-6xl font-bold text-white font-amiri">{surah.name}</h1>
+            <div class="flex flex-wrap gap-x-3 gap-y-1 mt-1 justify-center md:justify-start">
+              <span class="text-sm md:text-base text-white/80">{surah.englishName}</span>
+              <span class="text-white/40 hidden md:inline">·</span>
+              <span class="text-sm md:text-base text-white/60">{surah.englishNameTranslation}</span>
+            </div>
+
+            <div id="reciter-info" class="flex items-center gap-2 mt-3 justify-center md:justify-start cursor-pointer" role="button" tabindex="0" aria-haspopup="listbox" aria-expanded="false">
+              <div id="reciter-avatar" class="w-8 h-8 md:w-10 md:h-10 rounded-full ring-2 ring-white/20 flex-shrink-0 overflow-hidden bg-accent/20 flex items-center justify-center">
+                <img src="/images/abdul-basit.jpg" alt="" class="w-full h-full object-cover" loading="lazy" />
+              </div>
+              <div>
+                <p class="text-xs text-white/50">القارئ</p>
+                <div class="flex items-center gap-1">
+                  <span id="reciter-name" class="text-sm md:text-base text-white font-medium leading-tight">الشيخ عبد الباسط عبد الصمد</span>
+                  <svg class="w-3 h-3 text-white/40 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div id="reciter-dropdown" class="hidden absolute z-20 top-full mt-2 left-0 right-0 md:right-auto md:w-72 bg-bg-dark border border-white/10 rounded-xl shadow-2xl max-h-64 overflow-y-auto" role="listbox">
+              <div class="p-2 space-y-0.5">
+                {reciters.map((r) => (
+                  <button
+                    data-reciter={r.id}
+                    class="reciter-option w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-right hover:bg-white/5 transition-colors min-h-[44px]"
+                    role="option"
+                    aria-selected={r.id === defaultReciter.id}
+                  >
+                    <div class="w-8 h-8 rounded-full bg-accent/20 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                      {r.img
+                        ? <img src={r.img} alt="" class="w-full h-full object-cover" loading="lazy" />
+                        : <span class="text-xs text-accent font-bold">{r.name.charAt(0)}</span>
+                      }
+                    </div>
+                    <div class="text-right">
+                      <p class="text-sm text-white font-medium">{r.name}</p>
+                      <p class="text-xs text-text-muted">{r.nameEn}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between mt-2 md:mt-4">
+          <div class="flex items-center gap-3 text-xs md:text-sm text-white/60">
+            <span>{surah.numberOfAyahs} آية</span>
+            <span>·</span>
+            <span>{revelationAr}</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4 mt-4">
+          <button id="play-all-btn" class="w-14 h-14 rounded-full bg-accent hover:bg-accent/80 text-white flex items-center justify-center shadow-xl shadow-accent/30 transition-all hover:scale-105 active:scale-95 flex-shrink-0">
+            <svg class="w-6 h-6 mr-1" fill="currentColor" viewBox="0 0 384 512">
+              <path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/>
+            </svg>
+          </button>
+          <div class="text-xs md:text-sm text-white/60">
+            <span class="font-bold text-white text-sm md:text-base">شغل الكل</span>
+            <br class="hidden md:block" />
+            <span class="hidden md:inline text-white/50">استمع إلى السورة كاملة</span>
+          </div>
+          <div class="flex-1"></div>
+          <button id="download-surah-btn" title="تحميل السورة" class="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all hover:scale-105 flex-shrink-0" aria-label="تحميل السورة">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          </button>
+          <a href="https://dm.qurancomplex.gov.sa/" target="_blank" rel="noopener noreferrer" title="تحميل المصحف الشريف" class="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all hover:scale-105 flex-shrink-0" aria-label="تحميل المصحف الشريف">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-1 bg-bg-dark px-4 pb-4" style="margin-top: -1px;">
+      <div class="max-w-4xl mx-auto">
+        <div class="pb-3 pt-4">
+          <div class="relative">
+            <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              id="ayah-search"
+              placeholder="ابحث في الآيات..."
+              class="w-full px-10 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-text-muted focus:outline-none focus:border-accent transition-colors min-h-[44px]"
+              autocomplete="off"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-1 bg-bg-dark px-4 pb-4" style="margin-top: -1px;">
+      <div class="max-w-4xl mx-auto">
+        <div class="flex items-center gap-4 px-3 py-2 border-b border-white/5 text-xs text-text-muted sticky top-0 bg-bg-dark z-10">
+          <div class="w-7 md:w-8 flex-shrink-0 text-center">#</div>
+          <div class="flex-1 pr-2">الآية</div>
+          <div class="w-16 flex-shrink-0 flex items-center justify-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 320 512">
+              <path d="M48 64C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/>
+            </svg>
+            <span class="text-[10px] text-text-muted">تنزيل</span>
+          </div>
+        </div>
+
+        <div id="ayahs-container" class="space-y-0">
+          {ayahs.map((ayah) => (
+            <div
+              class="group flex items-center gap-4 px-3 py-2 rounded-md hover:bg-white/5 transition-colors cursor-pointer"
+              id={`ayah-${ayah.numberInSurah}`}
+              role="button"
+              tabindex={0}
+            >
+              <div class="w-7 md:w-8 flex-shrink-0 text-center">
+                <span class="text-xs md:text-sm text-text-muted group-hover:hidden">{ayah.numberInSurah}</span>
+                <button
+                  data-ayah={ayah.numberInSurah}
+                  class="play-btn w-7 h-7 hidden group-hover:flex items-center justify-center mx-auto hover:scale-110 transition-transform"
+                  aria-label={`استماع للآية ${ayah.numberInSurah}`}
+                >
+                  <svg class="w-3.5 h-3.5 text-white mr-0.5" fill="currentColor" viewBox="0 0 384 512">
+                    <path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="flex-1 min-w-0 pr-2">
+                <div class="arabic-verse text-base md:text-xl text-white group-hover:text-white transition-colors line-clamp-2">{ayah.text}</div>
+              </div>
+              <div class="flex items-center gap-1 flex-shrink-0">
+                <button
+                  data-ayah={ayah.numberInSurah}
+                  class="play-btn hover:scale-110 transition-transform"
+                  aria-label={`استماع للآية ${ayah.numberInSurah}`}
+                >
+                  <svg class="w-3.5 h-3.5 md:w-4 md:h-4 text-text-muted hover:text-accent transition-colors mr-0.5" fill="currentColor" viewBox="0 0 384 512">
+                    <path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/>
+                  </svg>
+                </button>
+                <button
+                  data-ayah={ayah.numberInSurah}
+                  class="download-btn opacity-0 group-hover:opacity-100 hover:scale-110 transition-all"
+                  aria-label={`تحميل الآية ${ayah.numberInSurah}`}
+                >
+                  <svg class="w-3 h-3 text-text-muted hover:text-accent transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                </button>
+              </div>
+              <audio data-audio={ayah.numberInSurah} preload="none"></audio>
+            </div>
+          ))}
+        </div>
+        <div id="download-progress" class="hidden text-center text-xs text-text-muted py-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <Footer />
+</BaseLayout>
+
+<script id="reciters-data" type="application/json" set:html={recitersJson}></script>
+<script id="ayahs-data" type="application/json" set:html={ayahsJson}></script>
+
+<script>
+  const surahNumber = window.location.pathname.split('/').pop();
+  const reciters = JSON.parse(document.getElementById('reciters-data').textContent);
+  let currentReciter = localStorage.getItem('quran-reciter') || reciters[0].id;
+  let currentAudio = null;
+  let currentBtn = null;
+  let currentRow = null;
+
+  const playSvg = '<svg class="w-3.5 h-3.5 text-white mr-0.5" fill="currentColor" viewBox="0 0 384 512"><path d="M73 39c-14.8-9.3-33.4-9.1-48 .3-14.7 9.5-23.7 25.9-23.7 43.6v346.2c0 17.7 9 34.1 23.7 43.6 14.6 9.4 33.2 9.6 48 .3l288-194.3c14.4-9.7 22.3-25.1 22.3-41s-7.9-31.3-22.3-41L73 39z"/></svg>';
+  const pauseSvg = '<svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 320 512"><path d="M48 64C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48v288c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/></svg>';
+
+  function getAudioUrl(ayah) {
+    const num = surahNumber.toString().padStart(3, '0');
+    const a = ayah.toString().padStart(3, '0');
+    return `https://everyayah.com/data/${currentReciter}/${num}${a}.mp3`;
+  }
+
+  function getReciterInfo(id) {
+    return reciters.find(r => r.id === id) || reciters[0];
+  }
+
+  function updateReciterUI(id) {
+    const info = getReciterInfo(id);
+    const nameEl = document.getElementById('reciter-name');
+    const avatarEl = document.getElementById('reciter-avatar');
+    if (nameEl) nameEl.textContent = info.name;
+    if (avatarEl) {
+      if (info.img) {
+        avatarEl.innerHTML = `<img src="${info.img}" alt="" class="w-full h-full object-cover" loading="lazy" />`;
+      } else {
+        const initial = info.name.charAt(0);
+        const colors = ['bg-accent', 'bg-emerald-500', 'bg-blue-500', 'bg-purple-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-orange-500'];
+        const colorIdx = reciters.findIndex(r => r.id === id) % colors.length;
+        avatarEl.innerHTML = `<div class="w-full h-full flex items-center justify-center ${colors[colorIdx]}"><span class="text-white text-sm font-bold">${initial}</span></div>`;
+      }
+    }
+    document.querySelectorAll('.reciter-option').forEach(opt => {
+      opt.classList.toggle('bg-white/10', opt.getAttribute('data-reciter') === id);
+      opt.setAttribute('aria-selected', opt.getAttribute('data-reciter') === id);
+    });
+  }
+
+  // Reciter selector
+  const reciterInfo = document.getElementById('reciter-info');
+  const reciterDropdown = document.getElementById('reciter-dropdown');
+
+  if (reciterInfo && reciterDropdown) {
+    function openDropdown() {
+      reciterDropdown.classList.remove('hidden');
+      reciterInfo.setAttribute('aria-expanded', 'true');
+      reciterDropdown.scrollTop = 0;
+    }
+
+    function closeDropdown() {
+      reciterDropdown.classList.add('hidden');
+      reciterInfo.setAttribute('aria-expanded', 'false');
+    }
+
+    reciterInfo.addEventListener('click', () => {
+      const isOpen = reciterInfo.getAttribute('aria-expanded') === 'true';
+      isOpen ? closeDropdown() : openDropdown();
+    });
+
+    reciterInfo.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const isOpen = reciterInfo.getAttribute('aria-expanded') === 'true';
+        isOpen ? closeDropdown() : openDropdown();
+      }
+    });
+
+    document.querySelectorAll('.reciter-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        const id = opt.getAttribute('data-reciter');
+        if (id && id !== currentReciter) {
+          stopCurrent();
+          currentReciter = id;
+          localStorage.setItem('quran-reciter', id);
+          updateReciterUI(id);
+        }
+        closeDropdown();
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      const isOpen = reciterInfo.getAttribute('aria-expanded') === 'true';
+      if (isOpen && !reciterInfo.contains(e.target) && !reciterDropdown.contains(e.target)) {
+        closeDropdown();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && reciterInfo.getAttribute('aria-expanded') === 'true') {
+        closeDropdown();
+        reciterInfo.focus();
+      }
+    });
+  }
+
+  updateReciterUI(currentReciter);
+
+  function stopCurrent() {
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      if (currentBtn) {
+        currentBtn.innerHTML = playSvg;
+        currentBtn.classList.remove('text-red-400');
+        currentBtn.classList.add('text-text-muted');
+      }
+      if (currentRow) {
+        currentRow.classList.remove('bg-accent/5');
+      }
+      currentAudio = null;
+      currentBtn = null;
+      currentRow = null;
+    }
+  }
+
+  function playAyah(btn) {
+    const ayahNumber = btn.getAttribute('data-ayah');
+    const audio = document.querySelector(`[data-audio="${ayahNumber}"]`);
+    const row = btn.closest('[role="button"]');
+    const url = getAudioUrl(ayahNumber);
+
+    stopCurrent();
+
+    if (audio.src !== url) audio.src = url;
+
+    audio.play();
+    btn.innerHTML = pauseSvg;
+    btn.classList.remove('text-text-muted');
+    btn.classList.add('text-red-400');
+    if (row) row.classList.add('bg-accent/5');
+    currentAudio = audio;
+    currentBtn = btn;
+    currentRow = row;
+
+    audio.onended = () => {
+      stopCurrent();
+      const nextAyah = parseInt(ayahNumber) + 1;
+      if (nextAyah <= document.querySelectorAll('.play-btn').length) {
+        const nextBtn = document.querySelector(`.play-btn[data-ayah="${nextAyah}"]`);
+        if (nextBtn) playAyah(nextBtn);
+      }
+    };
+  }
+
+  document.querySelectorAll('.play-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const ayahNumber = btn.getAttribute('data-ayah');
+      const audio = document.querySelector(`[data-audio="${ayahNumber}"]`);
+
+      if (currentAudio === audio) {
+        stopCurrent();
+      } else {
+        playAyah(btn);
+      }
+    });
+  });
+
+  document.getElementById('play-all-btn')?.addEventListener('click', () => {
+    stopCurrent();
+    const firstBtn = document.querySelector('.play-btn');
+    if (firstBtn) playAyah(firstBtn);
+  });
+
+  document.querySelectorAll('[role="button"]').forEach((row) => {
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const btn = row.querySelector('.play-btn');
+        if (btn) btn.click();
+      }
+    });
+  });
+
+  // Download single ayah
+  async function downloadAyah(ayahNumber, filename) {
+    const url = getAudioUrl(ayahNumber);
+    try {
+      const res = await fetch(url, { mode: 'cors' });
+      if (!res.ok) throw new Error('fail');
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch {
+      window.open(url, '_blank');
+    }
+  }
+
+  document.querySelectorAll('.download-btn').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const ayahNum = btn.getAttribute('data-ayah');
+      const surahNum = parseInt(surahNumber);
+      downloadAyah(ayahNum, `${surahNum}_${ayahNum}.mp3`);
+    });
+  });
+
+  document.getElementById('download-surah-btn')?.addEventListener('click', async () => {
+    const total = document.querySelectorAll('.download-btn').length;
+    const progress = document.getElementById('download-progress');
+    if (!progress) return;
+    progress.classList.remove('hidden');
+    progress.textContent = `جاري تحميل ${total} آية...`;
+    for (let i = 1; i <= total; i++) {
+      await downloadAyah(i, `${parseInt(surahNumber)}_${i}.mp3`);
+      progress.textContent = `جاري التحميل... ${i}/${total}`;
+    }
+    setTimeout(() => {
+      progress.textContent = `تم تحميل ${total} آية ✓`;
+      setTimeout(() => progress.classList.add('hidden'), 3000);
+    }, 500);
+  });
+
+  const ayahSearch = document.getElementById('ayah-search');
+  const ayahContainer = document.getElementById('ayahs-container');
+
+  if (ayahSearch && ayahContainer) {
+    ayahSearch.addEventListener('input', () => {
+      const q = ayahSearch.value.trim();
+      const rows = ayahContainer.querySelectorAll('[role="button"]');
+      rows.forEach(row => {
+        const textEl = row.querySelector('.arabic-verse');
+        const numEl = row.querySelector('[class*="group-hover"]');
+        const match = !q
+          || (textEl && textEl.textContent.includes(q))
+          || (numEl && numEl.textContent.trim() === q);
+        row.style.display = match ? '' : 'none';
+      });
+    });
+  }
+
+  // Touch devices
+  if ('ontouchstart' in window) {
+    document.querySelectorAll('.play-btn').forEach((btn) => {
+      btn.style.display = 'flex';
+    });
+    document.querySelectorAll('.download-btn').forEach((btn) => {
+      btn.classList.remove('opacity-0', 'group-hover:opacity-100');
+      btn.style.opacity = '0.5';
+    });
+    document.querySelectorAll('.group-hover\\:hidden').forEach((el) => {
+      el.style.display = 'none';
+    });
+    document.querySelectorAll('.hidden.group-hover\\:flex').forEach((el) => {
+      el.classList.remove('hidden', 'group-hover:flex');
+      el.classList.add('flex');
+    });
+  }
+</script>

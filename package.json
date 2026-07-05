@@ -1,0 +1,50 @@
+{
+  "name": "quran-pipeline",
+  "version": "1.0.0",
+  "description": "نظام أوتوماتيكي كامل لتوليد ونشر محتوى قرآني على يوتيوب (Shorts + فيديوهات طويلة)",
+  "main": "dist/scheduler.js",
+  "scripts": {
+    "build": "tsc",
+    "dev:worker": "ts-node src/queue/worker.ts",
+    "dev:scheduler": "ts-node src/scheduler.ts",
+    "get-refresh-token": "ts-node src/scripts/getRefreshToken.ts",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:generate": "prisma generate",
+    "prisma:studio": "prisma studio",
+    "preview": "ts-node src/scripts/previewVideo.ts",
+    "setup": "ts-node src/scripts/setupPlatforms.ts",
+    "setup:guide": "ts-node src/scripts/setupPlatforms.ts --guide",
+    "setup:verify": "ts-node src/scripts/setupPlatforms.ts --verify",
+    "e2e": "node dist/scripts/e2eTest.js",
+    "publish": "node dist/scripts/triggerPublish.js",
+    "refresh-models": "npx tsx src/scripts/refreshModels.ts",
+    "test": "echo \"لا يوجد اختبارات بعد\" && exit 0"
+  },
+  "keywords": [
+    "quran",
+    "youtube",
+    "automation",
+    "ai-agent"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/node-cron": "^3.0.11",
+    "prisma": "^5.20.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1075.0",
+    "@google/generative-ai": "^0.24.1",
+    "@prisma/client": "^5.20.0",
+    "bullmq": "^5.78.1",
+    "canvas": "^2.11.2",
+    "dotenv": "^17.4.2",
+    "googleapis": "^173.0.0",
+    "ioredis": "^5.11.1",
+    "node-cron": "^4.2.1",
+    "openai": "^6.44.0"
+  }
+}
