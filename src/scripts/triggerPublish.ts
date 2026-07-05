@@ -89,6 +89,9 @@ async function main() {
 
   // إضافة Chapters للفيديوهات الطويلة
   let finalDescription = seoOutput.description;
+
+  const cleanDesc = (s: string) => s.replace(/[\u0610-\u0615\u064B-\u065F\u0670\u06D6-\u06ED\u08D0-\u08FF\u200B-\u200F\u2028-\u202E\uFEFF]/g, "");
+
   if (contentType === ContentType.LONG_VIDEO && generated.sceneDurations.length > 1) {
     const chapters = generated.verses.map((v, i) => {
       const startSec = generated.sceneDurations.slice(0, i).reduce((sum, d) => sum + d, 0);
@@ -97,6 +100,11 @@ async function main() {
       return `${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")} - الآية ${v.ayahNumber}`;
     }).join("\n");
     finalDescription = `${seoOutput.description}\n\n${chapters}`;
+  }
+
+  finalDescription = cleanDesc(finalDescription);
+  if (finalDescription.length > 4900) {
+    finalDescription = finalDescription.slice(0, 4877) + "...";
   }
 
   console.log("━".repeat(50));
