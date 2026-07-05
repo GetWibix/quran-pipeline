@@ -161,21 +161,21 @@ function buildDescription(input: SeoInput, hashtags: string[]): string {
 
   const clean = (s: string) => s.replace(/[\u0610-\u0615\u064B-\u065F\u0670\u06D6-\u06ED\u08D0-\u08FF\u200B-\u200F\u2028-\u202E\uFEFF]/g, "");
 
-  const verseLine = input.verseText ? clean(input.verseText).slice(0, 2000) : "";
-
-  const parts = [
+  const parts: string[] = [
     clean(firstLine).slice(0, 150),
     "",
     `🎙️ القارئ: ${input.reciterArabic}`,
     `📖 سورة ${input.surahName} (${input.fromAyah}-${input.toAyah})`,
     "",
-    "📜 نص الآيات:",
-    verseLine || "",
-    "",
-    cta,
-    "",
-    formattedTags,
   ];
+
+  if (input.contentType === "SHORT" && input.verseText) {
+    parts.push("📜 نص الآيات:");
+    parts.push(clean(input.verseText).slice(0, 2000));
+    parts.push("");
+  }
+
+  parts.push(cta, "", formattedTags);
 
   let result = parts.join("\n");
   if (result.length > 4800) {
