@@ -9,7 +9,6 @@
     "preview": "astro preview"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.3.2",
     "astro": "^4.16.19",
     "autoprefixer": "^10.5.2",
     "postcss": "^8.5.16",
