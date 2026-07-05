@@ -10,7 +10,10 @@
  */
 
 import { getVerse } from "../services/verseFetcher";
-import { getCachedAyahAudio, RECITERS, Reciter } from "../services/audioFetcher";
+import {
+  downloadAyahAudio, buildSurahAudio, extractAyahAudio,
+  RECITERS, Reciter, SurahAudioIndex,
+} from "../services/audioFetcher";
 import { composeScene } from "../services/visualComposer";
 import { renderVideo, cleanupWorkDir } from "../services/videoRenderer";
 import { ContentType } from "@prisma/client";
@@ -89,6 +92,12 @@ async function main() {
   const sceneInputs: { imagePath: string; audioPath: string; durationSeconds: number }[] = [];
   let versesFetched = 0;
 
+  let fullSurahAudio: { filePath: string; index: SurahAudioIndex } | null = null;
+  if (!isShort && opts.toAyah - opts.fromAyah >= 5) {
+    const first = await getVerse(opts.surah, 1);
+    fullSurahAudio = await buildSurahAudio(reciter, opts.surah, first.numberOfAyahsInSurah);
+  }
+
   for (let ayah = opts.fromAyah; ayah <= opts.toAyah; ayah++) {
     if (isShort && totalDuration >= MAX_SHORT_SEC) {
       console.log(`⏱️ بلغت المدة القصوى للـ Short (${MAX_SHORT_SEC}ث) — توقفنا عند الآية ${ayah - 1}`);
@@ -101,9 +110,9 @@ async function main() {
 
     const audioOutPath = path.join(audioDir, `${opts.surah}-${ayah}.mp3`);
     console.log(`   ⏳ تحميل الصوت...`);
-    const { filePath: audioPath, durationSeconds } = await getCachedAyahAudio(
-      reciter, opts.surah, ayah, audioOutPath
-    );
+    const { filePath: audioPath, durationSeconds } = fullSurahAudio
+      ? await extractAyahAudio(fullSurahAudio.filePath, fullSurahAudio.index, ayah, audioOutPath)
+      : await downloadAyahAudio(reciter, opts.surah, ayah, audioOutPath);
 
     const bgPath = pickBackground();
     const imageOutPath = path.join(scenesDir, `${opts.surah}-${ayah}.png`);
