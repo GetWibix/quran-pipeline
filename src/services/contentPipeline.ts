@@ -1,5 +1,4 @@
 import { mkdir, mkdtemp, readdir } from "fs/promises";
-import { statSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
 import { ContentType } from "@prisma/client";
@@ -12,22 +11,24 @@ import { renderVideo, cleanupWorkDir, SceneInput } from "./videoRenderer";
 import prisma from "../lib/prisma";
 
 const BACKGROUNDS_DIR = path.join(__dirname, "../../assets/backgrounds");
+const LANDSCAPE_BG_DIR = path.join(BACKGROUNDS_DIR, "landscape");
+const PORTRAIT_BG_DIR = path.join(BACKGROUNDS_DIR, "portrait");
 const VIDEOS_DIR = path.join(__dirname, "../../assets/videos");
 
-async function listBackgrounds(ext: string): Promise<string[]> {
+async function listDir(dir: string, ext: string): Promise<string[]> {
   try {
-    const files = await readdir(BACKGROUNDS_DIR);
+    const files = await readdir(dir);
     return files
-      .filter((f) => f.startsWith("bg-") && f.endsWith(ext))
+      .filter((f) => f.endsWith(ext))
       .sort(() => Math.random() - 0.5)
-      .map((f) => path.join(BACKGROUNDS_DIR, f));
+      .map((f) => path.join(dir, f));
   } catch {
     return [];
   }
 }
 
-async function pickBackground(): Promise<string> {
-  const images = await listBackgrounds(".jpg");
+async function pickImageBackground(): Promise<string> {
+  const images = await listDir(BACKGROUNDS_DIR, ".jpg");
   if (images.length > 0) return images[Math.floor(Math.random() * images.length)];
 
   const fallbacks = ["mosque-sunset.jpg", "geometric-pattern-blue.jpg", "clouds-soft.jpg", "desert-night.jpg"];
@@ -35,8 +36,8 @@ async function pickBackground(): Promise<string> {
   return path.join(BACKGROUNDS_DIR, chosen);
 }
 
-async function getAvailableVideoBackgrounds(): Promise<string[]> {
-  return listBackgrounds(".mp4");
+async function getVideoBackgrounds(): Promise<string[]> {
+  return listDir(LANDSCAPE_BG_DIR, ".mp4");
 }
 
 export async function generateContent(
@@ -57,8 +58,9 @@ export async function generateContent(
   const verses: VerseData[] = [];
   const sceneInputs: SceneInput[] = [];
   const aspectRatio = contentType === ContentType.SHORT ? "9:16" : "16:9";
-  const backgroundPath = await pickBackground();
-  const availableVideoBackgrounds = await getAvailableVideoBackgrounds();
+  const backgroundPath = await pickImageBackground();
+  const useVideoBackground = contentType === ContentType.LONG_VIDEO;
+  const availableVideoBackgrounds = useVideoBackground ? await getVideoBackgrounds() : [];
   const sceneBackgrounds: string[] = [];
 
   let totalDuration = 0;
