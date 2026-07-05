@@ -1,6 +1,8 @@
 import { mkdir, mkdtemp, readdir } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { ContentType } from "@prisma/client";
 
 import { selectNextRange } from "./verseSelector";
@@ -9,6 +11,8 @@ import { downloadAyahAudio, Reciter, RECITERS } from "./audioFetcher";
 import { composeScene } from "./visualComposer";
 import { renderVideo, cleanupWorkDir, SceneInput } from "./videoRenderer";
 import prisma from "../lib/prisma";
+
+const execFileAsync = promisify(execFile);
 
 const BACKGROUNDS_DIR = path.join(__dirname, "../../assets/backgrounds");
 const LANDSCAPE_BG_DIR = path.join(BACKGROUNDS_DIR, "landscape");
@@ -136,8 +140,26 @@ export async function generateContent(
     videoBackgroundPaths: sceneBackgrounds.length > 0 ? sceneBackgrounds : undefined,
   });
 
+  let shortVideoPath: string | undefined;
+  if (contentType === ContentType.LONG_VIDEO) {
+    shortVideoPath = path.join(
+      VIDEOS_DIR,
+      `SHORT-${range.surahNumber}-${range.fromAyah}-${actualLastAyah}.mp4`
+    );
+    const cropDuration = Math.min(totalDuration, 60);
+    await execFileAsync("ffmpeg", [
+      "-y", "-i", finalVideoPath,
+      "-t", String(cropDuration),
+      "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
+      "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+      "-c:a", "aac", "-b:a", "128k",
+      shortVideoPath,
+    ]);
+  }
+
   return {
     videoPath: finalVideoPath,
+    shortVideoPath,
     workDir,
     contentType,
     surahNumber: range.surahNumber,
@@ -152,6 +174,7 @@ export async function generateContent(
 
 export interface GeneratedContent {
   videoPath: string;
+  shortVideoPath?: string;
   workDir: string;
   contentType: ContentType;
   surahNumber: number;
