@@ -12,10 +12,6 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
-defaults:
-  run:
-    working-directory: website
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -24,22 +20,20 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+          cache: npm
+          cache-dependency-path: website/package-lock.json
 
-      - run: npm ci
+      - name: Install dependencies
+        working-directory: website
+        run: npm ci
 
-      - run: |
-          npm run build 2>&1 | tee /tmp/build-log.txt; exit ${PIPESTATUS[0]}
-        env:
-          NODE_ENV: production
+      - name: Build website
+        working-directory: website
+        run: npx astro build
 
-      - run: |
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          cat /tmp/build-log.txt >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-        if: failure()
-
-      - uses: peaceiris/actions-gh-pages@v4
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: website/dist
