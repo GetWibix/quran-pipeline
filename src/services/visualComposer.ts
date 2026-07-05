@@ -108,7 +108,7 @@ export async function composeScene(opts: ComposeSceneOptions): Promise<string> {
   const verseStartY = height * 0.38;
   const verseLineHeight = width * 0.075;
 
-  drawWrappedText(
+  const arabicLines = drawWrappedText(
     ctx,
     opts.textArabic,
     width / 2,
@@ -118,6 +118,9 @@ export async function composeScene(opts: ComposeSceneOptions): Promise<string> {
   );
 
   if (opts.translation) {
+    const arabicEndY = verseStartY + arabicLines * verseLineHeight;
+    const translationStartY = arabicEndY + height * 0.04;
+
     (ctx as unknown as { direction: string }).direction = "ltr";
     ctx.shadowBlur = 4;
     ctx.fillStyle = "#E8E8E8";
@@ -126,7 +129,7 @@ export async function composeScene(opts: ComposeSceneOptions): Promise<string> {
       ctx,
       opts.translation,
       width / 2,
-      height * 0.68,
+      translationStartY,
       verseAreaMaxWidth,
       width * 0.04
     );
