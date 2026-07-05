@@ -116,17 +116,21 @@ cron.schedule("0 2 * * *", async () => {
     });
   }
 
-  if (new Date().getDay() === 5) {
-    const longSlot = todaySlot(14, 30);
-    console.log(`   📋 الجمعة 14:30 — الفيديو الطويل الأسبوعي`);
-    await enqueueContentGeneration({
-      contentType: ContentType.LONG_VIDEO,
-      platformRouting: { youtube: true, facebook: true, instagram: true, threads: true, facebookStory: true, instagramStory: true },
-      forcePublishAt: longSlot.toISOString(),
-    });
-  }
-
   console.log(`✅ [02:00] تم إنشاء ${baseJobs.length + extraCount} مهمة توليد`);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// 🎥 فيديو الجمعة الطويل — يُولّد ليلة الخميس لينزل مع الفجر
+// ═══════════════════════════════════════════════════════════════
+
+cron.schedule("0 22 * * 4", async () => {
+  const longSlot = todaySlot(4, 30);
+  console.log(`   📋 الجمعة ${longSlot.toISOString()} — الفيديو الطويل الأسبوعي (فجر الجمعة)`);
+  await enqueueContentGeneration({
+    contentType: ContentType.LONG_VIDEO,
+    platformRouting: { youtube: true, facebook: true, instagram: true, threads: true, facebookStory: true, instagramStory: true },
+    forcePublishAt: longSlot.toISOString(),
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════
