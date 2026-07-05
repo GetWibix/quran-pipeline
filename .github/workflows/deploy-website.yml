@@ -28,15 +28,16 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run build 2>&1 | tee ../build-log.txt; exit ${PIPESTATUS[0]}
+      - run: |
+          npm run build 2>&1 | tee /tmp/build-log.txt; exit ${PIPESTATUS[0]}
         env:
           NODE_ENV: production
 
-      - uses: actions/upload-artifact@v4
+      - run: |
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/build-log.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
         if: failure()
-        with:
-          name: build-log
-          path: build-log.txt
 
       - uses: peaceiris/actions-gh-pages@v4
         with:
