@@ -30,9 +30,23 @@ jobs:
 
       - name: Build website
         working-directory: website
-        run: npx astro build
+        continue-on-error: true
+        id: build
+        run: |
+          npx astro build 2>&1 | tee ${{ runner.temp }}/astro-build.log
+
+      - name: Show build log on failure
+        if: steps.build.outcome != 'success'
+        working-directory: website
+        run: |
+          echo "### Build failed with output:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat ${{ runner.temp }}/astro-build.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          exit 1
 
       - name: Deploy to gh-pages
+        if: steps.build.outcome == 'success'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
