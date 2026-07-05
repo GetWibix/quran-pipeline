@@ -181,7 +181,11 @@ export async function generateContent(
       "-i", finalVideoPath,
       "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
       "-t", "60",
-      "-preset", "veryfast",
+      "-c:v", "libx264",
+      "-preset", "ultrafast",
+      "-crf", "28",
+      "-x264opts", "rc-lookahead=5:bframes=1:ref=1",
+      "-c:a", "copy",
       "-y", shortOut,
     ]);
     shortVideoPath = shortOut;

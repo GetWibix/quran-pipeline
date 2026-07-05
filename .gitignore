@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 assets/videos/
+assets/audio/
 output/
 test-output/
 *.log
