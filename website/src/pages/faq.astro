@@ -42,25 +42,25 @@ const faqs = [
 <BaseLayout title="الأسئلة الشائعة" canonical="https://quran.waxbix.com/faq" description="أجوبة على الأسئلة المتكررة حول مشروع NOR Quran">
   <Header />
 
-  <section id="main-content" class="pt-32 pb-16 relative min-h-screen">
+  <section id="main-content" class="pt-32 pb-10 xs:pb-12 sm:pb-16 relative min-h-screen overflow-hidden">
     <div class="hero-glow"></div>
     <div class="max-w-4xl mx-auto px-4">
-      <h1 class="text-4xl md:text-5xl font-bold text-center mb-4">
+      <h1 class="text-3xl xs:text-4xl md:text-5xl font-bold text-center mb-3 sm:mb-4">
         <span class="gradient-text">الأسئلة الشائعة</span>
       </h1>
-      <p class="text-text-secondary text-center text-lg mb-12">إجابات على أكثر الأسئلة تكرراً</p>
+      <p class="text-text-secondary text-center text-sm xs:text-base md:text-lg mb-8 sm:mb-12">إجابات على أكثر الأسئلة تكرراً</p>
 
-      <div class="space-y-4" role="list">
+      <div class="space-y-3 sm:space-y-4" role="list">
         {faqs.map((faq, i) => (
-          <div class="glow-card p-6" role="listitem">
+          <div class="glow-card p-4 xs:p-5 sm:p-6" role="listitem">
             <h3>
               <button
-                class="faq-btn w-full flex items-center justify-between text-right py-3 min-h-[44px]"
+                class="faq-btn w-full flex items-center justify-between text-right py-2 sm:py-3 min-h-[44px] gap-2"
                 aria-expanded="false"
                 aria-controls={`faq-answer-${i}`}
                 id={`faq-btn-${i}`}
               >
-                <span class="font-bold text-lg">{faq.q}</span>
+                <span class="font-bold text-sm xs:text-base sm:text-lg">{faq.q}</span>
                 <svg class="w-5 h-5 text-text-secondary transform transition-transform duration-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                 </svg>

@@ -11,10 +11,10 @@ export interface Props {
 const { icon, title, description, link } = Astro.props;
 ---
 
-<article class="glow-card p-6 group">
-  <div class="mb-3"><Icon name={icon} size={28} class="text-primary" /></div>
-  <h3 class="text-xl font-bold mb-2">{title}</h3>
-  <p class="text-text-secondary text-sm leading-relaxed mb-4">{description}</p>
+<article class="glow-card p-5 xs:p-6 group">
+  <div class="mb-2 sm:mb-3"><Icon name={icon} size={24} class="xs:w-7 xs:h-7 text-primary" /></div>
+  <h3 class="text-base xs:text-lg sm:text-xl font-bold mb-1.5 sm:mb-2">{title}</h3>
+  <p class="text-text-secondary text-xs xs:text-sm leading-relaxed mb-3 sm:mb-4">{description}</p>
   {
     link && (
       <a href={link} class="text-white text-sm font-semibold hover:text-gold-light transition-colors inline-flex items-center gap-1">
