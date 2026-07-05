@@ -28,9 +28,13 @@ jobs:
 
       - run: npm ci
 
-      - run: node -v && npx astro --version
+      - run: npm run build 2>&1 | tee /tmp/build.log; exit ${PIPESTATUS[0]}
 
-      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-log
+          path: /tmp/build.log
         env:
           NODE_ENV: production
 
