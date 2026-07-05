@@ -10,7 +10,7 @@
  */
 
 import { getVerse } from "../services/verseFetcher";
-import { downloadAyahAudio, RECITERS, Reciter } from "../services/audioFetcher";
+import { getCachedAyahAudio, RECITERS, Reciter } from "../services/audioFetcher";
 import { composeScene } from "../services/visualComposer";
 import { renderVideo, cleanupWorkDir } from "../services/videoRenderer";
 import { ContentType } from "@prisma/client";
@@ -101,7 +101,7 @@ async function main() {
 
     const audioOutPath = path.join(audioDir, `${opts.surah}-${ayah}.mp3`);
     console.log(`   ⏳ تحميل الصوت...`);
-    const { filePath: audioPath, durationSeconds } = await downloadAyahAudio(
+    const { filePath: audioPath, durationSeconds } = await getCachedAyahAudio(
       reciter, opts.surah, ayah, audioOutPath
     );
 

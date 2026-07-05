@@ -7,7 +7,7 @@ import { ContentType } from "@prisma/client";
 
 import { selectNextRange } from "./verseSelector";
 import { getVerse, getSurahMeta, VerseData } from "./verseFetcher";
-import { downloadAyahAudio, Reciter, RECITERS } from "./audioFetcher";
+import { getCachedAyahAudio, ensureSurahAudioCache, Reciter, RECITERS } from "./audioFetcher";
 import { composeScene } from "./visualComposer";
 import { renderVideo, cleanupWorkDir, SceneInput } from "./videoRenderer";
 import prisma from "../lib/prisma";
@@ -57,6 +57,11 @@ export async function generateContent(
 
   const range = await selectNextRange(contentType, forceSurahNumber);
 
+  if (contentType === ContentType.LONG_VIDEO) {
+    const first = await getVerse(range.surahNumber, 1);
+    await ensureSurahAudioCache(reciter, range.surahNumber, first.numberOfAyahsInSurah);
+  }
+
   const workDir = await mkdtemp(path.join(tmpdir(), "quran-gen-"));
   const scenesDir = path.join(workDir, "scenes");
   const audioDir = path.join(workDir, "audio");
@@ -87,7 +92,7 @@ export async function generateContent(
   const audioResults = await Promise.all(
     ayahNumbers.map(async (ayah) => {
       const audioOutPath = path.join(audioDir, `${range.surahNumber}-${ayah}.mp3`);
-      const result = await downloadAyahAudio(reciter, range.surahNumber, ayah, audioOutPath);
+      const result = await getCachedAyahAudio(reciter, range.surahNumber, ayah, audioOutPath);
       return { ayah, ...result };
     })
   );
