@@ -12,9 +12,10 @@
  * - Maher_AlMuaiqly_64kbps   => ماهر المعيقلي
  */
 
-import { writeFile } from "fs/promises";
+import { writeFile, copyFile, mkdir, access } from "fs/promises";
 import { execFile } from "child_process";
 import { promisify } from "util";
+import path from "path";
 
 const execFileAsync = promisify(execFile);
 
@@ -47,9 +48,14 @@ export const RECITER_ARABIC_NAMES: Record<Reciter, string> = {
 };
 
 const EVERYAYAH_BASE = "https://everyayah.com/data";
+const AUDIO_CACHE_DIR = path.join(__dirname, "../../assets/audio-cache");
 
 function pad3(n: number): string {
   return n.toString().padStart(3, "0");
+}
+
+function cachePath(reciter: Reciter, surahNumber: number, ayahNumber: number): string {
+  return path.join(AUDIO_CACHE_DIR, reciter, `${pad3(surahNumber)}${pad3(ayahNumber)}.mp3`);
 }
 
 /**
@@ -63,6 +69,73 @@ export function buildAudioUrl(
   return `${EVERYAYAH_BASE}/${reciter}/${pad3(surahNumber)}${pad3(
     ayahNumber
   )}.mp3`;
+}
+
+/**
+ * كيتأكد أن كل آيات السورة محمّلة في cache — لو ناقصة يحمّل الباقي
+ * كيرجع true إذا كلشي موجود، false إذا فشل شي
+ */
+export async function ensureSurahAudioCache(
+  reciter: Reciter,
+  surahNumber: number,
+  totalVerses: number
+): Promise<boolean> {
+  const dir = path.join(AUDIO_CACHE_DIR, reciter);
+  await mkdir(dir, { recursive: true });
+
+  const missing: number[] = [];
+  for (let ayah = 1; ayah <= totalVerses; ayah++) {
+    try {
+      await access(cachePath(reciter, surahNumber, ayah));
+    } catch {
+      missing.push(ayah);
+    }
+  }
+
+  if (missing.length === 0) return true;
+
+  console.log(`📥 تحميل ${missing.length} آية صوت من سورة ${surahNumber} (${reciter})...`);
+
+  let success = 0;
+  for (const ayah of missing) {
+    try {
+      const url = buildAudioUrl(reciter, surahNumber, ayah);
+      const res = await fetch(url);
+      if (!res.ok) continue;
+      const buffer = Buffer.from(await res.arrayBuffer());
+      if (buffer.length < 1000) continue;
+      await writeFile(cachePath(reciter, surahNumber, ayah), buffer);
+      success++;
+    } catch {
+      // نتجاوز الفاشل
+    }
+  }
+
+  console.log(`   ✅ ${success}/${missing.length} آية`);
+  return success === missing.length;
+}
+
+/**
+ * كيجيب الصوت من الـ cache (أو يحمّله إذا ما موجود)، كينسخه إلى outputPath
+ */
+export async function getCachedAyahAudio(
+  reciter: Reciter,
+  surahNumber: number,
+  ayahNumber: number,
+  outputPath: string
+): Promise<{ filePath: string; durationSeconds: number }> {
+  const cached = cachePath(reciter, surahNumber, ayahNumber);
+
+  try {
+    await access(cached);
+    await copyFile(cached, outputPath);
+  } catch {
+    await downloadAyahAudio(reciter, surahNumber, ayahNumber, cached);
+    await copyFile(cached, outputPath);
+  }
+
+  const durationSeconds = await getAudioDuration(outputPath);
+  return { filePath: outputPath, durationSeconds };
 }
 
 /**
