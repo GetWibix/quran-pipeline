@@ -125,11 +125,12 @@ cron.schedule("0 2 * * *", async () => {
 
 cron.schedule("0 22 * * 4", async () => {
   const longSlot = todaySlot(4, 30);
-  console.log(`   📋 الجمعة ${longSlot.toISOString()} — الفيديو الطويل الأسبوعي (فجر الجمعة)`);
+  console.log(`   📋 الجمعة ${longSlot.toISOString()} — سورة الكهف (فجر الجمعة)`);
   await enqueueContentGeneration({
     contentType: ContentType.LONG_VIDEO,
     platformRouting: { youtube: true, facebook: true, instagram: true, threads: true, facebookStory: true, instagramStory: true },
     forcePublishAt: longSlot.toISOString(),
+    forceSurahNumber: 18,
   });
 });
 
