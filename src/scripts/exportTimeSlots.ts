@@ -7,9 +7,7 @@
  *   npx ts-node src/scripts/exportTimeSlots.ts
  */
 
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../lib/prisma";
 
 function esc(val: string): string {
   return val.replace(/'/g, "''");

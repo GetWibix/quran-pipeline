@@ -1,7 +1,5 @@
-import { PrismaClient } from "@prisma/client";
 import { notifyReport } from "../notifier";
-
-const prisma = new PrismaClient();
+import prisma from "../../lib/prisma";
 
 function getPeriodDates(type: "DAILY" | "WEEKLY" | "MONTHLY"): { periodStart: Date; periodEnd: Date } {
   const now = new Date();

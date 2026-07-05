@@ -5,11 +5,10 @@
  */
 
 import OpenAI from "openai";
-import { PrismaClient, ContentType } from "@prisma/client";
+import { ContentType } from "@prisma/client";
 import { getSurahMeta, getVerse } from "./verseFetcher";
 import { getFreeModels } from "./modelRegistry";
-
-const prisma = new PrismaClient();
+import prisma from "../lib/prisma";
 const client = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
   apiKey: process.env.OPENROUTER_API_KEY!,

@@ -1,6 +1,5 @@
-import { PrismaClient, ContentType } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { ContentType } from "@prisma/client";
+import prisma from "../lib/prisma";
 
 // ============================================================
 // قوالب العناوين — 5 أنماط محترمة للمحتوى القرآني

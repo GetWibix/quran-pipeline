@@ -1,7 +1,8 @@
-import { readFile } from "fs/promises";
+import { createReadStream } from "fs";
 import { request as httpsRequest } from "https";
 import { generateComment } from "./commentGenerator";
 import { SITE_LINK_SHORT } from "../site";
+import FormData from "form-data";
 
 export interface FacebookPublishOptions {
   videoFilePath: string;
@@ -82,44 +83,31 @@ async function addEngagementComment(videoId: string, opts?: FacebookPublishOptio
   }
 }
 
-function buildMultipartBody(
-  videoBuffer: Buffer,
-  fields: Record<string, string>,
-  boundary: string
-): Buffer {
-  const parts: Buffer[] = [];
-
+function buildMultipartForm(
+  videoPath: string,
+  fields: Record<string, string>
+): FormData {
+  const form = new FormData();
   for (const [key, value] of Object.entries(fields)) {
-    parts.push(Buffer.from(
-      `--${boundary}\r\nContent-Disposition: form-data; name="${key}"\r\n\r\n${value}\r\n`,
-      "utf-8"
-    ));
+    form.append(key, value);
   }
-
-  parts.push(Buffer.from(
-    `--${boundary}\r\nContent-Disposition: form-data; name="source"; filename="video.mp4"\r\nContent-Type: video/mp4\r\n\r\n`,
-    "utf-8"
-  ));
-  parts.push(videoBuffer);
-  parts.push(Buffer.from(`\r\n--${boundary}--\r\n`, "utf-8"));
-
-  return Buffer.concat(parts);
+  form.append("source", createReadStream(videoPath), {
+    filename: "video.mp4",
+    contentType: "video/mp4",
+  });
+  return form;
 }
 
-function httpsPostMultipart(url: string, body: Buffer, boundary: string): Promise<any> {
+function httpsPostForm(url: string, form: FormData): Promise<any> {
   return new Promise((resolve, reject) => {
     const parsed = new URL(url);
-    const options = {
+    form.submit({
       hostname: parsed.hostname,
       path: parsed.pathname + parsed.search,
+      protocol: parsed.protocol as "https:" | "http:",
       method: "POST",
-      headers: {
-        "Content-Type": `multipart/form-data; boundary=${boundary}`,
-        "Content-Length": body.length.toString(),
-      },
-    };
-
-    const req = httpsRequest(options, (res) => {
+    }, (err, res) => {
+      if (err) { reject(err); return; }
       let data = "";
       res.on("data", (chunk) => (data += chunk));
       res.on("end", () => {
@@ -130,10 +118,6 @@ function httpsPostMultipart(url: string, body: Buffer, boundary: string): Promis
         }
       });
     });
-
-    req.on("error", reject);
-    req.write(body);
-    req.end();
   });
 }
 
@@ -142,9 +126,6 @@ export async function publishToFacebook(opts: FacebookPublishOptions): Promise<F
     console.warn("⚠️ Facebook: META_PAGE_ID أو META_PAGE_ACCESS_TOKEN غير موجودين — تخطي");
     return { facebookVideoId: "", postUrl: "" };
   }
-
-  const videoBuffer = await readFile(opts.videoFilePath);
-  const boundary = `----FB${Date.now()}${Math.random().toString(36).slice(2)}`;
 
   const fields: Record<string, string> = {
     description: buildDescription(opts.description, opts.tags),
@@ -162,11 +143,11 @@ export async function publishToFacebook(opts: FacebookPublishOptions): Promise<F
     fields.unpublished_content_type = "SCHEDULED";
   }
 
-  const body = buildMultipartBody(videoBuffer, fields, boundary);
+  const form = buildMultipartForm(opts.videoFilePath, fields);
 
   const url = `https://graph.facebook.com/${API_VERSION}/${PAGE_ID}/videos?access_token=${ACCESS_TOKEN}`;
 
-  const data = await httpsPostMultipart(url, body, boundary);
+  const data = await httpsPostForm(url, form);
 
   if (data.error) throw new Error(`Facebook API: ${data.error.message}`);
 

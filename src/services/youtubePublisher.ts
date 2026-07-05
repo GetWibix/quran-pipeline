@@ -123,14 +123,37 @@ export async function publishVideo(
     }
   }
 
-  // 4. إضافة تعليق تلقائي لزيادة التفاعل (مع تأخير لانتظار معالجة يوتيوب)
-  await new Promise((r) => setTimeout(r, 15000));
-  await addEngagementComment(videoId, opts.title, opts.surahName, opts.fromAyah, opts.toAyah);
+  // 4. إضافة تعليق تلقائي لزيادة التفاعل
+  // إذا كان الفيديو مجدولاً، ننتظر إلى دقيقتين بعد وقت النشر
+  // إذا كان فورياً، ننتظر 15 ثانية فقط
+  scheduleComment(videoId, opts);
 
   return {
     youtubeVideoId: videoId,
     videoUrl: `https://youtube.com/watch?v=${videoId}`,
   };
+}
+
+/**
+ * كيضيف تعليق تلقائي بعد نشر الفيديو
+ * يتعامل مع الفيديوهات المجدولة: ينتظر لين تصير عامة ثم يعلق
+ */
+function scheduleComment(videoId: string, opts: PublishOptions): void {
+  let delayMs = 15000;
+
+  if (opts.scheduledPublishTime) {
+    const publishTime = new Date(opts.scheduledPublishTime).getTime();
+    const now = Date.now();
+    delayMs = Math.max(publishTime - now + 120000, 15000);
+  }
+
+  setTimeout(async () => {
+    try {
+      await addEngagementComment(videoId, opts.title, opts.surahName, opts.fromAyah, opts.toAyah);
+    } catch {
+      console.warn(`⚠️ تعذر إضافة التعليق التلقائي للفيديو ${videoId}`);
+    }
+  }, delayMs);
 }
 
 /**

@@ -52,7 +52,7 @@ export const defaultJobOptions: JobsOptions = {
   attempts: 2, // محاولة إعادة واحدة إذا فشل (مثلاً timeout شبكة وقت تحميل صوت)
   backoff: { type: "exponential", delay: 5000 },
   removeOnComplete: { age: 86400 * 7 }, // نخليو سجل الجوبات الناجحة لمدة أسبوع للتدقيق
-  removeOnFail: false, // نخليو الفاشلة دائماً للمراجعة اليدوية
+  removeOnFail: { count: 100 }, // نحتفظ بآخر 100 فاشل فقط للمراجعة
 };
 
 /**

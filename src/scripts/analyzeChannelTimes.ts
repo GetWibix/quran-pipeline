@@ -17,10 +17,9 @@
  */
 
 import { google, youtube_v3 } from "googleapis";
-import { PrismaClient, ContentType } from "@prisma/client";
+import { ContentType } from "@prisma/client";
 import { getTimezoneOffset, utcHourToTarget } from "../services/publishingEngine/types";
-
-const prisma = new PrismaClient();
+import prisma from "../lib/prisma";
 
 interface VideoStats {
   videoId: string;

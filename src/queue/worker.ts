@@ -4,7 +4,7 @@
  */
 
 import { Worker, Job } from "bullmq";
-import { PrismaClient, ContentType } from "@prisma/client";
+import { ContentType } from "@prisma/client";
 import { connection, ContentGenerationJobData, WORKER_CONCURRENCY, PlatformRouting } from "./queue";
 import { generateContent } from "../services/contentPipeline";
 import { generateMetadata, getNextOptimalPublishTime } from "../services/decisionAgent";
@@ -25,7 +25,7 @@ import { RECITER_ARABIC_NAMES, RECITERS, RECITER_WEIGHTS } from "../services/aud
 import { rename, unlink, mkdir, writeFile } from "fs/promises";
 import path from "path";
 
-const prisma = new PrismaClient();
+import prisma from "../lib/prisma";
 
 function getDefaultRouting(): PlatformRouting {
   return { youtube: true, facebook: true, instagram: true, threads: true, facebookStory: true, instagramStory: true };
@@ -431,6 +431,20 @@ worker.on("completed", (job) => {
 
 worker.on("failed", (job, err) => {
   console.error(`❌ Job ${job?.id} فشل:`, err.message);
+});
+
+async function shutdown(signal: string) {
+  console.log(`\n🛑 استقبلت ${signal} — إيقاف العامل...`);
+  await worker.close().catch(() => {});
+  await prisma.$disconnect().catch(() => {});
+  await connection.quit().catch(() => {});
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("unhandledRejection", (reason) => {
+  console.error("❌ Unhandled Rejection:", reason);
 });
 
 console.log("🚀 Quran Content Worker بدأ التشغيل...");

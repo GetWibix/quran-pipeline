@@ -1,10 +1,8 @@
 import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
 import { publishToFacebook } from "../services/facebookPublisher";
 import { publishToInstagram } from "../services/instagramPublisher";
 import { publishToThreads } from "../services/threadsPublisher";
-
-const prisma = new PrismaClient();
+import prisma from "../lib/prisma";
 
 const VIDEO_PATH = "assets/videos/SHORT-2-27-28.mp4";
 const YOUTUBE_ID = "kGKEPneEZ7M";
