@@ -1,6 +1,5 @@
 import OpenAI from "openai";
 import { getFreeModels } from "./modelRegistry";
-import { SITE_LINK_SHORT} from "../site";
 
 const client = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
@@ -67,11 +66,11 @@ export async function generateComment(
       });
 
       const text = response.choices[0]?.message?.content?.trim() ?? "";
-      if (isValidComment(text, title, surahName)) return text + SITE_LINK_SHORT;
+      if (isValidComment(text, title, surahName)) return text;
     } catch {
       continue;
     }
   }
 
-  return FALLBACK_COMMENTS[Math.floor(Math.random() * FALLBACK_COMMENTS.length)] + SITE_LINK_SHORT;
+  return FALLBACK_COMMENTS[Math.floor(Math.random() * FALLBACK_COMMENTS.length)];
 }
