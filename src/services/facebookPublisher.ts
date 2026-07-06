@@ -317,7 +317,7 @@ async function addEngagementComment(videoId: string, opts?: FacebookPublishOptio
   try {
     let comment: string;
     if (opts?.surahName && opts?.fromAyah) {
-      comment = await generateComment(opts.title, opts.surahName, opts.fromAyah, opts.toAyah ?? opts.fromAyah);
+      comment = await generateComment(opts.title, opts.surahName, opts.fromAyah, opts.toAyah ?? opts.fromAyah) + SITE_LINK_SHORT;
     } else {
       const fallback = [
         "اللهم اجعل هذه التلاوة نوراً في قلوبنا 🤲 شارك الأجر مع غيرك 💚",
