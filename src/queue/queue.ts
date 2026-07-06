@@ -43,6 +43,12 @@ export interface ContentGenerationJobData {
   forceSurahNumber?: number;
 }
 
+export interface FacebookVerificationData {
+  recordId: string;
+  facebookVideoId: string;
+  scheduledTime: string;
+}
+
 export const contentQueue = new Queue<ContentGenerationJobData>(
   "content-generation",
   { connection: connection as any }

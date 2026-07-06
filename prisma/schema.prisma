@@ -20,6 +20,7 @@ enum PublishStatus {
   PENDING
   GENERATING
   READY
+  SCHEDULED
   PUBLISHED
   FAILED
 }
@@ -53,6 +54,9 @@ model PublishedContent {
   scheduledAt        DateTime?
   publishedAt        DateTime?
 
+  contentHash         String?   @unique
+  facebookPostStatus  String?
+
   // بيانات التفاعل (كيتم تحديثها لاحقاً عبر job دوري يسحب من YouTube Analytics API)
   views             Int           @default(0)
   likes             Int           @default(0)
@@ -76,6 +80,7 @@ model PublishedContent {
   @@index([youtubeVideoId])
   @@index([publishedAt])
   @@index([status, publishedAt])
+  @@index([facebookPostStatus])
 }
 
 /// قرارات الوكيل بخصوص الجدولة — سجل تدقيق (audit log) لشفافية القرارات

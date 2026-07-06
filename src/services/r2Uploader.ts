@@ -12,7 +12,10 @@
  */
 
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { NodeHttpHandler } from "@smithy/node-http-handler";
+import { Agent as HttpsAgent } from "https";
 import { createReadStream } from "fs";
+import { setTimeout as sleep } from "timers/promises";
 
 const ACCOUNT_ID = process.env.R2_ACCOUNT_ID ?? "";
 const ACCESS_KEY = process.env.R2_ACCESS_KEY ?? "";
@@ -30,10 +33,18 @@ function getClient(): S3Client | null {
     client = new S3Client({
       region: "auto",
       endpoint: `https://${ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      forcePathStyle: true,
       credentials: {
         accessKeyId: ACCESS_KEY,
         secretAccessKey: SECRET_KEY,
       },
+      requestHandler: new NodeHttpHandler({
+        httpsAgent: new HttpsAgent({
+          keepAlive: true,
+          rejectUnauthorized: true,
+        }),
+      }),
+      maxAttempts: 3,
     });
   }
   return client;
@@ -61,15 +72,31 @@ export async function uploadToR2(localPath: string): Promise<string | undefined>
 
   console.log(`☁️  رفع الفيديو إلى R2: ${key}`);
 
-  try {
-    await s3.send(new PutObjectCommand({
-      Bucket: BUCKET,
-      Key: key,
-      Body: createReadStream(localPath),
-      ContentType: "video/mp4",
-    }));
-  } catch (err) {
-    console.warn(`⚠️ R2: فشل الرفع — ${err instanceof Error ? err.message : String(err)}`);
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await s3.send(new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: key,
+        Body: createReadStream(localPath),
+        ContentType: "video/mp4",
+      }));
+      lastError = undefined;
+      break;
+    } catch (err) {
+      lastError = err;
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.includes("EPROTO") || msg.includes("SSL") || msg.includes("handshake")) {
+        console.warn(`⚠️ R2: محاولة ${attempt}/3 فشلت (SSL) — ${msg}`);
+        if (attempt < 3) await sleep(2000 * attempt);
+      } else {
+        console.warn(`⚠️ R2: فشل الرفع — ${msg}`);
+        return undefined;
+      }
+    }
+  }
+  if (lastError) {
+    console.warn(`⚠️ R2: فشل الرفع بعد 3 محاولات — ${lastError instanceof Error ? lastError.message : String(lastError)}`);
     return undefined;
   }
 
