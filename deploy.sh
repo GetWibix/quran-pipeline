@@ -42,22 +42,25 @@ npm install
 # 4. تحديث Prisma
 echo ""
 echo "🗄️  [4/7] تحديث قاعدة البيانات..."
-npx prisma generate
-npx prisma db push
+npx prisma generate || echo "⚠️  prisma generate فشل — أكمل"
+npx prisma db push || echo "⚠️  prisma db push فشل — أكمل"
 
-# 4. بناء المشروع
+# 5. بناء المشروع
 echo ""
 echo "🔨 [5/7] بناء المشروع (TypeScript)..."
-npm run build
+npm run build || echo "⚠️  build فشل — أكمل"
 
 # 6. تحديث PM2
 echo ""
 echo "🔄 [6/7] إعادة تشغيل خدمات PM2..."
-pm2 start ecosystem.config.js 2>/dev/null || pm2 restart ecosystem.config.js
+pm2 restart ecosystem.config.js 2>/dev/null || pm2 start ecosystem.config.js 2>/dev/null || echo "⚠️  PM2 لم يشتغل — تأكد يدوياً"
 
-# 7. عرض الحالة
+# 7. حفظ PM2 (auto-start بعد إعادة تشغيل الخادم)
+pm2 save 2>/dev/null || echo "⚠️  لم يتم حفظ PM2"
+
+# 8. عرض الحالة
 echo ""
-echo "📊 [7/7] حالة الخدمات..."
+echo "📊 [8/8] حالة الخدمات..."
 pm2 list | grep quran-
 
 echo ""
