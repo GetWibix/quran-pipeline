@@ -1,0 +1,4 @@
+# حماية الملفات الحرجة — أي تغيير يحتاج موافقتك
+.github/workflows/          @GetWibix
+deploy.sh                   @GetWibix
+ecosystem.config.js         @GetWibix
