@@ -5,13 +5,14 @@
 
 import { Worker, Job } from "bullmq";
 import { ContentType } from "@prisma/client";
-import { connection, ContentGenerationJobData, WORKER_CONCURRENCY, PlatformRouting } from "./queue";
+import { connection, ContentGenerationJobData, WORKER_CONCURRENCY, PlatformRouting, contentQueue, FacebookVerificationData } from "./queue";
 import { generateContent } from "../services/contentPipeline";
 import { generateMetadata, getNextOptimalPublishTime } from "../services/decisionAgent";
 import { generateSeoMetadata } from "../services/seoEngine";
 import type { SeoInput } from "../services/seoEngine";
 import { publishVideo } from "../services/youtubePublisher";
 import { addVideoToSurahPlaylist } from "../services/playlistManager";
+import { verifyFacebookPost, generateContentHash } from "../services/facebookPublisher";
 import { publishToAllPlatforms } from "../services/multiPlatformPublisher";
 import { uploadToR2, deleteFromR2 } from "../services/r2Uploader";
 import { notifyPublishSuccess, notifyPublishFailure } from "../services/notifier";
@@ -44,8 +45,11 @@ function pickReciter(): (keyof typeof RECITERS) {
 }
 
 async function processJob(job: Job<ContentGenerationJobData>) {
+  if (job.name === "verify-facebook-post") {
+    return processVerification(job as unknown as Job<FacebookVerificationData>);
+  }
   const { contentType } = job.data;
-  const routing = job.data.platformRouting ?? getDefaultRouting();
+  let routing = { ...(job.data.platformRouting ?? getDefaultRouting()) };
   let dbRecordId: string | undefined;
   let workDirToClean: string | undefined;
 
@@ -78,12 +82,32 @@ async function processJob(job: Job<ContentGenerationJobData>) {
 
       const imageBuffer = await generatePoster({ surahName: label, verses });
 
-      // حفظ الصورة محلياً للتوثيق
       const posterDir = path.join(__dirname, "../../output/posters");
       const posterFile = `surah${range.surahNumber}-${range.fromAyah}-${range.toAyah}-${Date.now()}.png`;
       const posterPath = path.join(posterDir, posterFile);
       await mkdir(posterDir, { recursive: true });
       await writeFile(posterPath, imageBuffer);
+
+      const posterHash = generateContentHash(range.surahNumber, range.fromAyah, range.toAyah, "alafasy", posterContentType);
+      const existingPoster = posterHash ? await prisma.publishedContent.findFirst({
+        where: { contentHash: posterHash, facebookVideoId: { not: null } },
+        select: { facebookVideoId: true },
+      }) : null;
+      if (existingPoster?.facebookVideoId) {
+        console.log(`⏭️ بوستر مكرر: ${existingPoster.facebookVideoId}`);
+        await unlink(posterPath).catch(() => {});
+        await notifyPublishSuccess({
+          title: posterTitle,
+          videoUrl: "",
+          surahName,
+          fromAyah: range.fromAyah,
+          toAyah: range.toAyah,
+          contentType: posterContentType,
+          scheduledAt: new Date().toISOString(),
+          extraPlatforms: `📘 بوستر مكرر (موجود): ${existingPoster.facebookVideoId}`,
+        });
+        return { success: true, type: "poster_skipped", facebookPhotoId: existingPoster.facebookVideoId };
+      }
 
       let fbResult: Awaited<ReturnType<typeof publishPhotoToFacebook>> | undefined;
       if (routing.facebook) {
@@ -105,6 +129,7 @@ async function processJob(job: Job<ContentGenerationJobData>) {
           scheduledAt: new Date(scheduledAt),
           publishedAt: new Date(),
           facebookVideoId: fbResult?.facebookPhotoId ?? "",
+          contentHash: posterHash,
         },
       });
 
@@ -196,6 +221,7 @@ async function processJob(job: Job<ContentGenerationJobData>) {
     finalDescription += SITE_LINK;
 
     const scheduledAt = job.data.forcePublishAt ?? (await getNextOptimalPublishTime(contentType));
+    const contentHash = generateContentHash(generated.surahNumber, generated.fromAyah, generated.toAyah, generated.reciter, contentType);
 
     const record = await prisma.publishedContent.create({
       data: {
@@ -210,6 +236,7 @@ async function processJob(job: Job<ContentGenerationJobData>) {
         status: "READY",
         scheduledAt: new Date(scheduledAt),
         titlePatternId: seoOutput.patternId,
+        contentHash,
       },
     });
     dbRecordId = record.id;
@@ -254,6 +281,19 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       instagramStory: null,
       errors: [],
     };
+
+    let existingFacebookId: string | undefined;
+    if (routing.facebook && contentHash) {
+      const dup = await prisma.publishedContent.findFirst({
+        where: { contentHash, facebookVideoId: { not: null } },
+        select: { facebookVideoId: true },
+      });
+      if (dup?.facebookVideoId) {
+        existingFacebookId = dup.facebookVideoId;
+        routing = { ...routing, facebook: false };
+        console.log(`⏭️ Facebook: مكرر — استخدام المعرف ${existingFacebookId}`);
+      }
+    }
 
     const shouldPublishOthers = routing.facebook || routing.instagram || routing.threads;
     if (shouldPublishOthers) {
@@ -341,17 +381,44 @@ async function processJob(job: Job<ContentGenerationJobData>) {
     }
 
     // ─── تحديث السجل ─────────────────────────────────────────
+    if (existingFacebookId && !multiResult.facebook?.facebookVideoId) {
+      multiResult.facebook = {
+        facebookVideoId: existingFacebookId,
+        postUrl: `https://www.facebook.com/watch/?v=${existingFacebookId}`,
+      };
+    }
+
+    const isScheduled = scheduledAt && (new Date(scheduledAt).getTime() - Date.now() > 10 * 60 * 1000);
+
     await prisma.publishedContent.update({
       where: { id: record.id },
       data: {
-        status: "PUBLISHED",
+        status: isScheduled ? "SCHEDULED" : "PUBLISHED",
         publishedAt: new Date(),
+        facebookPostStatus: multiResult.facebook?.facebookVideoId
+          ? (isScheduled ? "SCHEDULED" : "PUBLISHED")
+          : null,
         youtubeVideoId,
         facebookVideoId: multiResult.facebook?.facebookVideoId || null,
         instagramMediaId: multiResult.instagram?.instagramMediaId || null,
         threadsPostId: multiResult.threads?.threadsPostId || null,
       },
     });
+
+    if (isScheduled && multiResult.facebook?.facebookVideoId) {
+      const verificationDelay = Math.max(
+        new Date(scheduledAt).getTime() - Date.now() + 30 * 60 * 1000,
+        60000
+      );
+      await (contentQueue as any).add("verify-facebook-post", {
+        recordId: record.id,
+        facebookVideoId: multiResult.facebook.facebookVideoId,
+        scheduledTime: scheduledAt,
+      }, {
+        delay: verificationDelay,
+      });
+      console.log(`🔍 تمت جدولة التحقق من منشور فيسبوك بعد ${Math.round(verificationDelay / 60000)} دقيقة`);
+    }
 
     // ─── إشعار Telegram ──────────────────────────────────────
     const mainLink = youtubeVideoUrl
@@ -416,6 +483,29 @@ async function processJob(job: Job<ContentGenerationJobData>) {
       await cleanupWorkDir(workDirToClean).catch(() => {});
     }
 
+    throw err;
+  }
+}
+
+async function processVerification(job: Job<FacebookVerificationData>) {
+  const { recordId, facebookVideoId } = job.data;
+  try {
+    const status = await verifyFacebookPost(facebookVideoId);
+    if (status.isHidden) {
+      console.warn(`⚠️ منشور فيسبوك ${facebookVideoId} مخفي — تحديث السجل`);
+      await prisma.publishedContent.update({
+        where: { id: recordId },
+        data: { facebookPostStatus: "HIDDEN", status: "FAILED" },
+      });
+    } else if (status.isPublished) {
+      console.log(`✅ منشور فيسبوك ${facebookVideoId} منشور ومرئي`);
+      await prisma.publishedContent.update({
+        where: { id: recordId },
+        data: { facebookPostStatus: "PUBLISHED", status: "PUBLISHED", publishedAt: new Date() },
+      });
+    }
+  } catch (err) {
+    console.error(`❌ فشل التحقق من منشور فيسبوك ${facebookVideoId}:`, err instanceof Error ? err.message : String(err));
     throw err;
   }
 }
