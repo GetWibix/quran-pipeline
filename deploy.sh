@@ -10,7 +10,9 @@ cd "$(dirname "$0")"
 # 1. سحب آخر التحديثات من GitHub
 echo ""
 echo "📥 [1/7] سحب آخر التحديثات من GitHub..."
+git stash
 git pull origin main
+git stash pop || true
 
 # 2. إنشاء قاعدة البيانات إن لم تكن موجودة
 echo ""
