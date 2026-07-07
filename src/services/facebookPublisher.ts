@@ -377,14 +377,15 @@ export async function publishToFacebook(opts: FacebookPublishOptions): Promise<F
   };
 
   if (opts.scheduledPublishTime) {
-    let publishTime = new Date(opts.scheduledPublishTime).getTime();
+    const publishTime = new Date(opts.scheduledPublishTime).getTime();
     const minTime = Date.now() + 15 * 60 * 1000;
-    if (publishTime < minTime) {
-      publishTime = minTime;
-      console.log("⏰ Facebook: وقت الجدولة قريب جداً — تم التمديد لـ +15 دقيقة");
+    if (publishTime > minTime) {
+      fields.scheduled_publish_time = String(Math.floor(publishTime / 1000));
+      fields.unpublished_content_type = "SCHEDULED";
+      fields.published = "false";
+    } else {
+      console.log("⏰ Facebook: وقت الجدولة قريب جداً أو مضى — نشر فوري");
     }
-    fields.scheduled_publish_time = String(Math.floor(publishTime / 1000));
-    fields.unpublished_content_type = "SCHEDULED";
   }
 
   const videoId = await withRetry(() => uploadVideo(opts.videoFilePath, fields, opts.isShort));
