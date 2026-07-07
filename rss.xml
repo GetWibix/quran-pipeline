@@ -1,0 +1,694 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>NOR Quran</title>
+  <link>https://quran.waxbix.com</link>
+  <description>نظام آلي مفتوح المصدر لنشر آيات القرآن الكريم على يوتيوب والمنصات الأخرى</description>
+  <language>ar</language>
+  <atom:link href="https://quran.waxbix.com/rss.xml" rel="self" type="application/rss+xml"/>
+  <item>
+    <title>سورة الفاتحة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/1</link>
+    <description>قراءة سورة الفاتحة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/1</guid>
+  </item>
+  <item>
+    <title>سورة البقرة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/2</link>
+    <description>قراءة سورة البقرة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/2</guid>
+  </item>
+  <item>
+    <title>سورة آل عمران - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/3</link>
+    <description>قراءة سورة آل عمران كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/3</guid>
+  </item>
+  <item>
+    <title>سورة النساء - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/4</link>
+    <description>قراءة سورة النساء كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/4</guid>
+  </item>
+  <item>
+    <title>سورة المائدة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/5</link>
+    <description>قراءة سورة المائدة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/5</guid>
+  </item>
+  <item>
+    <title>سورة الأنعام - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/6</link>
+    <description>قراءة سورة الأنعام كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/6</guid>
+  </item>
+  <item>
+    <title>سورة الأعراف - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/7</link>
+    <description>قراءة سورة الأعراف كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/7</guid>
+  </item>
+  <item>
+    <title>سورة الأنفال - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/8</link>
+    <description>قراءة سورة الأنفال كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/8</guid>
+  </item>
+  <item>
+    <title>سورة التوبة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/9</link>
+    <description>قراءة سورة التوبة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/9</guid>
+  </item>
+  <item>
+    <title>سورة يونس - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/10</link>
+    <description>قراءة سورة يونس كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/10</guid>
+  </item>
+  <item>
+    <title>سورة هود - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/11</link>
+    <description>قراءة سورة هود كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/11</guid>
+  </item>
+  <item>
+    <title>سورة يوسف - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/12</link>
+    <description>قراءة سورة يوسف كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/12</guid>
+  </item>
+  <item>
+    <title>سورة الرعد - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/13</link>
+    <description>قراءة سورة الرعد كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/13</guid>
+  </item>
+  <item>
+    <title>سورة إبراهيم - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/14</link>
+    <description>قراءة سورة إبراهيم كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/14</guid>
+  </item>
+  <item>
+    <title>سورة الحجر - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/15</link>
+    <description>قراءة سورة الحجر كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/15</guid>
+  </item>
+  <item>
+    <title>سورة النحل - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/16</link>
+    <description>قراءة سورة النحل كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/16</guid>
+  </item>
+  <item>
+    <title>سورة الإسراء - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/17</link>
+    <description>قراءة سورة الإسراء كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/17</guid>
+  </item>
+  <item>
+    <title>سورة الكهف - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/18</link>
+    <description>قراءة سورة الكهف كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/18</guid>
+  </item>
+  <item>
+    <title>سورة مريم - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/19</link>
+    <description>قراءة سورة مريم كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/19</guid>
+  </item>
+  <item>
+    <title>سورة طه - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/20</link>
+    <description>قراءة سورة طه كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/20</guid>
+  </item>
+  <item>
+    <title>سورة الأنبياء - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/21</link>
+    <description>قراءة سورة الأنبياء كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/21</guid>
+  </item>
+  <item>
+    <title>سورة الحج - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/22</link>
+    <description>قراءة سورة الحج كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/22</guid>
+  </item>
+  <item>
+    <title>سورة المؤمنون - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/23</link>
+    <description>قراءة سورة المؤمنون كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/23</guid>
+  </item>
+  <item>
+    <title>سورة النور - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/24</link>
+    <description>قراءة سورة النور كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/24</guid>
+  </item>
+  <item>
+    <title>سورة الفرقان - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/25</link>
+    <description>قراءة سورة الفرقان كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/25</guid>
+  </item>
+  <item>
+    <title>سورة الشعراء - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/26</link>
+    <description>قراءة سورة الشعراء كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/26</guid>
+  </item>
+  <item>
+    <title>سورة النمل - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/27</link>
+    <description>قراءة سورة النمل كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/27</guid>
+  </item>
+  <item>
+    <title>سورة القصص - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/28</link>
+    <description>قراءة سورة القصص كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/28</guid>
+  </item>
+  <item>
+    <title>سورة العنكبوت - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/29</link>
+    <description>قراءة سورة العنكبوت كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/29</guid>
+  </item>
+  <item>
+    <title>سورة الروم - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/30</link>
+    <description>قراءة سورة الروم كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/30</guid>
+  </item>
+  <item>
+    <title>سورة لقمان - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/31</link>
+    <description>قراءة سورة لقمان كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/31</guid>
+  </item>
+  <item>
+    <title>سورة السجدة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/32</link>
+    <description>قراءة سورة السجدة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/32</guid>
+  </item>
+  <item>
+    <title>سورة الأحزاب - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/33</link>
+    <description>قراءة سورة الأحزاب كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/33</guid>
+  </item>
+  <item>
+    <title>سورة سبأ - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/34</link>
+    <description>قراءة سورة سبأ كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/34</guid>
+  </item>
+  <item>
+    <title>سورة فاطر - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/35</link>
+    <description>قراءة سورة فاطر كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/35</guid>
+  </item>
+  <item>
+    <title>سورة يس - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/36</link>
+    <description>قراءة سورة يس كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/36</guid>
+  </item>
+  <item>
+    <title>سورة الصافات - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/37</link>
+    <description>قراءة سورة الصافات كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/37</guid>
+  </item>
+  <item>
+    <title>سورة ص - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/38</link>
+    <description>قراءة سورة ص كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/38</guid>
+  </item>
+  <item>
+    <title>سورة الزمر - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/39</link>
+    <description>قراءة سورة الزمر كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/39</guid>
+  </item>
+  <item>
+    <title>سورة غافر - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/40</link>
+    <description>قراءة سورة غافر كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/40</guid>
+  </item>
+  <item>
+    <title>سورة فصلت - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/41</link>
+    <description>قراءة سورة فصلت كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/41</guid>
+  </item>
+  <item>
+    <title>سورة الشورى - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/42</link>
+    <description>قراءة سورة الشورى كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/42</guid>
+  </item>
+  <item>
+    <title>سورة الزخرف - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/43</link>
+    <description>قراءة سورة الزخرف كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/43</guid>
+  </item>
+  <item>
+    <title>سورة الدخان - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/44</link>
+    <description>قراءة سورة الدخان كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/44</guid>
+  </item>
+  <item>
+    <title>سورة الجاثية - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/45</link>
+    <description>قراءة سورة الجاثية كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/45</guid>
+  </item>
+  <item>
+    <title>سورة الأحقاف - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/46</link>
+    <description>قراءة سورة الأحقاف كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/46</guid>
+  </item>
+  <item>
+    <title>سورة محمد - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/47</link>
+    <description>قراءة سورة محمد كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/47</guid>
+  </item>
+  <item>
+    <title>سورة الفتح - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/48</link>
+    <description>قراءة سورة الفتح كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/48</guid>
+  </item>
+  <item>
+    <title>سورة الحجرات - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/49</link>
+    <description>قراءة سورة الحجرات كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/49</guid>
+  </item>
+  <item>
+    <title>سورة ق - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/50</link>
+    <description>قراءة سورة ق كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/50</guid>
+  </item>
+  <item>
+    <title>سورة الذاريات - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/51</link>
+    <description>قراءة سورة الذاريات كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/51</guid>
+  </item>
+  <item>
+    <title>سورة الطور - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/52</link>
+    <description>قراءة سورة الطور كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/52</guid>
+  </item>
+  <item>
+    <title>سورة النجم - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/53</link>
+    <description>قراءة سورة النجم كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/53</guid>
+  </item>
+  <item>
+    <title>سورة القمر - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/54</link>
+    <description>قراءة سورة القمر كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/54</guid>
+  </item>
+  <item>
+    <title>سورة الرحمن - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/55</link>
+    <description>قراءة سورة الرحمن كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/55</guid>
+  </item>
+  <item>
+    <title>سورة الواقعة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/56</link>
+    <description>قراءة سورة الواقعة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/56</guid>
+  </item>
+  <item>
+    <title>سورة الحديد - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/57</link>
+    <description>قراءة سورة الحديد كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/57</guid>
+  </item>
+  <item>
+    <title>سورة المجادلة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/58</link>
+    <description>قراءة سورة المجادلة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/58</guid>
+  </item>
+  <item>
+    <title>سورة الحشر - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/59</link>
+    <description>قراءة سورة الحشر كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/59</guid>
+  </item>
+  <item>
+    <title>سورة الممتحنة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/60</link>
+    <description>قراءة سورة الممتحنة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/60</guid>
+  </item>
+  <item>
+    <title>سورة الصف - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/61</link>
+    <description>قراءة سورة الصف كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/61</guid>
+  </item>
+  <item>
+    <title>سورة الجمعة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/62</link>
+    <description>قراءة سورة الجمعة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/62</guid>
+  </item>
+  <item>
+    <title>سورة المنافقون - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/63</link>
+    <description>قراءة سورة المنافقون كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/63</guid>
+  </item>
+  <item>
+    <title>سورة التغابن - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/64</link>
+    <description>قراءة سورة التغابن كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/64</guid>
+  </item>
+  <item>
+    <title>سورة الطلاق - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/65</link>
+    <description>قراءة سورة الطلاق كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/65</guid>
+  </item>
+  <item>
+    <title>سورة التحريم - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/66</link>
+    <description>قراءة سورة التحريم كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/66</guid>
+  </item>
+  <item>
+    <title>سورة الملك - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/67</link>
+    <description>قراءة سورة الملك كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/67</guid>
+  </item>
+  <item>
+    <title>سورة القلم - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/68</link>
+    <description>قراءة سورة القلم كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/68</guid>
+  </item>
+  <item>
+    <title>سورة الحاقة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/69</link>
+    <description>قراءة سورة الحاقة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/69</guid>
+  </item>
+  <item>
+    <title>سورة المعارج - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/70</link>
+    <description>قراءة سورة المعارج كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/70</guid>
+  </item>
+  <item>
+    <title>سورة نوح - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/71</link>
+    <description>قراءة سورة نوح كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/71</guid>
+  </item>
+  <item>
+    <title>سورة الجن - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/72</link>
+    <description>قراءة سورة الجن كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/72</guid>
+  </item>
+  <item>
+    <title>سورة المزمل - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/73</link>
+    <description>قراءة سورة المزمل كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/73</guid>
+  </item>
+  <item>
+    <title>سورة المدثر - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/74</link>
+    <description>قراءة سورة المدثر كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/74</guid>
+  </item>
+  <item>
+    <title>سورة القيامة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/75</link>
+    <description>قراءة سورة القيامة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/75</guid>
+  </item>
+  <item>
+    <title>سورة الإنسان - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/76</link>
+    <description>قراءة سورة الإنسان كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/76</guid>
+  </item>
+  <item>
+    <title>سورة المرسلات - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/77</link>
+    <description>قراءة سورة المرسلات كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/77</guid>
+  </item>
+  <item>
+    <title>سورة النبأ - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/78</link>
+    <description>قراءة سورة النبأ كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/78</guid>
+  </item>
+  <item>
+    <title>سورة النازعات - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/79</link>
+    <description>قراءة سورة النازعات كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/79</guid>
+  </item>
+  <item>
+    <title>سورة عبس - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/80</link>
+    <description>قراءة سورة عبس كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/80</guid>
+  </item>
+  <item>
+    <title>سورة التكوير - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/81</link>
+    <description>قراءة سورة التكوير كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/81</guid>
+  </item>
+  <item>
+    <title>سورة الانفطار - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/82</link>
+    <description>قراءة سورة الانفطار كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/82</guid>
+  </item>
+  <item>
+    <title>سورة المطففين - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/83</link>
+    <description>قراءة سورة المطففين كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/83</guid>
+  </item>
+  <item>
+    <title>سورة الانشقاق - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/84</link>
+    <description>قراءة سورة الانشقاق كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/84</guid>
+  </item>
+  <item>
+    <title>سورة البروج - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/85</link>
+    <description>قراءة سورة البروج كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/85</guid>
+  </item>
+  <item>
+    <title>سورة الطارق - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/86</link>
+    <description>قراءة سورة الطارق كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/86</guid>
+  </item>
+  <item>
+    <title>سورة الأعلى - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/87</link>
+    <description>قراءة سورة الأعلى كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/87</guid>
+  </item>
+  <item>
+    <title>سورة الغاشية - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/88</link>
+    <description>قراءة سورة الغاشية كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/88</guid>
+  </item>
+  <item>
+    <title>سورة الفجر - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/89</link>
+    <description>قراءة سورة الفجر كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/89</guid>
+  </item>
+  <item>
+    <title>سورة البلد - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/90</link>
+    <description>قراءة سورة البلد كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/90</guid>
+  </item>
+  <item>
+    <title>سورة الشمس - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/91</link>
+    <description>قراءة سورة الشمس كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/91</guid>
+  </item>
+  <item>
+    <title>سورة الليل - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/92</link>
+    <description>قراءة سورة الليل كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/92</guid>
+  </item>
+  <item>
+    <title>سورة الضحى - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/93</link>
+    <description>قراءة سورة الضحى كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/93</guid>
+  </item>
+  <item>
+    <title>سورة الشرح - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/94</link>
+    <description>قراءة سورة الشرح كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/94</guid>
+  </item>
+  <item>
+    <title>سورة التين - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/95</link>
+    <description>قراءة سورة التين كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/95</guid>
+  </item>
+  <item>
+    <title>سورة العلق - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/96</link>
+    <description>قراءة سورة العلق كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/96</guid>
+  </item>
+  <item>
+    <title>سورة القدر - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/97</link>
+    <description>قراءة سورة القدر كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/97</guid>
+  </item>
+  <item>
+    <title>سورة البينة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/98</link>
+    <description>قراءة سورة البينة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/98</guid>
+  </item>
+  <item>
+    <title>سورة الزلزلة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/99</link>
+    <description>قراءة سورة الزلزلة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/99</guid>
+  </item>
+  <item>
+    <title>سورة العاديات - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/100</link>
+    <description>قراءة سورة العاديات كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/100</guid>
+  </item>
+  <item>
+    <title>سورة القارعة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/101</link>
+    <description>قراءة سورة القارعة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/101</guid>
+  </item>
+  <item>
+    <title>سورة التكاثر - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/102</link>
+    <description>قراءة سورة التكاثر كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/102</guid>
+  </item>
+  <item>
+    <title>سورة العصر - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/103</link>
+    <description>قراءة سورة العصر كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/103</guid>
+  </item>
+  <item>
+    <title>سورة الهمزة - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/104</link>
+    <description>قراءة سورة الهمزة كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/104</guid>
+  </item>
+  <item>
+    <title>سورة الفيل - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/105</link>
+    <description>قراءة سورة الفيل كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/105</guid>
+  </item>
+  <item>
+    <title>سورة قريش - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/106</link>
+    <description>قراءة سورة قريش كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/106</guid>
+  </item>
+  <item>
+    <title>سورة الماعون - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/107</link>
+    <description>قراءة سورة الماعون كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/107</guid>
+  </item>
+  <item>
+    <title>سورة الكوثر - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/108</link>
+    <description>قراءة سورة الكوثر كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/108</guid>
+  </item>
+  <item>
+    <title>سورة الكافرون - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/109</link>
+    <description>قراءة سورة الكافرون كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/109</guid>
+  </item>
+  <item>
+    <title>سورة النصر - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/110</link>
+    <description>قراءة سورة النصر كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/110</guid>
+  </item>
+  <item>
+    <title>سورة المسد - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/111</link>
+    <description>قراءة سورة المسد كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/111</guid>
+  </item>
+  <item>
+    <title>سورة الإخلاص - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/112</link>
+    <description>قراءة سورة الإخلاص كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/112</guid>
+  </item>
+  <item>
+    <title>سورة الفلق - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/113</link>
+    <description>قراءة سورة الفلق كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/113</guid>
+  </item>
+  <item>
+    <title>سورة الناس - استماع وقراءة</title>
+    <link>https://quran.waxbix.com/quran/114</link>
+    <description>قراءة سورة الناس كاملة مع إمكانية الاستماع بصوت أشهر القراء</description>
+    <guid>https://quran.waxbix.com/quran/114</guid>
+  </item>
+</channel>
+</rss>
