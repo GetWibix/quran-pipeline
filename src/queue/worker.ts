@@ -222,6 +222,7 @@ async function processJob(job: Job<ContentGenerationJobData>) {
 
     const scheduledAt = job.data.forcePublishAt ?? (await getNextOptimalPublishTime(contentType));
     const contentHash = generateContentHash(generated.surahNumber, generated.fromAyah, generated.toAyah, generated.reciter, contentType);
+    const isScheduled = scheduledAt && (new Date(scheduledAt).getTime() - Date.now() > 10 * 60 * 1000);
 
     const record = await prisma.publishedContent.create({
       data: {
@@ -310,7 +311,7 @@ async function processJob(job: Job<ContentGenerationJobData>) {
           surahName,
           fromAyah: generated.fromAyah,
           toAyah: generated.toAyah,
-          scheduledPublishTime: scheduledAt,
+          scheduledPublishTime: isScheduled ? scheduledAt : undefined,
         },
         {
           youtube: routing.youtube,
@@ -387,8 +388,6 @@ async function processJob(job: Job<ContentGenerationJobData>) {
         postUrl: `https://www.facebook.com/watch/?v=${existingFacebookId}`,
       };
     }
-
-    const isScheduled = scheduledAt && (new Date(scheduledAt).getTime() - Date.now() > 10 * 60 * 1000);
 
     await prisma.publishedContent.update({
       where: { id: record.id },

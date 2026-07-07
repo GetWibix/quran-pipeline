@@ -13,17 +13,19 @@ module.exports = {
     {
       name: "quran-worker",
       script: "dist/queue/worker.js",
-      instances: 1, // ⚠️ لا تستخدم "max" أو cluster mode هنا — concurrency: 1 إلزامية
+      instances: 1,
+      exec_mode: "fork",
       autorestart: true,
-      max_memory_restart: "800M", // إعادة تشغيل احتياطية إذا تسرب ذاكرة (VPS صغير)
+      max_memory_restart: "800M",
       env: { NODE_ENV: "production" },
     },
     {
       name: "quran-scheduler",
       script: "dist/scheduler.js",
       instances: 1,
+      exec_mode: "fork",
       autorestart: true,
-      max_memory_restart: "150M", // خفيف جداً، فقط cron triggers
+      max_memory_restart: "150M",
       env: { NODE_ENV: "production" },
     },
   ],
