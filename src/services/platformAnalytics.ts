@@ -18,26 +18,41 @@ async function fetchFacebookPostInsights(
   if (!META_TOKEN) return null;
 
   try {
-    const url = `https://graph.facebook.com/${API_VERSION}/${postId}/insights?metric=post_reactions_by_type_total,post_comments,post_shares,post_video_views&access_token=${META_TOKEN}`;
+    const isVideo = /^\d+$/.test(postId);
+    const metric = isVideo
+      ? "total_video_views,total_video_reactions_by_type_total"
+      : "post_reactions_by_type_total,post_comments,post_shares";
+
+    const url = `https://graph.facebook.com/${API_VERSION}/${postId}/insights?metric=${metric}&access_token=${META_TOKEN}`;
     const res = await fetch(url);
     const data = (await res.json()) as any;
 
-    if (data.error) {
-      console.warn(`⚠️ Facebook Insights فشل للمنشور ${postId}: ${data.error.message}`);
-      return null;
+    if (data.error) return null;
+
+    if (isVideo) {
+      const extractValue = (metricName: string): number => {
+        const m = data.data?.find((x: any) => x.name === metricName);
+        return m?.values?.[0]?.value ?? 0;
+      };
+      return {
+        reactions: extractValue("total_video_reactions_by_type_total"),
+        comments: 0,
+        shares: 0,
+        videoViews: extractValue("total_video_views"),
+      };
     }
 
     const extractValue = (metricName: string): number => {
-      const metric = data.data?.find((m: any) => m.name === metricName);
-      return metric?.values?.[0]?.value ?? 0;
+      const m = data.data?.find((x: any) => x.name === metricName);
+      return m?.values?.[0]?.value ?? 0;
     };
 
-    const reactions = extractValue("post_reactions_by_type_total");
-    const comments = extractValue("post_comments");
-    const shares = extractValue("post_shares");
-    const videoViews = extractValue("post_video_views");
-
-    return { reactions, comments, shares, videoViews };
+    return {
+      reactions: extractValue("post_reactions_by_type_total"),
+      comments: extractValue("post_comments"),
+      shares: extractValue("post_shares"),
+      videoViews: 0,
+    };
   } catch (err) {
     console.warn(`⚠️ Facebook Insights تعذر الاتصال:`, err instanceof Error ? err.message : String(err));
     return null;
