@@ -6,7 +6,7 @@ import { promisify } from "util";
 import { ContentType } from "@prisma/client";
 
 import { selectNextRange } from "./verseSelector";
-import { getVerse, getSurahMeta, VerseData } from "./verseFetcher";
+import { getVerse, getSurahMeta, getVerseRange, VerseData } from "./verseFetcher";
 import {
   downloadAyahAudio, buildSurahAudio, extractAyahAudio,
   SurahAudioIndex, Reciter, RECITERS, RECITER_ARABIC_NAMES,
@@ -97,16 +97,16 @@ export async function generateContent(
   const sceneBackgrounds: string[] = [];
 
   let totalDuration = 0;
-  const MAX_DURATION_SEC = contentType === ContentType.LONG_VIDEO ? 600 : 60;
+  const MAX_DURATION_SEC = contentType === ContentType.LONG_VIDEO
+    ? (forceSurahNumber ? 7200 : 600)
+    : 60;
 
   const ayahNumbers: number[] = [];
   for (let ayah = range.fromAyah; ayah <= range.toAyah; ayah++) {
     ayahNumbers.push(ayah);
   }
 
-  const verseResults = await Promise.all(
-    ayahNumbers.map((ayah) => getVerse(range.surahNumber, ayah))
-  );
+  const verseResults = await getVerseRange(range.surahNumber, range.fromAyah, range.toAyah, 5);
 
   const audioResults = await Promise.all(
     ayahNumbers.map(async (ayah) => {

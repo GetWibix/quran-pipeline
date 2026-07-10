@@ -31,8 +31,6 @@ const FPS = {
   "16:9": 30,
 };
 
-const X264_OPTS = "rc-lookahead=5:bframes=1:ref=1";
-
 async function concatAudioFiles(
   audioPaths: string[],
   outputPath: string,
@@ -67,6 +65,8 @@ async function renderSingleScene(
   fps: number,
   outputPath: string,
 ): Promise<void> {
+  const fadeDur = 0.4;
+  const fadeOutStart = Math.max(0, duration - fadeDur).toFixed(3);
   const dur = duration.toFixed(3);
 
   await execFileAsync("ffmpeg", [
@@ -75,12 +75,12 @@ async function renderSingleScene(
     "-i", imagePath,
     "-i", audioPath,
     "-filter_complex",
-    `[0:v]trim=duration=${dur},setpts=PTS-STARTPTS,fps=${fps},scale=${dims},setsar=1[bgv];[bgv][1:v]overlay`,
+    `[0:v]trim=duration=${dur},setpts=PTS-STARTPTS,fps=${fps},scale=${dims},setsar=1[bgv];[bgv][1:v]overlay,fade=t=in:d=${fadeDur},fade=t=out:st=${fadeOutStart}:d=${fadeDur}`,
     "-map", "2:a",
     "-c:v", "libx264",
     "-preset", "ultrafast",
     "-crf", "28",
-    "-x264opts", X264_OPTS,
+    "-x264opts", "rc-lookahead=5:bframes=1:ref=1",
     "-pix_fmt", "yuv420p",
     "-c:a", "copy",
     "-t", dur,
@@ -194,7 +194,7 @@ async function renderWithStaticImages(
     "-c:v", "libx264",
     "-preset", "ultrafast",
     "-crf", "28",
-    "-x264opts", X264_OPTS,
+    "-x264opts", "rc-lookahead=5:bframes=1:ref=1",
     "-pix_fmt", "yuv420p",
     "-c:a", "copy",
     "-shortest",
