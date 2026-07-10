@@ -134,6 +134,8 @@ export async function selectNextRange(
   } else if (contentType === ContentType.POSTER) {
     const remaining = surahMeta.numberOfAyahs - currentAyah + 1;
     toAyah = remaining <= 7 ? surahMeta.numberOfAyahs : Math.min(currentAyah + 6, surahMeta.numberOfAyahs);
+  } else if (forceSurahNumber) {
+    toAyah = surahMeta.numberOfAyahs;
   } else {
     const remainingInSurah = surahMeta.numberOfAyahs - currentAyah + 1;
     toAyah =

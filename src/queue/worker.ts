@@ -151,7 +151,7 @@ async function processJob(job: Job<ContentGenerationJobData>) {
     }
 
     // ─── فيديو ──────────────────────────────────────────
-    const chosenReciter = pickReciter();
+    const chosenReciter = job.data.forceSurahNumber ? "alafasy" : pickReciter();
     const generated = await generateContent(contentType, chosenReciter, job.data.forceSurahNumber);
     workDirToClean = generated.workDir;
     const reciterArabic = RECITER_ARABIC_NAMES[generated.reciter] ?? generated.reciter;

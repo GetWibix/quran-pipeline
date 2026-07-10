@@ -40,16 +40,20 @@ function parseArgs() {
   };
   const type = get("--type", "SHORT").toUpperCase();
   let reciter = get("--reciter", "") as keyof typeof RECITERS;
+  const surah = get("--surah", "");
 
   if (!["SHORT", "LONG_VIDEO"].includes(type)) throw new Error("نوع المحتوى: SHORT أو LONG_VIDEO");
 
-  // إذا ما حددش القارئ، نختارو عشوائياً
   const allKeys = Object.keys(RECITERS) as (keyof typeof RECITERS)[];
   if (!reciter || !RECITERS[reciter]) {
     reciter = allKeys[Math.floor(Math.random() * allKeys.length)];
   }
 
-  return { contentType: type as ContentType, reciterKey: reciter };
+  return {
+    contentType: type as ContentType,
+    reciterKey: reciter,
+    forceSurahNumber: surah ? parseInt(surah, 10) : undefined,
+  };
 }
 
 async function main() {
@@ -67,7 +71,7 @@ async function main() {
   console.log("📦 [1/5] توليد الفيديو (اختيار آيات → صوت → رسم → رندر)...");
   console.time("⏱️  المدة الإجمالية");
 
-  const generated = await generateContent(opts.contentType, opts.reciterKey);
+  const generated = await generateContent(opts.contentType, opts.reciterKey, opts.forceSurahNumber);
 
   console.log(`   ✅ الفيديو: ${generated.videoPath}`);
   console.log(`   ✅ المدة: ${generated.totalDurationSeconds.toFixed(1)}ث`);

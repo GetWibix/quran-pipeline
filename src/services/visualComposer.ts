@@ -83,6 +83,8 @@ export async function composeScene(opts: ComposeSceneOptions): Promise<string> {
   const canvas: Canvas = createCanvas(width, height);
   const ctx = canvas.getContext("2d");
 
+  const isLandscape = opts.aspectRatio === "16:9";
+
   if (!opts.transparent) {
     let bg = imageCache.get(opts.backgroundImagePath);
     if (!bg) {
@@ -103,15 +105,17 @@ export async function composeScene(opts: ComposeSceneOptions): Promise<string> {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#FFD700";
-  ctx.font = `bold ${Math.round(width * 0.052)}px Amiri`;
 
   ctx.shadowColor = "rgba(0,0,0,0.6)";
   ctx.shadowBlur = 8;
   ctx.shadowOffsetY = 3;
 
-  const verseAreaMaxWidth = width * 0.85;
-  const verseStartY = height * 0.38;
-  const verseLineHeight = width * 0.075;
+  const verseAreaMaxWidth = width * (isLandscape ? 0.78 : 0.85);
+  const verseStartY = height * (isLandscape ? 0.25 : 0.38);
+  const verseFontSize = Math.round(width * (isLandscape ? 0.038 : 0.052));
+  const verseLineHeight = width * (isLandscape ? 0.052 : 0.075);
+
+  ctx.font = `bold ${verseFontSize}px Amiri`;
 
   const arabicLines = drawWrappedText(
     ctx,
@@ -124,27 +128,31 @@ export async function composeScene(opts: ComposeSceneOptions): Promise<string> {
 
   if (opts.translation) {
     const arabicEndY = verseStartY + arabicLines * verseLineHeight;
-    const translationStartY = arabicEndY + height * 0.04;
+    const translationGap = height * (isLandscape ? 0.03 : 0.04);
+    const translationStartY = arabicEndY + translationGap;
 
     (ctx as unknown as { direction: string }).direction = "ltr";
     ctx.shadowBlur = 4;
     ctx.fillStyle = "#E8E8E8";
-    ctx.font = `${Math.round(width * 0.028)}px NotoNaskhArabic`;
+    const translationFontSize = Math.round(width * (isLandscape ? 0.020 : 0.028));
+    const translationLineHeight = width * (isLandscape ? 0.028 : 0.04);
+    ctx.font = `${translationFontSize}px NotoNaskhArabic`;
     drawWrappedText(
       ctx,
       opts.translation,
       width / 2,
       translationStartY,
       verseAreaMaxWidth,
-      width * 0.04
+      translationLineHeight
     );
   }
 
   (ctx as unknown as { direction: string }).direction = "rtl";
   ctx.shadowBlur = 0;
   ctx.fillStyle = "rgba(255,255,255,0.75)";
-  ctx.font = `${Math.round(width * 0.024)}px Amiri`;
-  ctx.fillText(opts.surahLabel, width / 2, height * 0.92);
+  const labelFontSize = Math.round(width * (isLandscape ? 0.020 : 0.024));
+  ctx.font = `${labelFontSize}px Amiri`;
+  ctx.fillText(opts.surahLabel, width / 2, height * (isLandscape ? 0.92 : 0.92));
 
   const buffer = canvas.toBuffer("image/png");
   await writeFile(opts.outputPath, buffer);
