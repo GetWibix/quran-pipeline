@@ -3,7 +3,7 @@ actions-runner/
 dist/
 .env
 assets/videos/
-assets/audio/
+assets/audio/.tmp-concat/
 output/
 test-output/
 *.log
