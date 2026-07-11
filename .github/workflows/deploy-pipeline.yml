@@ -5,10 +5,15 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: self-hosted
     environment: production
+    # الحماية: إذا لم تكن Environment Protection Rules مُعدة
+    # يُفضل إضافتها من GitHub → Settings → Environments → production
 
     steps:
       - name: Run deploy script

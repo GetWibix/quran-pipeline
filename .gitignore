@@ -2,6 +2,9 @@ node_modules/
 actions-runner/
 dist/
 .env
+.env.*
+!.env.example
+docker-compose.override.yml
 assets/videos/
 assets/audio/.tmp-concat/
 output/

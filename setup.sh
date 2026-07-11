@@ -25,7 +25,10 @@ sudo systemctl start redis-server
 
 echo "📦 تثبيت Node.js (v20 LTS) عبر nvm..."
 if [ ! -d "$HOME/.nvm" ]; then
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+  curl -o /tmp/nvm-install.sh https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh
+  echo "a]4b2027418b21f8e570fe1b40f381d7e46a42c0142f0e5f3c7d5f1e3e5c123e1  /tmp/nvm-install.sh" | sha256sum -c -
+  bash /tmp/nvm-install.sh
+  rm /tmp/nvm-install.sh
   export NVM_DIR="$HOME/.nvm"
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 fi

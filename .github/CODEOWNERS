@@ -2,3 +2,7 @@
 .github/workflows/          @GetWibix
 deploy.sh                   @GetWibix
 ecosystem.config.js         @GetWibix
+docker-compose.yml          @GetWibix
+Dockerfile                  @GetWibix
+setup.sh                    @GetWibix
+.env.example                @GetWibix

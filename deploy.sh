@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 echo "╔══════════════════════════════════════════════╗"
 echo "║     🚀  تحديث ونشر Quran Pipeline  🚀      ║"
@@ -24,41 +24,52 @@ if [ -n "$DB_URL" ]; then
   DB_PORT=$(echo "$DB_URL" | sed -n 's|.*:\([0-9]*\)/.*|\1|p')
   DB_USER=$(echo "$DB_URL" | sed -n 's|.*://\([^:]*\):.*|\1|p')
   DB_PASS=$(echo "$DB_URL" | sed -n 's|.*:\([^@]*\)@.*|\1|p')
-  PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -tc \
+
+  # التحقق من صحة اسم قاعدة البيانات (SQL Injection Prevention)
+  if [[ ! "$DB_NAME" =~ ^[a-zA-Z0-9_]+$ ]]; then
+    echo "❌ اسم قاعدة البيانات غير صالح: $DB_NAME"
+    exit 1
+  fi
+
+  # التحقق من وجود قاعدة البيانات
+  DB_EXISTS=$(PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -tc \
     "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" 2>/dev/null \
-    | grep -q 1 || {
-      echo "   📦 إنشاء قاعدة البيانات $DB_NAME..."
-      PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" \
-        -c "CREATE DATABASE $DB_NAME" 2>/dev/null && echo "   ✅ تم الإنشاء" \
-        || echo "   ⚠️  لا يمكن إنشاء قاعدة البيانات — قد تحتاج صلاحيات"
-    }
+    | grep -q 1 && echo "yes" || echo "no")
+
+  if [ "$DB_EXISTS" = "no" ]; then
+    echo "   📦 إنشاء قاعدة البيانات $DB_NAME..."
+    PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" \
+      -c "CREATE DATABASE $DB_NAME" 2>/dev/null
+    echo "   ✅ تم الإنشاء"
+  fi
 else
   echo "   ⚠️  لم يتم العثور على DATABASE_URL في .env"
+  exit 1
 fi
 
-# 3. تثبيت الاعتماديات
+# 3. تثبيت الاعتماديات (npm ci للبناء الحتمي)
 echo ""
 echo "📦 [3/7] تثبيت الاعتماديات..."
-npm install
+npm ci
 
 # 4. تحديث Prisma
 echo ""
 echo "🗄️  [4/7] تحديث قاعدة البيانات..."
-npx prisma generate || echo "⚠️  prisma generate فشل — أكمل"
-npx prisma db push || echo "⚠️  prisma db push فشل — أكمل"
+npx prisma generate
+npx prisma db push
 
 # 5. بناء المشروع
 echo ""
 echo "🔨 [5/7] بناء المشروع (TypeScript)..."
-npm run build || echo "⚠️  build فشل — أكمل"
+npm run build
 
 # 6. تحديث PM2
 echo ""
 echo "🔄 [6/7] إعادة تشغيل خدمات PM2..."
-pm2 restart ecosystem.config.js 2>/dev/null || pm2 start ecosystem.config.js 2>/dev/null || echo "⚠️  PM2 لم يشتغل — تأكد يدوياً"
+pm2 restart ecosystem.config.js 2>/dev/null || pm2 start ecosystem.config.js 2>/dev/null
 
 # 7. حفظ PM2 (auto-start بعد إعادة تشغيل الخادم)
-pm2 save 2>/dev/null || echo "⚠️  لم يتم حفظ PM2"
+pm2 save 2>/dev/null
 
 # 8. عرض الحالة
 echo ""
