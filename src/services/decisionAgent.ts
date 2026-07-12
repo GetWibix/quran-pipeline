@@ -1,24 +1,12 @@
-/**
- * decisionAgent.ts
- * "العقل" ديال النظام: كيولّد العنوان/الوصف/الهاشتاغات عبر OpenRouter (موديلات مجانية)،
- * وكيقرر واش نزيدو محتوى إضافي اليوم بناءً على التفاعل (مع احترام صارم لـ Quota)
- *
- * كل قرار "إبداعي" (زيادة محتوى) كيتسجل فـ AgentDecisionLog للشفافية والتدقيق
- */
-
-import OpenAI from "openai";
+import { Mistral } from "@mistralai/mistralai";
 import { ContentType } from "@prisma/client";
 import { VerseData } from "./verseFetcher";
 import { remainingVideoUploadsToday } from "./quotaTracker";
 import { getFreeModels } from "./modelRegistry";
 import prisma from "../lib/prisma";
-const client = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY!,
-  defaultHeaders: {
-    "HTTP-Referer": "https://github.com/quran-pipeline",
-    "X-Title": "Quran Pipeline",
-  },
+
+const mistral = new Mistral({
+  apiKey: process.env.MISTRAL_API_KEY!,
 });
 
 const FREE_MODELS = getFreeModels();
@@ -151,8 +139,9 @@ export async function generateMetadata(
 
   for (const model of FREE_MODELS) {
     try {
-      const response = await client.chat.completions.create({ model, messages });
-      const rawText = response.choices[0]?.message?.content?.trim() || "{}";
+      const response = await mistral.chat.complete({ model, messages });
+      const rawContent = response.choices?.[0]?.message?.content;
+      const rawText = typeof rawContent === "string" ? rawContent.trim() || "{}" : "{}";
       const parsed = parseResponse(rawText, surahName, fromAyah, toAyah);
       aiTitle = parsed.title;
       aiDescription = parsed.description;
@@ -165,7 +154,7 @@ export async function generateMetadata(
   }
 
   if (lastError) {
-    console.error("🚫 كل الموديلات المجانية فشلت، آخر خطأ:", lastError);
+    console.error("🚫 كل الموديلات فشلت، آخر خطأ:", lastError);
   }
 
   const description = buildDescription(aiDescription, reciterArabic, surahName, fromAyah, toAyah, combinedText, tags, contentType);

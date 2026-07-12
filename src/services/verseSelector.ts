@@ -1,21 +1,11 @@
-/**
- * verseSelector.ts
- * كيقرر شنو الآيات اللي غادي نولّدو محتوى ليها — يستعمل الذكاء الاصطناعي لاختيار
- * مقطع متنوع ومميز، مع الحفاظ على التقدم التسلسلي عموماً عبر القرآن.
- */
-
-import OpenAI from "openai";
+import { Mistral } from "@mistralai/mistralai";
 import { ContentType } from "@prisma/client";
 import { getSurahMeta, getVerse } from "./verseFetcher";
 import { getFreeModels } from "./modelRegistry";
 import prisma from "../lib/prisma";
-const client = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY!,
-  defaultHeaders: {
-    "HTTP-Referer": "https://github.com/quran-pipeline",
-    "X-Title": "Quran Pipeline",
-  },
+
+const mistral = new Mistral({
+  apiKey: process.env.MISTRAL_API_KEY!,
 });
 
 const TOTAL_SURAHS = 114;
@@ -38,7 +28,6 @@ async function aiSelectRange(
 ): Promise<{ fromAyah: number; toAyah: number } | null> {
   const windowEnd = Math.min(currentAyah + WINDOW_SIZE - 1, surahMeta.numberOfAyahs);
 
-  // ذاكرة: نجيب آخر فيديو منشور باش يعرف AI شنو تم قبل
   const lastPublished = await prisma.publishedContent.findFirst({
     where: { status: "PUBLISHED", contentType },
     orderBy: { publishedAt: "desc" },
@@ -88,8 +77,9 @@ ${versesList}
 
   for (const model of FREE_MODELS) {
     try {
-      const resp = await client.chat.completions.create({ model, messages });
-      const text = (resp.choices[0]?.message?.content ?? "").replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
+      const resp = await mistral.chat.complete({ model, messages });
+      const rawContent = resp.choices?.[0]?.message?.content;
+      const text = (typeof rawContent === "string" ? rawContent : "").replace(/^```json\s*/i, "").replace(/```\s*$/, "").trim();
       const parsed = JSON.parse(text);
       const f = Math.max(currentAyah, parsed.fromAyah ?? currentAyah);
       const t = Math.min(parsed.toAyah ?? f, surahMeta.numberOfAyahs);

@@ -1,13 +1,8 @@
-import OpenAI from "openai";
+import { Mistral } from "@mistralai/mistralai";
 import { getFreeModels } from "./modelRegistry";
 
-const client = new OpenAI({
-  baseURL: "https://openrouter.ai/api/v1",
-  apiKey: process.env.OPENROUTER_API_KEY!,
-  defaultHeaders: {
-    "HTTP-Referer": "https://github.com/quran-pipeline",
-    "X-Title": "Quran Pipeline",
-  },
+const mistral = new Mistral({
+  apiKey: process.env.MISTRAL_API_KEY!,
 });
 
 const FALLBACK_COMMENTS = [
@@ -49,7 +44,7 @@ export async function generateComment(
 
   for (const model of models) {
     try {
-      const response = await client.chat.completions.create({
+      const response = await mistral.chat.complete({
         model,
         messages: [
           {
@@ -61,11 +56,12 @@ export async function generateComment(
             content: `سورة ${surahName} ${fromAyah}-${toAyah}`,
           },
         ],
-        max_tokens: 100,
+        maxTokens: 100,
         temperature: 0.9,
       });
 
-      const text = response.choices[0]?.message?.content?.trim() ?? "";
+      const rawContent = response.choices?.[0]?.message?.content;
+      const text = typeof rawContent === "string" ? rawContent.trim() : "";
       if (isValidComment(text, title, surahName)) return text;
     } catch {
       continue;
